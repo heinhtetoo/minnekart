@@ -24,12 +24,15 @@ lint clean. See PRD.md for the decisions behind everything here.
 
 ## Phase 2 — Database Schema & Seed
 
-- [ ] Drizzle schema: `users`, `sessions`, `auth_tokens`, `invites`,
+- [x] Drizzle schema: `users`, `sessions`, `auth_tokens`, `invites`,
       `trips`, `photos`, `rate_limits` (per PRD data model)
-- [ ] Initial migration generated and applied (local + Neon)
-- [ ] Migration step added to CI on `main` (before Vercel promote)
-- [ ] Canned demo dataset JSON (fictional trips + stock-style photos)
-- [ ] Seed script loading demo data into local dev DB
+- [x] Initial migration generated and applied (local + Neon via CI
+      migrate job)
+- [x] Migration step added to CI on `main` (runs in parallel with
+      Vercel's deploy, so migrations stay additive)
+- [x] Canned demo dataset JSON (fictional trips; photos join in
+      Phase 5)
+- [x] Seed script loading demo data into local dev DB
 
 ## Phase 3 — Auth
 

@@ -247,7 +247,9 @@ OCI box (Tailscale-only, zero open ports):
   against a throwaway `postgres:16` service container (Hundo
   pattern).
 - **Migrations**: drizzle-kit migration step against Neon runs in the
-  Actions pipeline on `main` before Vercel promotes.
+  Actions pipeline on `main`. Vercel's deploy starts in parallel (the
+  Git integration can't be gated without losing auto-deploy), so
+  migrations must stay additive/backwards-compatible.
 - **Backups**: cron on the OCI box runs scheduled `pg_dump` against
   Neon over TLS; box needs no inbound access. R2 photo backup to box
   via rclone optional later.

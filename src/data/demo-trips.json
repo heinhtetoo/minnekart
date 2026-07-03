@@ -1,0 +1,72 @@
+[
+  {
+    "placeName": "Kyoto",
+    "country": "Japan",
+    "lat": 35.0116,
+    "lng": 135.7681,
+    "dateStart": "2023-04-02",
+    "dateEnd": "2023-04-11",
+    "highlight": "Petals drifting onto the Kamo river at dusk.",
+    "story": "Nine days of temples, tea houses, and getting happily lost in Gion. The cherry blossoms were a week early, so every evening became a slow walk under pink canopies, ice-cream in hand, planning nothing at all."
+  },
+  {
+    "placeName": "Reine",
+    "country": "Norway",
+    "lat": 67.932,
+    "lng": 13.088,
+    "dateStart": "2022-02-14",
+    "dateEnd": "2022-02-20",
+    "highlight": "The aurora finally showed on the last night.",
+    "story": "A red cabin on stilts above black water, fish drying on racks outside, and mountains that fall straight into the sea. We waited five cloudy nights for the lights — then the sky tore open in green and made every frozen minute worth it."
+  },
+  {
+    "placeName": "Cusco",
+    "country": "Peru",
+    "lat": -13.5319,
+    "lng": -71.9675,
+    "dateStart": "2019-06-08",
+    "dateEnd": "2019-06-19",
+    "highlight": "Sunrise breaking over Machu Picchu from the Sun Gate.",
+    "story": "Four days on the Inca Trail with coca tea at dawn and stars you could read by. Arriving at the Sun Gate as the mist lifted off the ruins felt like being let in on a secret the mountains had kept for five hundred years."
+  },
+  {
+    "placeName": "Marrakech",
+    "country": "Morocco",
+    "lat": 31.6295,
+    "lng": -7.9811,
+    "dateStart": "2021-10-30",
+    "dateEnd": "2021-11-06",
+    "highlight": "Mint tea on a rooftop while the medina hummed below.",
+    "story": "The souks swallowed whole afternoons — lanterns, leather, saffron, and cheerful haggling in three languages at once. Every evening ended the same way: a rooftop, a pot of mint tea, and the call to prayer rolling across the pink city."
+  },
+  {
+    "placeName": "Queenstown",
+    "country": "New Zealand",
+    "lat": -45.0312,
+    "lng": 168.6626,
+    "dateStart": "2024-12-27",
+    "dateEnd": "2025-01-08",
+    "highlight": "New Year's morning swim in Lake Wakatipu.",
+    "story": "Summer in December still feels like a glitch in the best way. We hiked Ben Lomond, ate too many Fergburgers, and started the new year by sprinting into a glacial lake — screaming, laughing, and instantly awake."
+  },
+  {
+    "placeName": "Lisbon",
+    "country": "Portugal",
+    "lat": 38.7223,
+    "lng": -9.1393,
+    "dateStart": "2020-01-18",
+    "dateEnd": null,
+    "highlight": "Tram 28 rattling up through Alfama at golden hour.",
+    "story": "One perfect stopover day: pastéis de nata still warm from the oven, azulejo blues on every corner, and fado drifting out of a doorway just as the streetlights came on. Sometimes a single day earns its own pin."
+  },
+  {
+    "placeName": "Cape Town",
+    "country": "South Africa",
+    "lat": -33.9249,
+    "lng": 18.4241,
+    "dateStart": "2025-03-01",
+    "dateEnd": "2025-03-09",
+    "highlight": "The tablecloth of cloud spilling off Table Mountain.",
+    "story": "Penguins at Boulders Beach in the morning, wine in Stellenbosch by afternoon, and the cable car up Table Mountain just before the wind closed it. The city sits between two oceans and somehow keeps the best of both."
+  }
+]
