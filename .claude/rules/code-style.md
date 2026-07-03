@@ -16,3 +16,4 @@ description: Universal code style rules for the entire project
 - Use single quotes for strings, except to avoid escaping.
 - Always include a newline at the end of files.
 - For tests, use descriptive names that explain the scenario and expected outcome.
+- Use TDD (Test-Driven Development) where possible. Write tests before implementing features. Red-Green-Refactor cycle.
