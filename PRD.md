@@ -40,9 +40,17 @@ one so invited friends and family can keep their own globes.
 ## Design Reference
 
 Claude Design project "Atlas Travel Site" (`Atlas Travel Site.dc.html`).
-Brand renamed **Minnekart**; visual language (cream/forest-green palette,
-Playfair Display + DM Sans, card style, responsive bottom nav) carries
-over. The design is in progress — ideas and features stay the same.
+Visual language: cream/forest-green palette, Playfair Display + DM Sans,
+card style, responsive bottom nav. The design is in progress — ideas and
+features stay the same.
+
+Design update (2026-07-03): branding is now Minnekart in the design
+itself — two-tone wordmark ("Minne" forest green, "kart" accent). The
+logged-out surface was reduced: nav links (desktop, mobile bottom nav,
+footer) render only when logged in, the sign-in gate cards for Timeline
+and Gallery were removed (those views are logged-in only now), and a
+wordmark block sits above the logged-out sign-in card. Signing out
+returns to the logged-out home.
 
 The design contains no editing screens; all CRUD UI (below) is designed
 by us in the same visual language.
@@ -53,15 +61,18 @@ by us in the same visual language.
 
 - D3 orthographic SVG globe (topojson world atlas): drag to spin,
   scroll to zoom, clickable pins.
-- **Logged out:** marketing hero, inline sign-in/sign-up card, product
-  stats band, "how it works" cards. Globe shows a **canned demo
-  dataset** (fictional trips from a bundled JSON file — also used as
-  dev seed data); clicking a pin opens a read-only sample trip.
+- **Logged out:** marketing hero, inline sign-in/sign-up card (with
+  wordmark above it), product stats band, "how it works" cards. Globe
+  shows a **canned demo dataset** (fictional trips from a bundled JSON
+  file — also used as dev seed data); clicking a pin opens a read-only
+  sample trip. Per the updated design, nav links are hidden when
+  logged out — this page (plus shared/public links) is the whole
+  visitor surface.
 - **Logged in:** user's own pins on the globe, pins list beside it,
   highlight card, personal stats band (countries, cities, photos,
   years — computed from their data).
 
-### F2 — Memory (trip) CRUD  *(not in design — we design it)*
+### F2 — Memory (trip) CRUD _(not in design — we design it)_
 
 - Pin = **one place-visit**: place name, country, lat/lng, date or date
   range, highlight quote, story text, photos.
@@ -86,12 +97,15 @@ by us in the same visual language.
 ### F4 — Gallery
 
 - Masonry photo grid across all the user's memories; filter chips
-  (All + per-country; year filters later if wanted). Sign-in gated.
+  (All + per-country; year filters later if wanted). Logged-in-only
+  route — logged-out visitors are redirected to home (design update
+  removed the sign-in gate card).
 
 ### F5 — Timeline
 
 - Chronological list of memories, newest first, year markers.
-  Sign-in gated.
+  Logged-in-only route — logged-out visitors are redirected to home
+  (design update removed the sign-in gate card).
 
 ### F6 — Trip detail
 
@@ -108,6 +122,8 @@ by us in the same visual language.
 - **DB-backed sessions**: random session token in an httpOnly cookie,
   sessions table in Postgres — instantly revocable, reset kills other
   sessions.
+- Sign-out returns the user to the logged-out home (globe page, login
+  card) per the updated design.
 - Security requirements (explicit, not afterthoughts):
   - Passwords hashed with argon2 (or bcrypt).
   - OTP/reset tokens stored **hashed**, single-use, short expiry
@@ -134,7 +150,10 @@ by us in the same visual language.
 ### F10 — About + chrome
 
 - Static About page (Minnekart's story + maker), design's warm tone.
-- Responsive layout; mobile bottom nav per design; footer.
+- Two-tone Minnekart wordmark ("Minne" forest, "kart" accent) in nav,
+  auth panel, and footer per the updated design.
+- Responsive layout; mobile bottom nav per design; footer. Nav links
+  (desktop, bottom nav, footer) render only for logged-in users.
 
 ## System Design
 
@@ -154,20 +173,20 @@ OCI box (Tailscale-only, zero open ports):
 
 ### Stack
 
-| Layer      | Choice                                              |
-| ---------- | --------------------------------------------------- |
-| Framework  | Next.js (App Router) + TypeScript, single codebase  |
-| Hosting    | Vercel free tier (auto-deploy from `main`)          |
-| Database   | Neon serverless Postgres (free tier, pooled TLS)    |
-| Data layer | Drizzle ORM + drizzle-kit migrations                |
-| Photos     | Cloudflare R2 free tier (10GB), S3 API, presigned   |
-| Auth       | Hand-rolled: DB sessions, argon2, OTP, invites      |
-| Email      | Abstracted `sendEmail()`; provider chosen at
-|            | implementation (Brevo / Gmail SMTP candidates);
-|            | console output in dev                               |
-| Geocoding  | Nominatim or Photon (free, rate-limited)            |
-| Globe      | D3 + topojson-client, orthographic SVG projection   |
-| Testing    | Vitest, integration-first                           |
+| Layer      | Choice                                             |
+| ---------- | -------------------------------------------------- |
+| Framework  | Next.js (App Router) + TypeScript, single codebase |
+| Hosting    | Vercel free tier (auto-deploy from `main`)         |
+| Database   | Neon serverless Postgres (free tier, pooled TLS)   |
+| Data layer | Drizzle ORM + drizzle-kit migrations               |
+| Photos     | Cloudflare R2 free tier (10GB), S3 API, presigned  |
+| Auth       | Hand-rolled: DB sessions, argon2, OTP, invites     |
+| Email      | Abstracted `sendEmail()`; provider chosen at       |
+|            | implementation (Brevo / Gmail SMTP candidates);    |
+|            | console output in dev                              |
+| Geocoding  | Nominatim or Photon (free, rate-limited)           |
+| Globe      | D3 + topojson-client, orthographic SVG projection  |
+| Testing    | Vitest, integration-first                          |
 
 ### Data model (initial)
 

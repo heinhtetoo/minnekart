@@ -5,18 +5,21 @@ lint clean. See PRD.md for the decisions behind everything here.
 
 ## Phase 1 — Project Scaffolding
 
-- [ ] `git init`, `.gitignore`, first commit (repo isn't git yet)
-- [ ] Scaffold Next.js (App Router) + TypeScript with npm
-- [ ] ESLint + Prettier configured (2 spaces, single quotes, 80 cols)
-- [ ] Vitest set up with one smoke test
-- [ ] Env config module (typed, validates required vars at boot)
-- [ ] Drizzle + drizzle-kit wired to Postgres (local Docker for dev)
-- [ ] `docker-compose.yml` for local dev Postgres
-- [ ] GitHub repo + Actions CI: lint → typecheck → test (with
+- [x] `git init`, `.gitignore`, first commit (repo isn't git yet)
+- [x] Scaffold Next.js (App Router) + TypeScript with npm
+- [x] ESLint + Prettier configured (2 spaces, single quotes, 80 cols)
+- [x] Vitest set up with one smoke test
+- [x] Env config module (typed, validates required vars at boot)
+- [x] Drizzle + drizzle-kit wired to Postgres (local Docker for dev;
+      host port 5433 — 5432 is taken by another local project)
+- [x] `docker-compose.yml` for local dev Postgres
+- [x] GitHub repo + Actions CI: lint → typecheck → test (with
       `postgres:16` service container)
-- [ ] Create Neon project; `DATABASE_URL` in Vercel + GitHub secrets
-- [ ] Vercel project linked to repo, auto-deploy on `main`
-- [ ] Delete `sample_ci.yml`, `sample_app.js`, `sample_deployment.md`
+- [x] Create Neon project; `DATABASE_URL` in Vercel + GitHub secrets
+      (user action — needs Neon account)
+- [x] Vercel project linked to repo, auto-deploy on `main`
+      (user action — needs Vercel account)
+- [x] Delete `sample_ci.yml`, `sample_app.js`, `sample_deployment.md`
       once their patterns are absorbed
 
 ## Phase 2 — Database Schema & Seed
@@ -73,16 +76,18 @@ lint clean. See PRD.md for the decisions behind everything here.
 - [ ] D3 orthographic globe component: topojson world, drag to spin,
       scroll zoom, pins, click → trip
 - [ ] Logged-out home: hero, demo globe (canned data), sample trip
-      peek, inline sign-in/sign-up card, stats band, how-it-works
+      peek, inline sign-in/sign-up card with wordmark above it, stats
+      band, how-it-works (nav links hidden when logged out)
 - [ ] Logged-in home: own pins on globe, pins list, highlight card,
       personal stats (countries, cities, photos, years)
 
 ## Phase 7 — Trip Detail, Timeline, Gallery
 
 - [ ] Trip detail page: story, highlight, details sidebar, photo grid
-- [ ] Timeline page: newest first, year markers, sign-in gate
+- [ ] Timeline page: newest first, year markers, logged-in-only
+      route (redirect to home when logged out)
 - [ ] Gallery page: masonry grid, filter chips (All + countries),
-      lightbox view, sign-in gate
+      lightbox view, logged-in-only route (redirect to home)
 
 ## Phase 8 — Sharing
 
@@ -103,7 +108,9 @@ lint clean. See PRD.md for the decisions behind everything here.
 ## Phase 10 — Polish & Chrome
 
 - [ ] Static About page (Minnekart story, design's warm tone)
-- [ ] Footer, responsive pass, mobile bottom nav
+- [ ] Footer, responsive pass, mobile bottom nav (nav links in all
+      three render only for logged-in users); two-tone Minnekart
+      wordmark in nav, auth panel, footer
 - [ ] Empty states (new user, no photos), error/loading states
 - [ ] Accessibility pass (focus states, alt text, contrast)
 
