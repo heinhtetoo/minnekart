@@ -36,21 +36,24 @@ lint clean. See PRD.md for the decisions behind everything here.
 
 ## Phase 3 — Auth
 
-- [ ] Password hashing (argon2) + user creation
-- [ ] DB-backed sessions: httpOnly cookie, create/verify/revoke,
+- [x] Password hashing (argon2) + user creation
+- [x] DB-backed sessions: httpOnly cookie, create/verify/revoke,
       sliding expiry
-- [ ] `sendEmail()` abstraction (console transport in dev; provider
-      decision deferred to this phase)
-- [ ] Signup gated by invite token (validate, consume, mark used)
-- [ ] Email OTP verification: 6-digit code, hashed, 10-min expiry,
+- [x] `sendEmail()` abstraction (console transport in dev; memory
+      transport in tests; real provider deferred to Phase 11)
+- [x] Signup gated by invite token (validate, consume, mark used)
+- [x] Email OTP verification: 6-digit code, hashed, 10-min expiry,
       single-use, attempt limit, resend throttle
-- [ ] Login / logout
-- [ ] Forgot password → hashed single-use reset token (30-min expiry)
+- [x] Login / logout
+- [x] Forgot password → hashed single-use reset token (30-min expiry)
       → reset form → revoke all other sessions
-- [ ] DB-backed rate limiting on all auth endpoints (per-IP +
+- [x] DB-backed rate limiting on all auth endpoints (per-IP +
       per-account)
-- [ ] Auth API integration tests (full flows, expiry, abuse cases)
+- [x] Auth API integration tests (full flows, expiry, abuse cases)
+- [x] Owner bootstrap + one-time invite CLI scripts (admin UI is
+      Phase 9)
 - [ ] Pick + integrate real email provider; verified sender
+      (deferred — see Phase 11)
 
 ## Phase 4 — Memory (Trip) CRUD
 
@@ -119,6 +122,9 @@ lint clean. See PRD.md for the decisions behind everything here.
 
 ## Phase 11 — Ops & Launch
 
+- [ ] Pick + integrate real email provider behind `sendEmail()`
+      (Brevo/Gmail SMTP candidates); verified sender; swap `console`
+      transport for it in production (deferred from Phase 3)
 - [ ] OCI box cron: scheduled `pg_dump` from Neon → local backups,
       retention policy; restore drill once
 - [ ] Vercel env audit (prod vs preview), Neon/R2 quotas checked

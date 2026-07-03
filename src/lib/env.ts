@@ -6,6 +6,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
+  EMAIL_TRANSPORT: z.enum(['console', 'memory']).default('console'),
 });
 
 export type Env = z.infer<typeof envSchema>;

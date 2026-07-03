@@ -14,6 +14,9 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
     fileParallelism: false,
     globalSetup: ['./test/global-setup.ts'],
-    env: databaseUrl ? { DATABASE_URL: testDatabaseUrl(databaseUrl) } : {},
+    env: {
+      EMAIL_TRANSPORT: 'memory',
+      ...(databaseUrl ? { DATABASE_URL: testDatabaseUrl(databaseUrl) } : {}),
+    },
   },
 });
