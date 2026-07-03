@@ -55,15 +55,15 @@ lint clean. See PRD.md for the decisions behind everything here.
 - [ ] Pick + integrate real email provider; verified sender
       (deferred — see Phase 11)
 
-## Phase 4 — Memory (Trip) CRUD
+## Phase 4 — Memory (Trip) API + Geocoding (backend-only)
 
-- [ ] Trips API: create/read/update/delete with ownership checks
-- [ ] Geocoding search endpoint (Nominatim/Photon proxy, debounced,
-      1 req/s cap, results cached)
-- [ ] Add/Edit Memory form (Atlas visual language): place search
-      autofill, date or range, highlight, story
-- [ ] Delete with confirmation
-- [ ] Integration tests: CRUD, authz, validation
+- [x] Trips API: create/read/update/delete with ownership checks
+      (verified-session gated)
+- [x] Geocoding search endpoint (Nominatim proxy, per-user rate cap,
+      injectable fetch; Photon documented fallback)
+- [x] Integration tests: CRUD, authz, validation
+- [ ] Add/Edit Memory form + delete confirmation — deferred to the UI
+      phases (built with the globe/auth overlay in Phase 6/7)
 
 ## Phase 5 — Photo Pipeline
 
@@ -89,6 +89,9 @@ lint clean. See PRD.md for the decisions behind everything here.
 
 ## Phase 7 — Trip Detail, Timeline, Gallery
 
+- [ ] Add/Edit Memory form (design's visual language): geocoding place
+      search autofill, date or range, highlight, story; delete with
+      confirmation (consumes the Phase 4 trips + geocode APIs)
 - [ ] Trip detail page: story, highlight, details sidebar, photo grid
 - [ ] Timeline page: newest first, year markers, logged-in-only
       route (redirect to home when logged out)

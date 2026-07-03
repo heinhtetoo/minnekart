@@ -14,6 +14,30 @@ export function postRequest(
   });
 }
 
+export function jsonRequest(
+  method: string,
+  url: string,
+  body?: unknown,
+  headers: Record<string, string> = {},
+): Request {
+  return new Request(url, {
+    method,
+    headers: {
+      'content-type': 'application/json',
+      'x-forwarded-for': '203.0.113.7',
+      ...headers,
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+export function getRequest(
+  url: string,
+  headers: Record<string, string> = {},
+): Request {
+  return new Request(url, { headers });
+}
+
 export function sessionCookieFrom(response: Response): string | null {
   const setCookie = response.headers.get('set-cookie');
   if (!setCookie) {

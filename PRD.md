@@ -80,6 +80,10 @@ by us in the same visual language.
   type a place, pick a suggestion, name/country/coords autofill.
 - Create, edit, delete. Multiple pins at the same location are fine
   (e.g. Tokyo three times = three pins).
+- Built backend-first: the trips API and geocoding proxy ship in
+  Phase 4 (ownership-scoped, verified-session gated); the Add/Edit
+  form UI that consumes them ships with the globe/auth chrome in
+  Phase 6/7.
 
 ### F3 — Photos
 
