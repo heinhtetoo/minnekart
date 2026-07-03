@@ -210,6 +210,15 @@ OCI box (Tailscale-only, zero open ports):
    sender is a verified personal address (deliverability mitigated
    with generous resend + long OTP expiry); domain is a drop-in
    upgrade later.
+9. **Vercel + Neon reaffirmed over all-Cloudflare (2026-07-03)** —
+   considered Workers (OpenNext) + D1 + R2. Rejected because: Workers
+   free tier's ~10ms CPU cap conflicts with argon2 hashing in our
+   hand-rolled auth (workaround weakens hashing or costs $5/mo); D1
+   has batch-only (no interactive) transactions, which the auth flows
+   rely on; Next.js on Workers depends on a community adapter with
+   feature lag. Cloudflare remains scoped to R2, so either side stays
+   independently swappable. Revisit only if Neon cold starts become a
+   real annoyance.
 
 ## Deployment & CI/CD
 
