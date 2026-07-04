@@ -1,0 +1,289 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { photos, trips } from '@/db/schema';
+import { newPhotoKeys } from '@/lib/photos/keys';
+import { getMemoryStorage, resetMemoryStorage } from '@/lib/storage';
+
+import { GET, POST } from './route';
+
+import {
+  createMember,
+  createMemberWithSession,
+} from '../../../../../../test/auth-fixtures';
+import { resetDb, testDb } from '../../../../../../test/db';
+import {
+  cookieHeader,
+  getRequest,
+  jsonRequest,
+} from '../../../../../../test/http';
+
+const db = testDb();
+
+const tripBody = {
+  placeName: 'Kyoto',
+  country: 'Japan',
+  lat: 35.0116,
+  lng: 135.7681,
+  dateStart: '2023-04-02',
+};
+
+async function insertTripFor(userId: string) {
+  const [trip] = await db
+    .insert(trips)
+    .values({ ...tripBody, userId })
+    .returning();
+  return trip;
+}
+
+function context(id: string) {
+  return { params: Promise.resolve({ id }) };
+}
+
+function urlFor(id: string) {
+  return `http://test/api/trips/${id}/photos`;
+}
+
+// Simulates a completed browser upload by registering both objects.
+async function uploadedKeys(userId: string, tripId: string) {
+  const keys = newPhotoKeys(userId, tripId);
+  const store = getMemoryStorage();
+  await store.presignPut(keys.displayKey, 'image/webp');
+  await store.presignPut(keys.thumbKey, 'image/webp');
+  return keys;
+}
+
+beforeEach(async () => {
+  await resetDb();
+  resetMemoryStorage();
+});
+
+describe('POST /api/trips/[id]/photos', () => {
+  it('creates a photo record for an uploaded object', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+    const keys = await uploadedKeys(user.id, trip.id);
+
+    const response = await POST(
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        { ...keys, width: 2560, height: 1707 },
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id),
+    );
+
+    expect(response.status).toBe(201);
+    const stored = await db.select().from(photos);
+    expect(stored).toHaveLength(1);
+    expect(stored[0].displayKey).toBe(keys.displayKey);
+    expect(stored[0].position).toBe(0);
+  });
+
+  it('assigns increasing positions', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+
+    for (let i = 0; i < 2; i += 1) {
+      const keys = await uploadedKeys(user.id, trip.id);
+      await POST(
+        jsonRequest(
+          'POST',
+          urlFor(trip.id),
+          { ...keys, width: 100, height: 100 },
+          cookieHeader(sessionToken),
+        ),
+        context(trip.id),
+      );
+    }
+
+    const stored = await db.select().from(photos);
+    expect(stored.map((p) => p.position).sort()).toEqual([0, 1]);
+  });
+
+  it('rejects a key outside the caller prefix', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+    const foreign = newPhotoKeys('someone-else', trip.id);
+    const store = getMemoryStorage();
+    await store.presignPut(foreign.displayKey, 'image/webp');
+    await store.presignPut(foreign.thumbKey, 'image/webp');
+
+    const response = await POST(
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        { ...foreign, width: 100, height: 100 },
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await db.select().from(photos)).toHaveLength(0);
+  });
+
+  it('rejects and purges an oversize object', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+    const keys = newPhotoKeys(user.id, trip.id);
+    const store = getMemoryStorage();
+    store.seed(keys.displayKey, {
+      size: 20_000_000,
+      contentType: 'image/webp',
+    });
+    store.seed(keys.thumbKey, { size: 50_000, contentType: 'image/webp' });
+
+    const response = await POST(
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        { ...keys, width: 100, height: 100 },
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await store.stat(keys.displayKey)).toBeNull();
+    expect(await store.stat(keys.thumbKey)).toBeNull();
+  });
+
+  it('rejects a key that was never uploaded', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+    const keys = newPhotoKeys(user.id, trip.id);
+
+    const response = await POST(
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        { ...keys, width: 100, height: 100 },
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id),
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  it('returns 404 for another users trip', async () => {
+    const { sessionToken } = await createMemberWithSession({ verified: true });
+    const { user: other } = await createMember({
+      email: 'other@example.com',
+      username: 'other',
+      verified: true,
+    });
+    const trip = await insertTripFor(other.id);
+    const keys = await uploadedKeys(other.id, trip.id);
+
+    const response = await POST(
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        { ...keys, width: 100, height: 100 },
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id),
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('rejects creation past the per-trip photo cap', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+    await db.insert(photos).values(
+      Array.from({ length: 50 }, (_, i) => {
+        const keys = newPhotoKeys(user.id, trip.id);
+        return {
+          tripId: trip.id,
+          userId: user.id,
+          displayKey: keys.displayKey,
+          thumbKey: keys.thumbKey,
+          width: 100,
+          height: 100,
+          position: i,
+        };
+      }),
+    );
+    const keys = await uploadedKeys(user.id, trip.id);
+
+    const response = await POST(
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        { ...keys, width: 100, height: 100 },
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id),
+    );
+
+    expect(response.status).toBe(409);
+  });
+});
+
+describe('GET /api/trips/[id]/photos', () => {
+  it('lists photos ordered by position with signed urls', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+    const first = newPhotoKeys(user.id, trip.id);
+    const second = newPhotoKeys(user.id, trip.id);
+    await db.insert(photos).values([
+      {
+        tripId: trip.id,
+        userId: user.id,
+        displayKey: second.displayKey,
+        thumbKey: second.thumbKey,
+        width: 100,
+        height: 100,
+        position: 1,
+      },
+      {
+        tripId: trip.id,
+        userId: user.id,
+        displayKey: first.displayKey,
+        thumbKey: first.thumbKey,
+        width: 100,
+        height: 100,
+        position: 0,
+      },
+    ]);
+
+    const response = await GET(
+      getRequest(urlFor(trip.id), cookieHeader(sessionToken)),
+      context(trip.id),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.photos.map((p: { position: number }) => p.position)).toEqual([
+      0, 1,
+    ]);
+    expect(body.photos[0].displayUrl).toContain(first.displayKey);
+    expect(body.photos[0].thumbUrl).toContain(first.thumbKey);
+  });
+
+  it('returns 401 without a session', async () => {
+    const response = await GET(
+      getRequest(urlFor('00000000-0000-0000-0000-000000000000')),
+      context('00000000-0000-0000-0000-000000000000'),
+    );
+
+    expect(response.status).toBe(401);
+  });
+});

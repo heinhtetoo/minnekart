@@ -65,17 +65,21 @@ lint clean. See PRD.md for the decisions behind everything here.
 - [ ] Add/Edit Memory form + delete confirmation — deferred to the UI
       phases (built with the globe/auth overlay in Phase 6/7)
 
-## Phase 5 — Photo Pipeline
+## Phase 5 — Photo Pipeline (backend-only)
 
-- [ ] R2 bucket (private) + API credentials; S3 client wired
-- [ ] Presigned PUT endpoint (auth'd, per-trip, size/type limits)
-- [ ] Client-side processing: resize → WebP display (~2560px) +
-      thumbnail; HEIC conversion; EXIF strip after reading taken_at
-- [ ] Upload UI: multi-select, progress, reorder, delete
-- [ ] Photo records API (create after upload, position, delete —
-      including R2 object cleanup)
-- [ ] Signed GET URLs (~1h) minted at render for all photo reads
-- [ ] Integration tests: presign authz, record lifecycle
+- [x] Object storage port + R2 adapter (S3 API) + in-memory adapter;
+      `STORAGE_DRIVER` env selects (memory for dev/CI)
+- [x] Presigned PUT endpoint (auth'd, per-trip ownership, webp-only,
+      rate-limited)
+- [x] Photo records API (create with prefix + size + count checks,
+      list, delete — with object cleanup); trip delete purges objects
+- [x] Signed GET URLs (~1h) minted at render for photo reads
+- [x] Integration tests: presign authz, record lifecycle, cleanup
+- [ ] Create real private R2 bucket + API token; set env/secrets
+      (user action — build/tests use the in-memory adapter until then)
+- [ ] Client-side processing (resize → WebP + thumbnail, HEIC, EXIF
+      strip) + upload UI (multi-select, progress, reorder) — deferred
+      to Phase 7 with the trip form/detail
 
 ## Phase 6 — Globe & Home
 
@@ -92,6 +96,10 @@ lint clean. See PRD.md for the decisions behind everything here.
 - [ ] Add/Edit Memory form (design's visual language): geocoding place
       search autofill, date or range, highlight, story; delete with
       confirmation (consumes the Phase 4 trips + geocode APIs)
+- [ ] Photo upload UI + client-side processing (resize → WebP display
+      ~2560px + thumbnail, HEIC conversion, EXIF strip after reading
+      taken_at); multi-select, progress, reorder (consumes the Phase 5
+      presign + photo-records APIs)
 - [ ] Trip detail page: story, highlight, details sidebar, photo grid
 - [ ] Timeline page: newest first, year markers, logged-in-only
       route (redirect to home when logged out)

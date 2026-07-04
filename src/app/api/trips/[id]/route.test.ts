@@ -1,7 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { trips } from '@/db/schema';
+import { photos, trips } from '@/db/schema';
+import { newPhotoKeys } from '@/lib/photos/keys';
+import { getMemoryStorage, resetMemoryStorage } from '@/lib/storage';
 
 import { DELETE, GET, PATCH } from './route';
 
@@ -44,6 +46,7 @@ function urlFor(id: string) {
 
 beforeEach(async () => {
   await resetDb();
+  resetMemoryStorage();
 });
 
 describe('GET /api/trips/[id]', () => {
@@ -180,5 +183,37 @@ describe('DELETE /api/trips/[id]', () => {
 
     expect(response.status).toBe(404);
     expect(await db.select().from(trips)).toHaveLength(1);
+  });
+
+  it('purges the objects of the trip photos', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+    const keys = newPhotoKeys(user.id, trip.id);
+    const store = getMemoryStorage();
+    await store.presignPut(keys.displayKey, 'image/webp');
+    await store.presignPut(keys.thumbKey, 'image/webp');
+    await db.insert(photos).values({
+      tripId: trip.id,
+      userId: user.id,
+      displayKey: keys.displayKey,
+      thumbKey: keys.thumbKey,
+      width: 100,
+      height: 100,
+    });
+
+    await DELETE(
+      jsonRequest(
+        'DELETE',
+        urlFor(trip.id),
+        undefined,
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id),
+    );
+
+    expect(await store.stat(keys.displayKey)).toBeNull();
+    expect(await store.stat(keys.thumbKey)).toBeNull();
   });
 });

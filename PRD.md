@@ -97,6 +97,11 @@ by us in the same visual language.
 - **Private bucket + short-lived signed GET URLs (~1h)** for all image
   reads, owners and share pages alike: un-sharing a trip genuinely
   revokes access within the hour.
+- Built backend-first (Phase 5): storage sits behind an `ObjectStorage`
+  port with an R2 adapter and an in-memory adapter, so the presign +
+  photo-records APIs are fully tested without R2 credentials
+  (`STORAGE_DRIVER` selects). Real R2 bucket creation is a user action;
+  the client-side processing + upload UI ship in Phase 7.
 
 ### F4 — Gallery
 

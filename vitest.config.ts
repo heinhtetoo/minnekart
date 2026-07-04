@@ -16,6 +16,7 @@ export default defineConfig({
     globalSetup: ['./test/global-setup.ts'],
     env: {
       EMAIL_TRANSPORT: 'memory',
+      STORAGE_DRIVER: 'memory',
       ...(databaseUrl ? { DATABASE_URL: testDatabaseUrl(databaseUrl) } : {}),
     },
   },

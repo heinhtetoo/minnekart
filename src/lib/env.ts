@@ -7,6 +7,11 @@ const envSchema = z.object({
     .enum(['development', 'test', 'production'])
     .default('development'),
   EMAIL_TRANSPORT: z.enum(['console', 'memory']).default('console'),
+  STORAGE_DRIVER: z.enum(['r2', 'memory']).default('r2'),
+  R2_ACCOUNT_ID: z.string().optional(),
+  R2_ACCESS_KEY_ID: z.string().optional(),
+  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  R2_BUCKET: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

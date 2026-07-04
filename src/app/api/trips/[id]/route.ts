@@ -1,9 +1,11 @@
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
-import { trips } from '@/db/schema';
+import { photos, trips } from '@/db/schema';
 import { requireVerifiedUser } from '@/lib/auth/current-user';
 import { jsonResponse, readJsonBody } from '@/lib/auth/http';
+import { deletePhotoObjects } from '@/lib/photos/cleanup';
+import { storage } from '@/lib/storage';
 import { updateTripSchema } from '@/lib/trips/validation';
 
 type Context = { params: Promise<{ id: string }> };
@@ -67,12 +69,21 @@ export async function DELETE(
   }
   const { id } = await params;
 
-  const deleted = await database
-    .delete(trips)
-    .where(and(eq(trips.id, id), eq(trips.userId, guard.user.id)))
-    .returning({ id: trips.id });
-  if (deleted.length === 0) {
+  const owned = await database
+    .select()
+    .from(trips)
+    .where(and(eq(trips.id, id), eq(trips.userId, guard.user.id)));
+  if (owned.length === 0) {
     return jsonResponse({ error: 'not_found' }, 404);
   }
+
+  const tripPhotos = await database
+    .select()
+    .from(photos)
+    .where(eq(photos.tripId, id));
+
+  await database.delete(trips).where(eq(trips.id, id));
+  await deletePhotoObjects(storage(), tripPhotos);
+
   return jsonResponse({ ok: true }, 200);
 }
