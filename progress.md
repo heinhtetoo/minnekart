@@ -97,18 +97,22 @@ lint clean. See PRD.md for the decisions behind everything here.
 
 ## Phase 7 — Trip Detail, Timeline, Gallery
 
-- [ ] Add/Edit Memory form (design's visual language): geocoding place
-      search autofill, date or range, highlight, story; delete with
-      confirmation (consumes the Phase 4 trips + geocode APIs)
-- [ ] Photo upload UI + client-side processing (resize → WebP display
-      ~2560px + thumbnail, HEIC conversion, EXIF strip after reading
-      taken_at); multi-select, progress, reorder (consumes the Phase 5
-      presign + photo-records APIs)
-- [ ] Trip detail page: story, highlight, details sidebar, photo grid
-- [ ] Timeline page: newest first, year markers, logged-in-only
-      route (redirect to home when logged out)
-- [ ] Gallery page: masonry grid, filter chips (All + countries),
+- [x] Add/Edit Memory form: geocoding place search autofill, date or
+      range, highlight, story; delete with confirmation (consumes the
+      Phase 4 trips + geocode APIs). Routes `/trip/new`, `/trip/[id]/edit`
+- [x] Photo upload UI + client-side processing (Canvas resize → WebP
+      display ~2560px + thumbnail, HEIC conversion via heic2any, EXIF
+      capture date via exifr then stripped); multi-select, per-file
+      progress, delete (consumes the Phase 5 presign + photo-records APIs)
+- [x] Trip detail page: story, highlight, details sidebar, photo grid
+      + lightbox (`/trip/[id]`)
+- [x] Timeline page: newest first, year markers, logged-in-only route
+      (redirect to home when logged out)
+- [x] Gallery page: masonry grid, filter chips (All + countries),
       lightbox view, logged-in-only route (redirect to home)
+- [ ] Docs + final gate + commit (awaiting approval)
+- ~~Photo reorder~~ deferred — no backend endpoint (position is set at
+  upload time only); photos order by upload
 
 ## Phase 8 — Sharing
 

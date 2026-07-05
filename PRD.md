@@ -125,6 +125,14 @@ by us in the same visual language.
 - Story paragraphs, highlight quote, details sidebar (destination,
   country, dates, photo count), photo grid, back-to-globe.
 
+_Shipped Phase 7 (F2–F6):_ Add/Edit memory form with geocoding autofill
+and delete; client-side photo upload (Canvas → WebP display + thumbnail,
+HEIC via `heic2any`, capture date via `exifr`, direct-to-R2 presigned
+PUT); trip detail, timeline, and gallery pages with a shared lightbox;
+logged-in-only routes redirect logged-out visitors to `/`. Photo
+**reorder** is deferred — `position` is only settable at upload time, so
+photos order by upload until a reorder endpoint is added.
+
 ### F7 — Auth (hand-rolled, Hundo-style)
 
 - Email + password signup **gated by a valid invite link**.

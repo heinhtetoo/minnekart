@@ -41,7 +41,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <LoggedInHome
-      user={{ name: user.name, username: user.username }}
+      user={{ name: user.name, email: user.email }}
       trips={owned.map(toTripDTO)}
       stats={stats}
     />

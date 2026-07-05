@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import styles from './Home.module.css';
 
 interface PeekPanelProps {
@@ -5,6 +7,7 @@ interface PeekPanelProps {
   subtitle: string;
   highlight: string | null;
   story: string | null;
+  href?: string;
   onClose: () => void;
 }
 
@@ -13,6 +16,7 @@ export default function PeekPanel({
   subtitle,
   highlight,
   story,
+  href,
   onClose,
 }: PeekPanelProps) {
   return (
@@ -85,6 +89,15 @@ export default function PeekPanel({
         >
           {story}
         </p>
+      )}
+      {href && (
+        <Link
+          href={href}
+          className="authlink"
+          style={{ display: 'inline-block', fontSize: 13, marginTop: 14 }}
+        >
+          View memory →
+        </Link>
       )}
     </div>
   );

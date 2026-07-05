@@ -1,24 +1,29 @@
+import Link from 'next/link';
+
 import Wordmark from '@/components/brand/Wordmark';
 
+import AccountMenu from './AccountMenu';
 import styles from './Nav.module.css';
-import SignOutButton from './SignOutButton';
+import NavLinks from './NavLinks';
 
 interface TopNavProps {
   name: string;
+  email: string;
 }
 
-export default function TopNav({ name }: TopNavProps) {
+export default function TopNav({ name, email }: TopNavProps) {
   return (
-    <header className={styles.topNav}>
-      <Wordmark />
+    <nav className={styles.topNav}>
+      <Link href="/" aria-label="Minnekart home" className={styles.brand}>
+        <Wordmark />
+      </Link>
+      <NavLinks variant="top" />
       <div className={styles.topNavRight}>
-        <span className={styles.greeting}>Hi, {firstName(name)}</span>
-        <SignOutButton />
+        <Link href="/trip/new" className={styles.newMemory}>
+          + New memory
+        </Link>
+        <AccountMenu name={name} email={email} />
       </div>
-    </header>
+    </nav>
   );
-}
-
-function firstName(name: string): string {
-  return name.trim().split(/\s+/)[0] || name;
 }
