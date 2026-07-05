@@ -71,6 +71,10 @@ by us in the same visual language.
 - **Logged in:** user's own pins on the globe, pins list beside it,
   highlight card, personal stats band (countries, cities, photos,
   years — computed from their data).
+- _Shipped Phase 6:_ the globe (full-bleed layout), logged-out home,
+  inline auth card, and the logged-in home (own pins, places list,
+  highlight peek, stats, empty state, top/bottom nav + sign-out). The
+  Add/Edit trip form and photo UI follow in Phase 7.
 
 ### F2 — Memory (trip) CRUD _(not in design — we design it)_
 
@@ -140,7 +144,9 @@ by us in the same visual language.
   - Resend throttling and per-IP/per-account rate limiting on all auth
     endpoints (DB-backed counters — no Redis dependency).
   - Auth overlay UI per the design (login, signup, verify, verified,
-    forgot, sent, reset, done states).
+    forgot, sent, reset, done states). _Phase 6 shipped the inline
+    login/signup/forgot card and the email-verify (OTP) screen for
+    logged-in-but-unverified sessions._
 
 ### F8 — Sharing & visibility
 

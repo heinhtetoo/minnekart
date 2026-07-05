@@ -83,13 +83,17 @@ lint clean. See PRD.md for the decisions behind everything here.
 
 ## Phase 6 — Globe & Home
 
-- [ ] D3 orthographic globe component: topojson world, drag to spin,
-      scroll zoom, pins, click → trip
-- [ ] Logged-out home: hero, demo globe (canned data), sample trip
+- [x] D3 orthographic globe component: topojson world, drag to spin,
+      scroll zoom, pins, click → zoom-to + peek; full-bleed layout
+- [x] Logged-out home: hero, demo globe (canned data), sample trip
       peek, inline sign-in/sign-up card with wordmark above it, stats
       band, how-it-works (nav links hidden when logged out)
-- [ ] Logged-in home: own pins on globe, pins list, highlight card,
-      personal stats (countries, cities, photos, years)
+- [x] Auth flow UI: inline login/signup/forgot card + full-screen
+      email-verify (OTP) screen for logged-in-but-unverified sessions
+- [x] Logged-in home: own pins on globe, pins list, highlight peek,
+      personal stats (countries, years, photos); empty state for new
+      users; top nav + mobile bottom nav + sign-out
+- [ ] Docs + final gate + commit (awaiting approval)
 
 ## Phase 7 — Trip Detail, Timeline, Gallery
 

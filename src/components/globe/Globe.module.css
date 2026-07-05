@@ -1,0 +1,24 @@
+.wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  overflow: visible;
+}
+
+.svg {
+  display: block;
+  height: auto;
+  cursor: grab;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+.svg:active {
+  cursor: grabbing;
+}
+
+@media (max-width: 720px) {
+  .svg {
+    width: 100%;
+  }
+}
