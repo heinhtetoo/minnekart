@@ -123,6 +123,20 @@
   text-overflow: ellipsis;
 }
 
+.menuLink {
+  display: block;
+  padding: 11px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--foreground);
+  border-bottom: 1px solid rgba(28, 25, 23, 0.07);
+  transition: background 0.12s;
+}
+
+.menuLink:hover {
+  background: rgba(28, 25, 23, 0.04);
+}
+
 .menuSignOut {
   display: block;
   width: 100%;

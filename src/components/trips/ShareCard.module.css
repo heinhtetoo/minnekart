@@ -1,0 +1,82 @@
+.card {
+  margin-top: 28px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px 24px;
+  border: 1px solid rgba(28, 25, 23, 0.07);
+  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.05);
+}
+
+.heading {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(28, 25, 23, 0.06);
+}
+
+.rowTitle {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0;
+}
+
+.rowHint {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 3px 0 0;
+  line-height: 1.5;
+}
+
+.linkRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.linkInput {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--foreground);
+  background: #f4efe6;
+  border: 1px solid rgba(28, 25, 23, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: inherit;
+}
+
+.copyButton {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--forest);
+  border: none;
+  border-radius: 10px;
+  padding: 0 16px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.copyButton:hover {
+  background: #24403a;
+}
+
+.error {
+  font-size: 13px;
+  color: var(--danger);
+  margin: 12px 0 0;
+}

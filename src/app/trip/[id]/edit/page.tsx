@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { db } from '@/db';
 import AppPage from '@/components/layout/AppPage';
 import PhotoUploader from '@/components/photos/PhotoUploader';
+import ShareCard from '@/components/trips/ShareCard';
 import TripForm from '@/components/trips/TripForm';
 import { requireVerifiedPageUser } from '@/lib/auth/session-server';
 import { getOwnedTrip } from '@/lib/trips/access';
@@ -44,6 +45,11 @@ export default async function EditTripPage({ params }: EditTripPageProps) {
       </h1>
       <TripForm mode="edit" tripId={id} initial={toTripDTO(trip)} />
       <PhotoUploader tripId={id} />
+      <ShareCard
+        tripId={id}
+        isPublic={trip.isPublic}
+        shareToken={trip.shareToken}
+      />
     </AppPage>
   );
 }

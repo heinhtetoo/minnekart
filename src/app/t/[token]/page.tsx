@@ -1,0 +1,58 @@
+import type { Metadata } from 'next';
+import { eq } from 'drizzle-orm';
+import { notFound } from 'next/navigation';
+
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import PublicTripView from '@/components/public/PublicTripView';
+import { loadTripTiles } from '@/lib/photos/tiles';
+import { publicTripMetadata } from '@/lib/trips/public-meta';
+import { getTripByShareToken } from '@/lib/trips/sharing';
+
+interface SharedTripPageProps {
+  params: Promise<{ token: string }>;
+}
+
+async function resolve(token: string) {
+  const trip = await getTripByShareToken(db(), token);
+  if (!trip) {
+    return null;
+  }
+  const [owner] = await db()
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, trip.userId));
+  const tiles = await loadTripTiles(trip.id);
+  return { trip, ownerName: owner?.name ?? 'Someone', tiles };
+}
+
+export async function generateMetadata({
+  params,
+}: SharedTripPageProps): Promise<Metadata> {
+  const { token } = await params;
+  const resolved = await resolve(token);
+  if (!resolved) {
+    return { title: 'Memory not found · Minnekart' };
+  }
+  return publicTripMetadata(resolved.trip, resolved.tiles);
+}
+
+export default async function SharedTripPage({
+  params,
+}: SharedTripPageProps) {
+  const { token } = await params;
+  const resolved = await resolve(token);
+  if (!resolved) {
+    notFound();
+  }
+
+  return (
+    <PublicTripView
+      ownerName={resolved.ownerName}
+      backHref="/"
+      backLabel="← Minnekart"
+      trip={resolved.trip}
+      tiles={resolved.tiles}
+    />
+  );
+}

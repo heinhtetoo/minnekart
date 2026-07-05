@@ -93,7 +93,7 @@ lint clean. See PRD.md for the decisions behind everything here.
 - [x] Logged-in home: own pins on globe, pins list, highlight peek,
       personal stats (countries, years, photos); empty state for new
       users; top nav + mobile bottom nav + sign-out
-- [ ] Docs + final gate + commit (awaiting approval)
+- [x] Docs + final gate + commit
 
 ## Phase 7 — Trip Detail, Timeline, Gallery
 
@@ -110,18 +110,26 @@ lint clean. See PRD.md for the decisions behind everything here.
       (redirect to home when logged out)
 - [x] Gallery page: masonry grid, filter chips (All + countries),
       lightbox view, logged-in-only route (redirect to home)
-- [ ] Docs + final gate + commit (awaiting approval)
+- [x] Docs + final gate + commit
 - ~~Photo reorder~~ deferred — no backend endpoint (position is set at
   upload time only); photos order by upload
 
 ## Phase 8 — Sharing
 
-- [ ] Per-trip share toggle → unguessable `share_token`; revoke
-      regenerates/nulls token
-- [ ] Public trip page `/t/<token>` (SSR + Open Graph tags)
-- [ ] Username public globe `/u/<username>` (opt-in `globe_public`,
-      public trips only, SSR + OG)
-- [ ] Visibility integration tests (private/shared/public matrix)
+- [x] Per-trip share toggle → unguessable `share_token`; revoke nulls the
+      token (POST/DELETE `/api/trips/[id]/share`). Sharing UI on the trip
+      edit page (`ShareCard`)
+- [x] Public trip page `/t/<token>` (SSR + Open Graph tags); shared
+      `TripDetailBody` view, `PublicChrome` header
+- [x] Username public globe `/u/<username>` (opt-in `globe_public` via
+      `/settings`, public trips only) + public detail `/u/<username>/<id>`;
+      all SSR + OG. `PATCH /api/account/globe` toggles the globe
+- [x] Visibility integration tests (private/shared/public matrix):
+      `sharing.ts` helpers, share + account routes, `isPublic` schema
+- [x] Docs + final gate + commit
+- No schema/migration change — `share_token`, `is_public`, `globe_public`
+  already existed from Phase 2. OG image uses the signed display URL (~1h);
+  a stable OG-image route is a documented follow-up
 
 ## Phase 9 — Admin Invites
 

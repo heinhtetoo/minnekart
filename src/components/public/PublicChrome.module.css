@@ -1,0 +1,50 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+  height: 66px;
+  padding: 0 clamp(20px, 5vw, 64px);
+  background: rgba(244, 239, 230, 0.82);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(28, 25, 23, 0.08);
+}
+
+.brand {
+  justify-self: start;
+}
+
+.attribution {
+  justify-self: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.signIn {
+  justify-self: end;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f4efe6;
+  background: var(--forest);
+  padding: 9px 18px;
+  border-radius: 22px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.signIn:hover {
+  background: #24403a;
+}
+
+@media (max-width: 560px) {
+  .attribution {
+    display: none;
+  }
+}

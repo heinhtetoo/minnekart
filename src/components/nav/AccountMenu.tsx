@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
@@ -54,6 +55,13 @@ export default function AccountMenu({ name, email }: AccountMenuProps) {
             <div className={styles.menuName}>{name}</div>
             <div className={styles.menuEmail}>{email}</div>
           </div>
+          <Link
+            href="/settings"
+            className={styles.menuLink}
+            onClick={() => setOpen(false)}
+          >
+            Settings
+          </Link>
           <button
             type="button"
             className={styles.menuSignOut}

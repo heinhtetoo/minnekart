@@ -1,0 +1,33 @@
+.toggle {
+  flex-shrink: 0;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(28, 25, 23, 0.18);
+  cursor: pointer;
+  padding: 3px;
+  transition: background 0.15s;
+}
+
+.toggle[data-on='true'] {
+  background: var(--forest);
+}
+
+.toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.knob {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+
+.toggle[data-on='true'] .knob {
+  transform: translateX(20px);
+}

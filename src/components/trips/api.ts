@@ -13,6 +13,16 @@ export const tripsApi = {
   get: (id: string) => apiRequest<{ trip: TripDTO }>(`/api/trips/${id}`),
 };
 
+export const shareApi = {
+  create: (id: string) =>
+    apiRequest<{ shareToken: string; url: string }>(
+      `/api/trips/${id}/share`,
+      { method: 'POST' },
+    ),
+  revoke: (id: string) =>
+    apiRequest<{ ok: true }>(`/api/trips/${id}/share`, { method: 'DELETE' }),
+};
+
 export const geocodeApi = {
   search: (query: string) =>
     apiRequest<{ results: PlaceResult[] }>(
