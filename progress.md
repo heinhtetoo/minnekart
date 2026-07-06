@@ -53,7 +53,7 @@ lint clean. See PRD.md for the decisions behind everything here.
 - [x] Owner bootstrap + one-time invite CLI scripts (admin UI is
       Phase 9)
 - [ ] Pick + integrate real email provider; verified sender
-      (deferred — see Phase 11)
+      (deferred — this is the same task as Phase 11 below)
 
 ## Phase 4 — Memory (Trip) API + Geocoding (backend-only)
 
@@ -62,8 +62,9 @@ lint clean. See PRD.md for the decisions behind everything here.
 - [x] Geocoding search endpoint (Nominatim proxy, per-user rate cap,
       injectable fetch; Photon documented fallback)
 - [x] Integration tests: CRUD, authz, validation
-- [ ] Add/Edit Memory form + delete confirmation — deferred to the UI
-      phases (built with the globe/auth overlay in Phase 6/7)
+- [x] Add/Edit Memory form + delete confirmation — delivered in Phase 7
+      (`TripForm.tsx`, routes `/trip/new` and `/trip/[id]/edit`; geocoding
+      autofill, date/range validation, `window.confirm` delete)
 
 ## Phase 5 — Photo Pipeline (backend-only)
 
@@ -76,10 +77,13 @@ lint clean. See PRD.md for the decisions behind everything here.
 - [x] Signed GET URLs (~1h) minted at render for photo reads
 - [x] Integration tests: presign authz, record lifecycle, cleanup
 - [ ] Create real private R2 bucket + API token; set env/secrets
-      (user action — build/tests use the in-memory adapter until then)
-- [ ] Client-side processing (resize → WebP + thumbnail, HEIC, EXIF
-      strip) + upload UI (multi-select, progress, reorder) — deferred
-      to Phase 7 with the trip form/detail
+      (user action, ops-only — code is switch-ready via `STORAGE_DRIVER`;
+      build/tests use the in-memory adapter until then. Tracked under the
+      Phase 11 env audit)
+- [x] Client-side processing (resize → WebP + thumbnail, HEIC, EXIF
+      strip) + upload UI (multi-select, progress) — delivered in Phase 7
+      (`process.ts`, `PhotoUploader.tsx`). Reorder stays deferred (no
+      backend endpoint — see the Phase 7 note below)
 
 ## Phase 6 — Globe & Home
 
