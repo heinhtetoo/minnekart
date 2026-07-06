@@ -60,6 +60,45 @@ Local real-send smoke: set the same vars in `.env`, run `npm run dev`, and use
 forgot-password — a real email should arrive. (Default `console` transport just
 logs the message, so dev works with no provider.)
 
+## Object storage (R2)
+
+Photos are stored in a private R2 bucket; the browser uploads directly to R2 via
+a presigned `PUT`. Two settings are required beyond the `R2_*` env vars, and
+both bit us at launch — check them when creating a new bucket or adding a domain:
+
+1. **Bucket CORS policy.** The upload is a cross-origin `PUT` from the site to
+   `…r2.cloudflarestorage.com`, so the browser sends a CORS preflight. Without a
+   policy the preflight is blocked and the `PUT` never leaves the browser (Network
+   tab shows status `—`, no response). In Cloudflare → R2 → bucket → Settings →
+   CORS Policy, add:
+
+   ```json
+   [
+     {
+       "AllowedOrigins": ["https://minnekart.vercel.app"],
+       "AllowedMethods": ["PUT", "GET", "HEAD"],
+       "AllowedHeaders": ["content-type"],
+       "ExposeHeaders": ["ETag"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
+   ```
+
+   Add each new origin (custom domain, or `http://localhost:3000` if you ever run
+   the real R2 driver locally). Thumbnails render via `<img src>`, which isn't
+   CORS-gated — this is only for the upload `fetch`. Takes effect immediately, no
+   redeploy.
+
+2. **SDK checksums off** — already handled in code (`src/lib/storage/r2.ts` sets
+   `requestChecksumCalculation`/`responseChecksumValidation` to `'WHEN_REQUIRED'`).
+   The aws-sdk v3 default bakes checksum headers into the presigned `PUT`'s signed
+   headers, which the browser can't reproduce → `SignatureDoesNotMatch`. Leave
+   this in place; removing it breaks uploads.
+
+If an upload fails: status `—`/no response = CORS; `403 SignatureDoesNotMatch`
+with a body = credentials (`R2_SECRET_ACCESS_KEY` not matching the key id) or the
+checksum setting.
+
 ## Backups (Neon → OCI box)
 
 `scripts/backup-neon.sh` runs on the OCI box (Tailscale-only, no inbound ports).
