@@ -39,6 +39,8 @@
   bottom: 12%;
   transform: translateX(-50%);
   width: min(96%, 570px);
+  max-height: 62%;
+  overflow-y: auto;
   z-index: 5;
 }
 
@@ -140,6 +142,276 @@
   gap: 8px;
 }
 
+.pinsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.pinsLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pinsHint {
+  font-size: 11px;
+  color: #b0a898;
+  white-space: nowrap;
+}
+
+.pinsListWrap {
+  position: relative;
+}
+
+.pinsListWrap::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 22px;
+  background: linear-gradient(to top, var(--background), transparent);
+  pointer-events: none;
+  border-radius: 0 0 12px 12px;
+}
+
+.pinsList {
+  list-style: none;
+  margin: 0;
+  padding: 2px 6px 4px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 460px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(28, 25, 23, 0.18) transparent;
+}
+
+.pinsList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pinsList::-webkit-scrollbar-thumb {
+  background: rgba(28, 25, 23, 0.18);
+  border-radius: 6px;
+}
+
+.pinsList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pinCard {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid rgba(28, 25, 23, 0.07);
+  text-align: left;
+  font-family: inherit;
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s ease,
+    border-color 0.15s;
+}
+
+.pinCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(28, 25, 23, 0.1);
+}
+
+.pinCard[data-active='true'] {
+  background: #fff;
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 6px 18px rgba(196, 105, 58, 0.16);
+}
+
+.pinSwatch {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+
+.pinInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.pinName {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--forest);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pinMeta {
+  display: block;
+  font-size: 11px;
+  color: #8a8878;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pinCount {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.featuredSection {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(40px, 6vw, 72px) clamp(20px, 5vw, 64px);
+}
+
+.featuredHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.featuredTitle {
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0;
+  letter-spacing: -0.8px;
+}
+
+.featuredSeeAll {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.featuredSeeAll:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.featuredGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+.featuredCard {
+  display: block;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid rgba(28, 25, 23, 0.07);
+  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.05);
+  transition:
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s ease;
+}
+
+.featuredCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(28, 25, 23, 0.14);
+}
+
+.featuredBanner {
+  height: 180px;
+  position: relative;
+  overflow: hidden;
+}
+
+.countryPill {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(28, 25, 23, 0.28);
+  padding: 4px 10px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.featuredBody {
+  padding: 18px 20px 20px;
+}
+
+.featuredRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.featuredName {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.featuredDate {
+  font-size: 11px;
+  color: #a8a090;
+  flex-shrink: 0;
+}
+
+.featuredHighlight {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 14px;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.featuredFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.featuredPhotos {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.featuredOpen {
+  font-size: 12px;
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.footerHolder {
+  background: #1c1917;
+}
+
 .section {
   max-width: 1180px;
   margin: 0 auto;
@@ -154,6 +426,9 @@
 
 @media (max-width: 1024px) {
   .cards3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .featuredGrid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -184,5 +459,11 @@
   }
   .cards3 {
     grid-template-columns: 1fr;
+  }
+  .featuredGrid {
+    grid-template-columns: 1fr;
+  }
+  .footerHolder {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
 }

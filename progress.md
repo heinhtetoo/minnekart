@@ -160,6 +160,22 @@ lint clean. See PRD.md for the decisions behind everything here.
 - No schema/migration change. Muted-text contrast (~3.4:1) kept as-designed —
       flagged as a follow-up if strict AA is wanted
 
+## Phase 10.5 — Design alignment (UI/UX polish)
+
+- [x] Home "Your Pins" list redesigned to the design's cards (gradient swatch +
+      name + `country · date` + photo count); stats band → Countries · Cities ·
+      Photos · Years; dark footer added to the globe/home
+- [x] "Featured journeys" section (3-card grid under the stats band) driven by a
+      new `trips.is_featured` flag; toggled on the trip edit page (ShareCard);
+      "See all on the timeline →". Migration `0001_demonic_wiccan.sql`
+- [x] Sticky footer — `body` is a flex column + `main { flex: 1 }`, so the footer
+      sits at the viewport bottom on short pages (settings/admin/trip-new/about)
+- [x] `/about` shows the full nav when logged in (TopNav + BottomNav), public
+      header when logged out
+- [x] Docs + final gate + commit
+- Globe and the click-to-peek card left untouched by request. First schema change
+  since Phase 2 (`is_featured`) — CI applies the migration on merge
+
 ## Phase 11 — Ops & Launch
 
 - [ ] Pick + integrate real email provider behind `sendEmail()`

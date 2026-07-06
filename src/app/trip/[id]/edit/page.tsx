@@ -48,6 +48,7 @@ export default async function EditTripPage({ params }: EditTripPageProps) {
       <ShareCard
         tripId={id}
         isPublic={trip.isPublic}
+        isFeatured={trip.isFeatured}
         shareToken={trip.shareToken}
       />
     </AppPage>

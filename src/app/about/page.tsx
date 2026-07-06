@@ -4,8 +4,12 @@ import { asc, count, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
 import Footer from '@/components/layout/Footer';
+import BottomNav from '@/components/nav/BottomNav';
+import TopNav from '@/components/nav/TopNav';
 import PublicChrome from '@/components/public/PublicChrome';
 import { photos, trips, users } from '@/db/schema';
+import { isVerified } from '@/lib/auth/current-user';
+import { getServerSessionUser } from '@/lib/auth/session-server';
 import { computeStats } from '@/lib/trips/stats';
 
 import styles from './about.module.css';
@@ -44,7 +48,10 @@ async function loadOwner() {
 }
 
 export default async function AboutPage() {
-  const data = await loadOwner();
+  const [data, viewer] = await Promise.all([
+    loadOwner(),
+    getServerSessionUser(),
+  ]);
   if (!data) {
     notFound();
   }
@@ -54,9 +61,19 @@ export default async function AboutPage() {
     .charAt(0)
     .toUpperCase();
 
+  const loggedIn = viewer !== null && isVerified(viewer);
+
   return (
     <>
-      <PublicChrome ownerName={owner.name} />
+      {viewer && isVerified(viewer) ? (
+        <TopNav
+          name={viewer.name}
+          email={viewer.email}
+          isOwner={viewer.role === 'owner'}
+        />
+      ) : (
+        <PublicChrome ownerName={owner.name} />
+      )}
       <main className="fade">
         <section className={styles.grid}>
           <div className={styles.card}>
@@ -100,7 +117,14 @@ export default async function AboutPage() {
           </div>
         </section>
       </main>
-      <Footer loggedIn={false} />
+      <div
+        className={`${styles.footerHolder}${
+          loggedIn ? ` ${styles.footerHolderApp}` : ''
+        }`}
+      >
+        <Footer loggedIn={loggedIn} />
+      </div>
+      {loggedIn && <BottomNav />}
     </>
   );
 }

@@ -11,18 +11,22 @@ import styles from './ShareCard.module.css';
 interface ShareCardProps {
   tripId: string;
   isPublic: boolean;
+  isFeatured: boolean;
   shareToken: string | null;
 }
 
 export default function ShareCard({
   tripId,
   isPublic: initialPublic,
+  isFeatured: initialFeatured,
   shareToken: initialToken,
 }: ShareCardProps) {
   const [isPublic, setIsPublic] = useState(initialPublic);
+  const [isFeatured, setIsFeatured] = useState(initialFeatured);
   const [shareToken, setShareToken] = useState(initialToken);
   const origin = useOrigin();
   const [busyPublic, setBusyPublic] = useState(false);
+  const [busyFeatured, setBusyFeatured] = useState(false);
   const [busyLink, setBusyLink] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +42,19 @@ export default function ShareCard({
       return;
     }
     setIsPublic(next);
+  }
+
+  async function toggleFeatured() {
+    const next = !isFeatured;
+    setBusyFeatured(true);
+    setError(null);
+    const result = await tripsApi.update(tripId, { isFeatured: next });
+    setBusyFeatured(false);
+    if (!result.ok) {
+      setError('Could not update featured status.');
+      return;
+    }
+    setIsFeatured(next);
   }
 
   async function toggleLink() {
@@ -93,6 +110,21 @@ export default function ShareCard({
           busy={busyPublic}
           onClick={togglePublic}
           label="Show on public globe"
+        />
+      </div>
+
+      <div className={styles.row}>
+        <div>
+          <p className={styles.rowTitle}>Feature on your home</p>
+          <p className={styles.rowHint}>
+            Shows as a Featured journey on your globe home — up to 3.
+          </p>
+        </div>
+        <Toggle
+          on={isFeatured}
+          busy={busyFeatured}
+          onClick={toggleFeatured}
+          label="Feature on your home"
         />
       </div>
 

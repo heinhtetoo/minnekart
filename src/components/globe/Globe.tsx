@@ -24,9 +24,17 @@ interface GlobeProps {
   autoSpin?: boolean;
   showGraticule?: boolean;
   onSelect?: (id: string) => void;
+  focusId?: string | null;
   width?: number;
   height?: number;
 }
+
+interface GlobeApi {
+  focusPin: (pin: GlobePin) => void;
+  resetView: () => void;
+}
+
+const IDLE_RESUME_MS = 5000;
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const topology = worldData as any;
@@ -55,16 +63,21 @@ export default function Globe({
   autoSpin = true,
   showGraticule = true,
   onSelect,
+  focusId = null,
   width = 540,
   height = 480,
 }: GlobeProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const pinsRef = useRef(pins);
   const selectRef = useRef(onSelect);
+  const focusIdRef = useRef(focusId);
+  const appliedFocusRef = useRef<string | null>(focusId);
+  const apiRef = useRef<GlobeApi | null>(null);
 
   useEffect(() => {
     pinsRef.current = pins;
     selectRef.current = onSelect;
+    focusIdRef.current = focusId;
   });
 
   useEffect(() => {
@@ -73,7 +86,9 @@ export default function Globe({
 
     const base = (Math.min(width, height) / 2 - 20) / MAX_ZOOM;
     const view = { rotation: [0, -25, 0] as Rotation, scale: base };
-    let interacted = false;
+    let lastInteraction = 0;
+    let dragging = false;
+    let animating = false;
     let raf = 0;
 
     const projection = geoOrthographic()
@@ -200,8 +215,8 @@ export default function Globe({
           .attr('cursor', 'pointer')
           .on('click', (event: MouseEvent) => {
             event.stopPropagation();
-            interacted = true;
-            zoomTo(pin);
+            appliedFocusRef.current = pin.id;
+            focusPin(pin);
           })
           .on('mouseenter', function () {
             select(this).attr('r', 9);
@@ -212,17 +227,20 @@ export default function Globe({
       }
     }
 
-    function zoomTo(pin: GlobePin) {
+    function animateTo(
+      targetRotation: Rotation,
+      targetScale: number,
+      onDone?: () => void,
+    ) {
       const startRotation: Rotation = [...view.rotation];
       const startScale = view.scale;
-      const targetRotation: Rotation = [-pin.lng, -pin.lat, 0];
       const deltaLng =
         ((((targetRotation[0] - startRotation[0]) % 360) + 540) % 360) - 180;
       const deltaLat = targetRotation[1] - startRotation[1];
-      const targetScale = base * MAX_ZOOM;
       const duration = 950;
       const start = performance.now();
       const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+      animating = true;
       const step = (now: number) => {
         const progress = Math.min(1, (now - start) / duration);
         const eased = easeOut(progress);
@@ -235,16 +253,28 @@ export default function Globe({
         redraw();
         if (progress < 1) {
           requestAnimationFrame(step);
-        } else if (selectRef.current) {
-          selectRef.current(pin.id);
+        } else {
+          animating = false;
+          onDone?.();
         }
       };
       requestAnimationFrame(step);
     }
 
+    function focusPin(pin: GlobePin) {
+      animateTo([-pin.lng, -pin.lat, 0], base * MAX_ZOOM, () => {
+        selectRef.current?.(pin.id);
+      });
+    }
+
+    function resetView() {
+      animateTo([...view.rotation], base);
+    }
+
     const dragBehavior = drag<SVGSVGElement, unknown>()
       .on('start', () => {
-        interacted = true;
+        dragging = true;
+        lastInteraction = performance.now();
       })
       .on('drag', (event) => {
         view.rotation = [
@@ -252,14 +282,19 @@ export default function Globe({
           Math.max(-80, Math.min(80, view.rotation[1] - event.dy * 0.26)),
           0,
         ];
+        lastInteraction = performance.now();
         redraw();
+      })
+      .on('end', () => {
+        dragging = false;
+        lastInteraction = performance.now();
       });
     svg.call(dragBehavior);
     svg.on(
       'wheel',
       (event: WheelEvent) => {
         event.preventDefault();
-        interacted = true;
+        lastInteraction = performance.now();
         const factor = event.deltaY < 0 ? 1.09 : 0.92;
         view.scale = Math.max(
           base * MIN_ZOOM,
@@ -270,8 +305,16 @@ export default function Globe({
       { passive: false } as never,
     );
 
+    apiRef.current = { focusPin, resetView };
+
     const spin = () => {
-      if (autoSpin && !interacted) {
+      if (
+        autoSpin &&
+        focusIdRef.current === null &&
+        !dragging &&
+        !animating &&
+        performance.now() - lastInteraction >= IDLE_RESUME_MS
+      ) {
         view.rotation = [view.rotation[0] + 0.16, view.rotation[1], 0];
         redraw();
       }
@@ -285,8 +328,24 @@ export default function Globe({
       cancelAnimationFrame(raf);
       svg.on('wheel', null);
       svg.on('.drag', null);
+      apiRef.current = null;
     };
   }, [accent, autoSpin, showGraticule, width, height]);
+
+  useEffect(() => {
+    if (focusId === appliedFocusRef.current) return;
+    appliedFocusRef.current = focusId;
+    const api = apiRef.current;
+    if (!api) return;
+    if (focusId === null) {
+      api.resetView();
+      return;
+    }
+    const pin = pinsRef.current.find((item) => item.id === focusId);
+    if (pin) {
+      api.focusPin(pin);
+    }
+  }, [focusId]);
 
   return (
     <div className={styles.wrap}>

@@ -97,6 +97,7 @@ export const trips = pgTable(
     highlight: text('highlight'),
     story: text('story'),
     isPublic: boolean('is_public').notNull().default(false),
+    isFeatured: boolean('is_featured').notNull().default(false),
     shareToken: text('share_token').unique(),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()

@@ -6,7 +6,7 @@ import { isVerified } from '@/lib/auth/current-user';
 import { getServerSessionUser } from '@/lib/auth/session-server';
 import { toTripDTO } from '@/lib/trips/dto';
 import { computeStats } from '@/lib/trips/stats';
-import LoggedInHome from '@/components/home/LoggedInHome';
+import LoggedInHome, { HomeTrip } from '@/components/home/LoggedInHome';
 import LoggedOutHome from '@/components/home/LoggedOutHome';
 import VerifyScreen from '@/components/auth/VerifyScreen';
 
@@ -32,12 +32,22 @@ export default async function Home({ searchParams }: HomeProps) {
     .from(trips)
     .where(eq(trips.userId, user.id))
     .orderBy(desc(trips.dateStart), desc(trips.createdAt));
-  const [photoCount] = await database
-    .select({ value: count() })
+  const photoCounts = await database
+    .select({ tripId: photos.tripId, value: count() })
     .from(photos)
-    .where(eq(photos.userId, user.id));
+    .where(eq(photos.userId, user.id))
+    .groupBy(photos.tripId);
 
-  const stats = computeStats(owned, photoCount?.value ?? 0);
+  const photosByTrip = new Map(photoCounts.map((row) => [row.tripId, row.value]));
+  const totalPhotos = photoCounts.reduce((sum, row) => sum + row.value, 0);
+
+  const toHomeTrip = (row: (typeof owned)[number]): HomeTrip => ({
+    ...toTripDTO(row),
+    photoCount: photosByTrip.get(row.id) ?? 0,
+  });
+
+  const stats = computeStats(owned, totalPhotos);
+  const featured = owned.filter((row) => row.isFeatured).slice(0, 3);
 
   return (
     <LoggedInHome
@@ -46,7 +56,8 @@ export default async function Home({ searchParams }: HomeProps) {
         email: user.email,
         isOwner: user.role === 'owner',
       }}
-      trips={owned.map(toTripDTO)}
+      trips={owned.map(toHomeTrip)}
+      featured={featured.map(toHomeTrip)}
       stats={stats}
     />
   );

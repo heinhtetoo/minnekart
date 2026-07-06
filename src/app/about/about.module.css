@@ -97,6 +97,10 @@
   margin-top: 5px;
 }
 
+.footerHolder {
+  background: #1c1917;
+}
+
 @media (max-width: 720px) {
   .grid {
     grid-template-columns: 1fr;
@@ -105,5 +109,9 @@
   .card {
     max-width: 300px;
     margin: 0 auto;
+  }
+
+  .footerHolderApp {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
 }

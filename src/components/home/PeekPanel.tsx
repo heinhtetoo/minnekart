@@ -73,6 +73,10 @@ export default function PeekPanel({
             margin: '12px 0 0',
             lineHeight: 1.6,
             fontStyle: 'italic',
+            display: '-webkit-box',
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
           }}
         >
           “{highlight}”
@@ -85,6 +89,10 @@ export default function PeekPanel({
             color: 'var(--muted)',
             margin: '10px 0 0',
             lineHeight: 1.65,
+            display: '-webkit-box',
+            WebkitLineClamp: 4,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
           }}
         >
           {story}

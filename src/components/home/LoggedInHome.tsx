@@ -1,10 +1,13 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 
 import Globe, { GlobePin } from '@/components/globe/Globe';
+import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/nav/BottomNav';
 import TopNav from '@/components/nav/TopNav';
+import { coverGradient } from '@/lib/photos/gradient';
 import { TripDTO } from '@/lib/trips/dto';
 import { TripStats } from '@/lib/trips/stats';
 
@@ -13,15 +16,21 @@ import { formatTripDates } from './format';
 import PeekPanel from './PeekPanel';
 import StatCell from './StatCell';
 
+export interface HomeTrip extends TripDTO {
+  photoCount: number;
+}
+
 interface LoggedInHomeProps {
   user: { name: string; email: string; isOwner?: boolean };
-  trips: TripDTO[];
+  trips: HomeTrip[];
+  featured: HomeTrip[];
   stats: TripStats;
 }
 
 export default function LoggedInHome({
   user,
   trips,
+  featured,
   stats,
 }: LoggedInHomeProps) {
   const [selected, setSelected] = useState<number | null>(null);
@@ -75,6 +84,7 @@ export default function LoggedInHome({
               pins={pins}
               width={960}
               height={960}
+              focusId={selected === null ? null : String(selected)}
               onSelect={(id) => setSelected(Number(id))}
             />
             {trip && (
@@ -95,7 +105,7 @@ export default function LoggedInHome({
             {trips.length === 0 ? (
               <EmptyState />
             ) : (
-              <PlacesList
+              <PinsList
                 trips={trips}
                 selected={selected}
                 onSelect={setSelected}
@@ -109,52 +119,117 @@ export default function LoggedInHome({
           style={{ position: 'relative', zIndex: 1 }}
         >
           <div className={styles.stats}>
-            <StatCell value={String(trips.length)} label="Places" />
-            <StatCell value={String(stats.countries)} label="Countries" bordered />
-            <StatCell value={String(stats.years)} label="Years" bordered />
+            <StatCell value={String(stats.countries)} label="Countries" />
+            <StatCell value={String(stats.cities)} label="Cities" bordered />
             <StatCell value={String(stats.photos)} label="Photos" bordered />
+            <StatCell value={String(stats.years)} label="Years" bordered />
           </div>
         </section>
+
+        {featured.length > 0 && (
+          <FeaturedSection featured={featured} />
+        )}
       </main>
+      <div className={styles.footerHolder}>
+        <Footer loggedIn />
+      </div>
       <BottomNav />
     </>
   );
 }
 
-function PlacesList({
+function PinsList({
   trips,
   selected,
   onSelect,
 }: {
-  trips: TripDTO[];
+  trips: HomeTrip[];
   selected: number | null;
   onSelect: (index: number) => void;
 }) {
   return (
-    <div className={styles.placesPanel}>
-      <p className={styles.panelTitle}>Your places</p>
-      <ul className={styles.placesList}>
-        {trips.map((trip, index) => (
-          <li key={trip.id}>
-            <button
-              type="button"
-              onClick={() => onSelect(index)}
-              className={styles.placeRow}
-              aria-current={selected === index}
-              data-active={selected === index}
-            >
-              <span>
-                <span className={styles.placeName}>{trip.placeName}</span>
-                <span className={styles.placeMeta}>{trip.country}</span>
-              </span>
-              <span className={styles.placeDates}>
-                {formatTripDates(trip.dateStart, trip.dateEnd)}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+    <div>
+      <div className={styles.pinsHead}>
+        <span className={styles.pinsLabel}>Your Pins</span>
+        <span className={styles.pinsHint}>Drag to spin · scroll to zoom</span>
+      </div>
+      <div className={styles.pinsListWrap}>
+        <ul className={styles.pinsList}>
+          {trips.map((trip, index) => (
+            <li key={trip.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(index)}
+                className={styles.pinCard}
+                aria-current={selected === index}
+                data-active={selected === index}
+              >
+                <span
+                  className={styles.pinSwatch}
+                  style={{ background: coverGradient(trip.id) }}
+                />
+                <span className={styles.pinInfo}>
+                  <span className={styles.pinName}>{trip.placeName}</span>
+                  <span className={styles.pinMeta}>
+                    {trip.country} ·{' '}
+                    {formatTripDates(trip.dateStart, trip.dateEnd)}
+                  </span>
+                </span>
+                <span className={styles.pinCount}>{trip.photoCount}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
+  );
+}
+
+function FeaturedSection({ featured }: { featured: HomeTrip[] }) {
+  return (
+    <section className={styles.featuredSection}>
+      <div className={styles.featuredHead}>
+        <h2 className={`serif ${styles.featuredTitle}`}>Featured journeys</h2>
+        <Link href="/timeline" className={styles.featuredSeeAll}>
+          See all on the timeline →
+        </Link>
+      </div>
+      <div className={styles.featuredGrid}>
+        {featured.map((trip) => (
+          <Link
+            key={trip.id}
+            href={`/trip/${trip.id}`}
+            className={styles.featuredCard}
+          >
+            <div
+              className={styles.featuredBanner}
+              style={{ background: coverGradient(trip.id) }}
+            >
+              <span className={styles.countryPill}>{trip.country}</span>
+            </div>
+            <div className={styles.featuredBody}>
+              <div className={styles.featuredRow}>
+                <span className={`serif ${styles.featuredName}`}>
+                  {trip.placeName}
+                </span>
+                <span className={styles.featuredDate}>
+                  {formatTripDates(trip.dateStart, trip.dateEnd)}
+                </span>
+              </div>
+              {trip.highlight && (
+                <p className={styles.featuredHighlight}>{trip.highlight}</p>
+              )}
+              <div className={styles.featuredFoot}>
+                <span className={styles.featuredPhotos}>
+                  {trip.photoCount} photos
+                </span>
+                <span className={styles.featuredOpen}>Open journey →</span>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 

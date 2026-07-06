@@ -79,4 +79,8 @@ describe('updateTripSchema', () => {
   it('still validates provided fields', () => {
     expect(updateTripSchema.safeParse({ lat: 999 }).success).toBe(false);
   });
+
+  it('accepts the isFeatured flag', () => {
+    expect(updateTripSchema.safeParse({ isFeatured: true }).success).toBe(true);
+  });
 });

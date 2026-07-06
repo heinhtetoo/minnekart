@@ -8,6 +8,13 @@
       "when": 1783074843247,
       "tag": "0000_shallow_thaddeus_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783321651507,
+      "tag": "0001_demonic_wiccan",
+      "breakpoints": true
     }
   ]
 }

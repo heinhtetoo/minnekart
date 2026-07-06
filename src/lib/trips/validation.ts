@@ -37,7 +37,7 @@ export const createTripSchema = tripFields.refine(
 );
 
 export const updateTripSchema = tripFields
-  .extend({ isPublic: z.boolean() })
+  .extend({ isPublic: z.boolean(), isFeatured: z.boolean() })
   .partial()
   .refine((data) => Object.keys(data).length > 0, {
     message: 'at least one field is required',
