@@ -5,7 +5,7 @@ import { useCallback, useEffect } from 'react';
 import styles from './Lightbox.module.css';
 
 interface LightboxProps {
-  photos: { displayUrl: string }[];
+  photos: { displayUrl: string; caption?: string }[];
   index: number;
   onClose: () => void;
   onNavigate: (index: number) => void;
@@ -72,7 +72,7 @@ export default function Lightbox({
       <img
         className={styles.image}
         src={photo.displayUrl}
-        alt=""
+        alt={photo.caption ?? ''}
         onClick={(event) => event.stopPropagation()}
       />
       {count > 1 && (

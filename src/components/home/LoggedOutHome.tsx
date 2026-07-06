@@ -7,6 +7,7 @@ import { computeStats } from '@/lib/trips/stats';
 import AuthCard, { AuthCardHandle } from '@/components/auth/AuthCard';
 import Globe, { GlobePin } from '@/components/globe/Globe';
 import Wordmark from '@/components/brand/Wordmark';
+import Footer from '@/components/layout/Footer';
 
 import styles from './Home.module.css';
 import { formatTripDates } from './format';
@@ -206,38 +207,8 @@ export default function LoggedOutHome({ invite }: LoggedOutHomeProps) {
         </div>
       </section>
 
-      <Footer />
+      <Footer loggedIn={false} />
     </main>
-  );
-}
-
-function Footer() {
-  return (
-    <footer
-      style={{
-        position: 'relative',
-        zIndex: 1,
-        borderTop: '1px solid rgba(28,25,23,.08)',
-        padding: 'clamp(28px,5vw,44px) clamp(20px,5vw,64px)',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1180,
-          margin: '0 auto',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 16,
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Wordmark />
-        <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>
-          A memory palace you can spin. © {new Date().getFullYear()} Minnekart.
-        </span>
-      </div>
-    </footer>
   );
 }
 

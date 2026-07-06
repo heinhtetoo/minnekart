@@ -1,3 +1,4 @@
+import Footer from '@/components/layout/Footer';
 import type { PhotoTile } from '@/components/photos/PhotoGrid';
 import TripDetailBody from '@/components/trips/TripDetailBody';
 
@@ -41,6 +42,7 @@ export default function PublicTripView({
         backHref={backHref}
         backLabel={backLabel}
       />
+      <Footer loggedIn={false} />
     </>
   );
 }

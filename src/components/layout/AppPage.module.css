@@ -1,6 +1,6 @@
 .main {
   padding: clamp(20px, 4vw, 40px) clamp(20px, 5vw, 64px)
-    calc(clamp(28px, 6vw, 56px) + 64px);
+    clamp(28px, 6vw, 56px);
 }
 
 .narrow {
@@ -13,8 +13,13 @@
   margin: 0 auto;
 }
 
-@media (min-width: 721px) {
-  .main {
-    padding-bottom: clamp(28px, 6vw, 56px);
+/* Dark backdrop so the mobile clearance below the footer reads as footer. */
+.footerHolder {
+  background: #1c1917;
+}
+
+@media (max-width: 720px) {
+  .footerHolder {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
 }

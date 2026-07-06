@@ -4,6 +4,7 @@ import BottomNav from '@/components/nav/BottomNav';
 import TopNav from '@/components/nav/TopNav';
 
 import styles from './AppPage.module.css';
+import Footer from './Footer';
 
 interface AppPageProps {
   user: { name: string; email: string; isOwner?: boolean };
@@ -26,6 +27,9 @@ export default function AppPage({
           {children}
         </div>
       </main>
+      <div className={styles.footerHolder}>
+        <Footer loggedIn />
+      </div>
       <BottomNav />
     </>
   );

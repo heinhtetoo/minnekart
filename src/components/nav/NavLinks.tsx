@@ -4,12 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import styles from './Nav.module.css';
-
-const ITEMS = [
-  { href: '/', label: 'Globe' },
-  { href: '/timeline', label: 'Timeline' },
-  { href: '/gallery', label: 'Gallery' },
-];
+import { navItems } from './navItems';
 
 function isActive(pathname: string, href: string): boolean {
   if (href === '/') {
@@ -24,7 +19,7 @@ export default function NavLinks({ variant }: { variant: 'top' | 'bottom' }) {
   if (variant === 'top') {
     return (
       <nav className={styles.topLinks} aria-label="Primary">
-        {ITEMS.map((item) => (
+        {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -40,7 +35,7 @@ export default function NavLinks({ variant }: { variant: 'top' | 'bottom' }) {
 
   return (
     <nav className={styles.bottomNav} aria-label="Primary">
-      {ITEMS.map((item) => (
+      {navItems.map((item) => (
         <Link
           key={item.href}
           href={item.href}

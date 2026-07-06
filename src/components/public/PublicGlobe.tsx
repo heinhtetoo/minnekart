@@ -83,34 +83,44 @@ export default function PublicGlobe({
           )}
         </div>
         <div className={homeStyles.formWrap}>
-          <div className={homeStyles.placesPanel}>
-            <p className={homeStyles.panelTitle}>Public places</p>
-            <ul className={homeStyles.placesList}>
-              {trips.map((item, index) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelected(index)}
-                    className={homeStyles.placeRow}
-                    aria-current={selected === index}
-                    data-active={selected === index}
-                  >
-                    <span>
-                      <span className={homeStyles.placeName}>
-                        {item.placeName}
+          {trips.length === 0 ? (
+            <div className={homeStyles.emptyState}>
+              <p className={homeStyles.panelTitle}>No public places yet</p>
+              <p className={homeStyles.emptyBody}>
+                {ownerName} hasn&apos;t shared any memories on this globe yet.
+                Check back soon.
+              </p>
+            </div>
+          ) : (
+            <div className={homeStyles.placesPanel}>
+              <p className={homeStyles.panelTitle}>Public places</p>
+              <ul className={homeStyles.placesList}>
+                {trips.map((item, index) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => setSelected(index)}
+                      className={homeStyles.placeRow}
+                      aria-current={selected === index}
+                      data-active={selected === index}
+                    >
+                      <span>
+                        <span className={homeStyles.placeName}>
+                          {item.placeName}
+                        </span>
+                        <span className={homeStyles.placeMeta}>
+                          {item.country}
+                        </span>
                       </span>
-                      <span className={homeStyles.placeMeta}>
-                        {item.country}
+                      <span className={homeStyles.placeDates}>
+                        {formatTripDates(item.dateStart, item.dateEnd)}
                       </span>
-                    </span>
-                    <span className={homeStyles.placeDates}>
-                      {formatTripDates(item.dateStart, item.dateEnd)}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </section>
     </main>

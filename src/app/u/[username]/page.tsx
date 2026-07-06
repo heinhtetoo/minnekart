@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { db } from '@/db';
+import Footer from '@/components/layout/Footer';
 import PublicChrome from '@/components/public/PublicChrome';
 import PublicGlobe from '@/components/public/PublicGlobe';
 import { toTripDTO } from '@/lib/trips/dto';
@@ -47,6 +48,7 @@ export default async function PublicGlobePage({
         username={owner.username}
         trips={trips.map(toTripDTO)}
       />
+      <Footer loggedIn={false} />
     </>
   );
 }

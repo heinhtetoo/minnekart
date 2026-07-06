@@ -146,12 +146,19 @@ lint clean. See PRD.md for the decisions behind everything here.
 
 ## Phase 10 — Polish & Chrome
 
-- [ ] Static About page (Minnekart story, design's warm tone)
-- [ ] Footer, responsive pass, mobile bottom nav (nav links in all
-      three render only for logged-in users); two-tone Minnekart
-      wordmark in nav, auth panel, footer
-- [ ] Empty states (new user, no photos), error/loading states
-- [ ] Accessibility pass (focus states, alt text, contrast)
+- [x] Public About page `/about` (matched the imported "Atlas Travel Site"
+      design: two-column portrait card + story + real owner stats). Owner
+      resolved deterministically (earliest-created); prose is source-edited
+- [x] Shared dark footer (design's `#1c1917`) across app/logged-out/public
+      shells; nav sourced from `navItems.ts` with About added (top nav, mobile
+      bottom nav, footer); two-tone wordmark in nav, auth panel, footer
+- [x] Empty states — added public-globe zero-trips state (new-user/no-photos
+      already existed); error/loading — custom `not-found.tsx` + `error.tsx`
+- [x] Accessibility pass — global `:focus-visible` ring, `prefers-reduced-motion`
+      on page fades/scroll, Lightbox caption alt (globe left untouched by choice)
+- [x] Docs + final gate + commit
+- No schema/migration change. Muted-text contrast (~3.4:1) kept as-designed —
+      flagged as a follow-up if strict AA is wanted
 
 ## Phase 11 — Ops & Launch
 
