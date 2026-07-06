@@ -11,9 +11,14 @@ import styles from './Nav.module.css';
 interface AccountMenuProps {
   name: string;
   email: string;
+  isOwner?: boolean;
 }
 
-export default function AccountMenu({ name, email }: AccountMenuProps) {
+export default function AccountMenu({
+  name,
+  email,
+  isOwner,
+}: AccountMenuProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -55,6 +60,15 @@ export default function AccountMenu({ name, email }: AccountMenuProps) {
             <div className={styles.menuName}>{name}</div>
             <div className={styles.menuEmail}>{email}</div>
           </div>
+          {isOwner && (
+            <Link
+              href="/admin"
+              className={styles.menuLink}
+              onClick={() => setOpen(false)}
+            >
+              Admin
+            </Link>
+          )}
           <Link
             href="/settings"
             className={styles.menuLink}

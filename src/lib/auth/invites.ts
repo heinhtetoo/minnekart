@@ -1,11 +1,15 @@
-import { and, eq, gt, isNull } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull } from 'drizzle-orm';
 
 import { DatabaseExecutor } from '@/db';
-import { invites } from '@/db/schema';
+import { invites, users } from '@/db/schema';
 
 import { generateToken, sha256 } from './tokens';
 
 const INVITE_LIFETIME_MS = 14 * 24 * 60 * 60 * 1000;
+
+export type InviteStatus = 'used' | 'revoked' | 'expired' | 'unused';
+
+type InviteRow = typeof invites.$inferSelect;
 
 export async function createInvite(
   database: DatabaseExecutor,
@@ -50,4 +54,46 @@ export async function consumeInvite(
     .where(and(eq(invites.id, inviteId), isNull(invites.usedAt)))
     .returning();
   return consumed.length > 0;
+}
+
+export async function listInvites(database: DatabaseExecutor) {
+  return database
+    .select({
+      invite: invites,
+      usedByUsername: users.username,
+    })
+    .from(invites)
+    .leftJoin(users, eq(invites.usedBy, users.id))
+    .orderBy(desc(invites.createdAt));
+}
+
+export async function revokeInvite(
+  database: DatabaseExecutor,
+  inviteId: string,
+): Promise<boolean> {
+  const revoked = await database
+    .update(invites)
+    .set({ revokedAt: new Date() })
+    .where(
+      and(
+        eq(invites.id, inviteId),
+        isNull(invites.usedAt),
+        isNull(invites.revokedAt),
+      ),
+    )
+    .returning();
+  return revoked.length > 0;
+}
+
+export function inviteStatus(invite: InviteRow): InviteStatus {
+  if (invite.usedAt) {
+    return 'used';
+  }
+  if (invite.revokedAt) {
+    return 'revoked';
+  }
+  if (invite.expiresAt.getTime() <= Date.now()) {
+    return 'expired';
+  }
+  return 'unused';
 }

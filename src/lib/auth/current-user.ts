@@ -37,3 +37,17 @@ export async function requireVerifiedUser(
   }
   return { user };
 }
+
+export async function requireOwner(
+  database: DatabaseExecutor,
+  request: Request,
+): Promise<GuardResult> {
+  const guard = await requireVerifiedUser(database, request);
+  if (guard.response) {
+    return guard;
+  }
+  if (guard.user.role !== 'owner') {
+    return { response: jsonResponse({ error: 'not_authorized' }, 403) };
+  }
+  return { user: guard.user };
+}

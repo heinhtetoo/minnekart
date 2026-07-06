@@ -133,10 +133,16 @@ lint clean. See PRD.md for the decisions behind everything here.
 
 ## Phase 9 — Admin Invites
 
-- [ ] Owner role gate + `/admin` page
-- [ ] Generate one-time invite links with expiry; list used/unused;
-      revoke unused
-- [ ] Integration tests: invite lifecycle, non-owner denied
+- [x] Owner role gate (`requireOwner` API + `requireOwnerPageUser` page) +
+      `/admin` page; owner-only "Admin" link in the account menu
+- [x] Generate one-time invite links with expiry; list used/revoked/expired/
+      unused; revoke unused (POST/DELETE `/api/admin/invites`). Token shown once
+      on create (stays hashed); optional note per invite
+- [x] Integration tests: `listInvites`/`revokeInvite`/`inviteStatus`, invite
+      lifecycle, non-owner denied (member 403, unverified 403, unauth 401)
+- [x] Docs + final gate + commit
+- No schema/migration change — `invites` (with `revokedAt`) and `users.role`
+  already existed from Phase 2
 
 ## Phase 10 — Polish & Chrome
 

@@ -24,7 +24,7 @@ export default async function EditTripPage({ params }: EditTripPageProps) {
   }
 
   return (
-    <AppPage user={{ name: user.name, email: user.email }} width="narrow">
+    <AppPage user={{ name: user.name, email: user.email, isOwner: user.role === 'owner' }} width="narrow">
       <Link
         href={`/trip/${id}`}
         style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}

@@ -69,3 +69,9 @@ export async function createMemberWithSession(
   const { token } = await createSession(db, user.id);
   return { user, password, sessionToken: token };
 }
+
+export async function createOwnerWithSession() {
+  const owner = await createOwner();
+  const { token } = await createSession(db, owner.id);
+  return { owner, sessionToken: token };
+}

@@ -28,7 +28,11 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
 
   return (
     <>
-      <TopNav name={user.name} email={user.email} />
+      <TopNav
+        name={user.name}
+        email={user.email}
+        isOwner={user.role === 'owner'}
+      />
       <TripDetailBody
         tripId={trip.id}
         placeName={trip.placeName}

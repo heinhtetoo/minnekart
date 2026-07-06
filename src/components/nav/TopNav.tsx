@@ -9,9 +9,10 @@ import NavLinks from './NavLinks';
 interface TopNavProps {
   name: string;
   email: string;
+  isOwner?: boolean;
 }
 
-export default function TopNav({ name, email }: TopNavProps) {
+export default function TopNav({ name, email, isOwner }: TopNavProps) {
   return (
     <nav className={styles.topNav}>
       <Link href="/" aria-label="Minnekart home" className={styles.brand}>
@@ -22,7 +23,7 @@ export default function TopNav({ name, email }: TopNavProps) {
         <Link href="/trip/new" className={styles.newMemory}>
           + New memory
         </Link>
-        <AccountMenu name={name} email={email} />
+        <AccountMenu name={name} email={email} isOwner={isOwner} />
       </div>
     </nav>
   );

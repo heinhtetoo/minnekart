@@ -14,7 +14,7 @@ import PeekPanel from './PeekPanel';
 import StatCell from './StatCell';
 
 interface LoggedInHomeProps {
-  user: { name: string; email: string };
+  user: { name: string; email: string; isOwner?: boolean };
   trips: TripDTO[];
   stats: TripStats;
 }
@@ -36,7 +36,7 @@ export default function LoggedInHome({
 
   return (
     <>
-      <TopNav name={user.name} email={user.email} />
+      <TopNav name={user.name} email={user.email} isOwner={user.isOwner} />
       <main className="fade" style={{ isolation: 'isolate', paddingBottom: 24 }}>
         <section className={styles.intro}>
           <p

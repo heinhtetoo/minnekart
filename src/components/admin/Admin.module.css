@@ -1,0 +1,193 @@
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px 24px;
+  border: 1px solid rgba(28, 25, 23, 0.07);
+  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.05);
+}
+
+.form {
+  display: flex;
+  gap: 8px;
+}
+
+.noteInput {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--foreground);
+  background: #f4efe6;
+  border: 1px solid rgba(28, 25, 23, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: inherit;
+}
+
+.generateButton {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--forest);
+  border: none;
+  border-radius: 10px;
+  padding: 0 18px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.generateButton:hover:not(:disabled) {
+  background: #24403a;
+}
+
+.generateButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 10px 0 0;
+  line-height: 1.5;
+}
+
+.linkRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.linkInput {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--foreground);
+  background: #f4efe6;
+  border: 1px solid rgba(28, 25, 23, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: inherit;
+}
+
+.copyButton {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--forest);
+  border: none;
+  border-radius: 10px;
+  padding: 0 16px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.copyButton:hover {
+  background: #24403a;
+}
+
+.error {
+  font-size: 13px;
+  color: var(--danger);
+  margin: 12px 0 0;
+}
+
+.list {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 18px;
+  border: 1px solid rgba(28, 25, 23, 0.07);
+}
+
+.itemNote {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0;
+}
+
+.itemMeta {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+
+.itemRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.unused {
+  color: #1f5a3d;
+  background: rgba(31, 90, 61, 0.12);
+}
+
+.used {
+  color: #5a4a1f;
+  background: rgba(90, 74, 31, 0.12);
+}
+
+.revoked {
+  color: var(--danger);
+  background: rgba(180, 60, 50, 0.12);
+}
+
+.expired {
+  color: #57534e;
+  background: rgba(87, 83, 78, 0.12);
+}
+
+.revokeButton {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--danger);
+  background: none;
+  border: 1px solid rgba(180, 60, 50, 0.35);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.revokeButton:hover:not(:disabled) {
+  background: rgba(180, 60, 50, 0.08);
+}
+
+.revokeButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.empty {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 20px 0 0;
+}

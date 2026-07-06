@@ -23,3 +23,11 @@ export async function requireVerifiedPageUser(): Promise<SessionUser> {
   }
   return user;
 }
+
+export async function requireOwnerPageUser(): Promise<SessionUser> {
+  const user = await requireVerifiedPageUser();
+  if (user.role !== 'owner') {
+    redirect('/');
+  }
+  return user;
+}

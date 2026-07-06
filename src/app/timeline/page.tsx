@@ -23,7 +23,7 @@ export default async function TimelinePage() {
   const covers = await tripCovers(user.id);
 
   return (
-    <AppPage user={{ name: user.name, email: user.email }} width="wide">
+    <AppPage user={{ name: user.name, email: user.email, isOwner: user.role === 'owner' }} width="wide">
       <div className={styles.page}>
         <header className={styles.header}>
           <p className={styles.eyebrow}>Chronology</p>

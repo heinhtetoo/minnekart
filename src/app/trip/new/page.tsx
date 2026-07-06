@@ -8,7 +8,7 @@ export default async function NewTripPage() {
   const user = await requireVerifiedPageUser();
 
   return (
-    <AppPage user={{ name: user.name, email: user.email }} width="narrow">
+    <AppPage user={{ name: user.name, email: user.email, isOwner: user.role === 'owner' }} width="narrow">
       <Link
         href="/"
         style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}

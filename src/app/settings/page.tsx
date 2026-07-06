@@ -6,7 +6,10 @@ export default async function SettingsPage() {
   const user = await requireVerifiedPageUser();
 
   return (
-    <AppPage user={{ name: user.name, email: user.email }} width="narrow">
+    <AppPage
+      user={{ name: user.name, email: user.email, isOwner: user.role === 'owner' }}
+      width="narrow"
+    >
       <p
         style={{
           fontSize: 11,
