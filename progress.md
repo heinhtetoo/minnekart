@@ -108,8 +108,7 @@ lint clean. See PRD.md for the decisions behind everything here.
       display ~2560px + thumbnail, HEIC conversion via heic2any, EXIF
       capture date via exifr then stripped); multi-select, per-file
       progress, delete (consumes the Phase 5 presign + photo-records APIs)
-- [x] Trip detail page: story, highlight, details sidebar, photo grid
-      + lightbox (`/trip/[id]`)
+- [x] Trip detail page: story, highlight, details sidebar, photo grid + lightbox (`/trip/[id]`)
 - [x] Timeline page: newest first, year markers, logged-in-only route
       (redirect to home when logged out)
 - [x] Gallery page: masonry grid, filter chips (All + countries),
@@ -162,7 +161,7 @@ lint clean. See PRD.md for the decisions behind everything here.
       on page fades/scroll, Lightbox caption alt (globe left untouched by choice)
 - [x] Docs + final gate + commit
 - No schema/migration change. Muted-text contrast (~3.4:1) kept as-designed —
-      flagged as a follow-up if strict AA is wanted
+  flagged as a follow-up if strict AA is wanted
 
 ## Phase 10.5 — Design alignment (UI/UX polish)
 
@@ -182,11 +181,19 @@ lint clean. See PRD.md for the decisions behind everything here.
 
 ## Phase 11 — Ops & Launch
 
-- [ ] Pick + integrate real email provider behind `sendEmail()`
-      (Brevo/Gmail SMTP candidates); verified sender; swap `console`
-      transport for it in production (deferred from Phase 3)
-- [ ] OCI box cron: scheduled `pg_dump` from Neon → local backups,
-      retention policy; restore drill once
-- [ ] Vercel env audit (prod vs preview), Neon/R2 quotas checked
-- [ ] Invite first users; monitor email deliverability
-- [ ] Post-launch backlog groomed from PRD "Deferred / open items"
+- [x] Real email provider behind `sendEmail()` — provider-agnostic nodemailer
+      SMTP transport (`smtp` branch, injectable for tests) + `SMTP_*`/`EMAIL_FROM`
+      env; `console`/`memory` unchanged. Brevo sender provisioning + Vercel envs
+      are ops steps in `docs/OPS.md`
+- [x] Backup tooling: `scripts/backup-neon.sh` (`pg_dump` over TLS → gzip +
+      retention prune) with cron + restore-drill runbook in `docs/OPS.md`.
+      Installing the cron on the OCI box is a user/ops step
+- [x] Vercel env audit — full prod-vs-preview checklist + the two footguns
+      (`STORAGE_DRIVER=r2` default, `smtp` requires all `SMTP_*`) in `docs/OPS.md`.
+      Setting the envs + checking Neon/R2 quotas is a user/ops step
+- [x] Invite-first-users runbook in `docs/OPS.md` (existing `create-owner`/
+      `create-invite` CLIs); actually sending invites is a user step
+- [x] Post-launch backlog groomed → `BACKLOG.md` (PRD deferred items + non-goals + build follow-ups)
+- Repo-side Phase 11 deliverables are done. Remaining launch tasks are external
+  actions (provision Brevo + set Vercel envs, provision R2, install the OCI cron,
+  send the first invites), each documented in `docs/OPS.md`

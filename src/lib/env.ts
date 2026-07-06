@@ -6,7 +6,12 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
-  EMAIL_TRANSPORT: z.enum(['console', 'memory']).default('console'),
+  EMAIL_TRANSPORT: z.enum(['console', 'memory', 'smtp']).default('console'),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
   STORAGE_DRIVER: z.enum(['r2', 'memory']).default('r2'),
   R2_ACCOUNT_ID: z.string().optional(),
   R2_ACCESS_KEY_ID: z.string().optional(),
