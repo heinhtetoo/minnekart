@@ -32,7 +32,7 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
   ref,
 ) {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>('login');
+  const [mode, setMode] = useState<Mode>(invite ? 'signup' : 'login');
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
