@@ -46,7 +46,10 @@ export default function LoggedInHome({
   return (
     <>
       <TopNav name={user.name} email={user.email} isOwner={user.isOwner} />
-      <main className="fade" style={{ isolation: 'isolate', paddingBottom: 24 }}>
+      <main
+        className="fade"
+        style={{ isolation: 'isolate', paddingBottom: 24 }}
+      >
         <section className={styles.intro}>
           <p
             style={{
@@ -126,9 +129,7 @@ export default function LoggedInHome({
           </div>
         </section>
 
-        {featured.length > 0 && (
-          <FeaturedSection featured={featured} />
-        )}
+        {featured.length > 0 && <FeaturedSection featured={featured} />}
       </main>
       <div className={styles.footerHolder}>
         <Footer loggedIn />

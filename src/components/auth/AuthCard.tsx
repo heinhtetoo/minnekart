@@ -1,12 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import {
-  FormEvent,
-  forwardRef,
-  useImperativeHandle,
-  useState,
-} from 'react';
+import { FormEvent, forwardRef, useImperativeHandle, useState } from 'react';
 
 import { authApi } from './api';
 
@@ -148,7 +143,10 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
 
       {mode === 'login' && (
         <form className="fade" onSubmit={onLogin}>
-          <Heading title="Welcome back" subtitle="Sign in to open your globe." />
+          <Heading
+            title="Welcome back"
+            subtitle="Sign in to open your globe."
+          />
           <Field
             label="Email"
             type="email"
@@ -215,8 +213,8 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
                 lineHeight: 1.5,
               }}
             >
-              Minnekart is invite-only for now. Open your invite link to
-              create an account.
+              Minnekart is invite-only for now. Open your invite link to create
+              an account.
             </p>
           )}
           <Field
@@ -290,11 +288,7 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
 
       {mode === 'forgotSent' && (
         <div className="fade" style={{ textAlign: 'center' }}>
-          <Heading
-            title="Check your inbox"
-            subtitle=""
-            center
-          />
+          <Heading title="Check your inbox" subtitle="" center />
           <p
             style={{
               fontSize: 14,
@@ -303,8 +297,8 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
               margin: '0 0 18px',
             }}
           >
-            If an account exists for <b>{email}</b>, a reset link is on its
-            way. It expires in 30 minutes.
+            If an account exists for <b>{email}</b>, a reset link is on its way.
+            It expires in 30 minutes.
           </p>
           <BackToSignIn onClick={() => setMode('login')} />
         </div>
@@ -421,7 +415,14 @@ function ErrorLine({ error }: { error: string }) {
 
 function BackToSignIn({ onClick }: { onClick: () => void }) {
   return (
-    <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted)', margin: '16px 0 0' }}>
+    <p
+      style={{
+        textAlign: 'center',
+        fontSize: 13,
+        color: 'var(--muted)',
+        margin: '16px 0 0',
+      }}
+    >
       <button type="button" className="authlink" onClick={onClick}>
         Back to sign in
       </button>

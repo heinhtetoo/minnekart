@@ -33,7 +33,12 @@ describe('DELETE /api/admin/invites/[id]', () => {
     const { invite } = await createInvite(db, owner.id);
 
     const response = await DELETE(
-      jsonRequest('DELETE', urlFor(invite.id), undefined, cookieHeader(sessionToken)),
+      jsonRequest(
+        'DELETE',
+        urlFor(invite.id),
+        undefined,
+        cookieHeader(sessionToken),
+      ),
       context(invite.id),
     );
 
@@ -51,7 +56,12 @@ describe('DELETE /api/admin/invites/[id]', () => {
     await consumeInvite(db, invite.id, owner.id);
 
     const response = await DELETE(
-      jsonRequest('DELETE', urlFor(invite.id), undefined, cookieHeader(sessionToken)),
+      jsonRequest(
+        'DELETE',
+        urlFor(invite.id),
+        undefined,
+        cookieHeader(sessionToken),
+      ),
       context(invite.id),
     );
 
@@ -63,7 +73,12 @@ describe('DELETE /api/admin/invites/[id]', () => {
     const missingId = '00000000-0000-0000-0000-000000000000';
 
     const response = await DELETE(
-      jsonRequest('DELETE', urlFor(missingId), undefined, cookieHeader(sessionToken)),
+      jsonRequest(
+        'DELETE',
+        urlFor(missingId),
+        undefined,
+        cookieHeader(sessionToken),
+      ),
       context(missingId),
     );
 
@@ -76,7 +91,12 @@ describe('DELETE /api/admin/invites/[id]', () => {
     const { sessionToken } = await createMemberWithSession({ verified: true });
 
     const response = await DELETE(
-      jsonRequest('DELETE', urlFor(invite.id), undefined, cookieHeader(sessionToken)),
+      jsonRequest(
+        'DELETE',
+        urlFor(invite.id),
+        undefined,
+        cookieHeader(sessionToken),
+      ),
       context(invite.id),
     );
 

@@ -7,7 +7,11 @@ export default async function SettingsPage() {
 
   return (
     <AppPage
-      user={{ name: user.name, email: user.email, isOwner: user.role === 'owner' }}
+      user={{
+        name: user.name,
+        email: user.email,
+        isOwner: user.role === 'owner',
+      }}
       width="narrow"
     >
       <p

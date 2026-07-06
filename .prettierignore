@@ -4,3 +4,7 @@ out/
 build/
 coverage/
 package-lock.json
+
+# Generated files — leave to their generators, not prettier
+drizzle/
+src/data/world-110m.json

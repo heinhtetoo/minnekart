@@ -61,7 +61,9 @@ export default function ShareCard({
     setBusyLink(true);
     setError(null);
     if (shareToken) {
-      if (!window.confirm('Revoke this link? Anyone with it will lose access.')) {
+      if (
+        !window.confirm('Revoke this link? Anyone with it will lose access.')
+      ) {
         setBusyLink(false);
         return;
       }
@@ -146,7 +148,11 @@ export default function ShareCard({
       {shareToken && (
         <div className={styles.linkRow}>
           <input className={styles.linkInput} readOnly value={shareUrl} />
-          <button type="button" className={styles.copyButton} onClick={copyLink}>
+          <button
+            type="button"
+            className={styles.copyButton}
+            onClick={copyLink}
+          >
             {copied ? 'Copied' : 'Copy'}
           </button>
         </div>

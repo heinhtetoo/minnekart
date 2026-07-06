@@ -29,7 +29,14 @@ export default function Wordmark({
           stroke={stroke}
           strokeWidth="1.6"
         />
-        <line x1="1.5" y1="11" x2="20.5" y2="11" stroke={stroke} strokeWidth="1.6" />
+        <line
+          x1="1.5"
+          y1="11"
+          x2="20.5"
+          y2="11"
+          stroke={stroke}
+          strokeWidth="1.6"
+        />
       </svg>
       <span
         style={{

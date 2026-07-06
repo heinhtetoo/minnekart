@@ -90,10 +90,10 @@ export default async function AboutPage() {
               I collect places the way others collect stamps.
             </h1>
             <p className={styles.body}>
-              Minnekart started as a shoebox of ticket stubs and a habit of never
-              writing anything down. Now it&apos;s a living globe — every pin a
-              place I&apos;ve stood, every photo a moment I&apos;d rather not
-              forget.
+              Minnekart started as a shoebox of ticket stubs and a habit of
+              never writing anything down. Now it&apos;s a living globe — every
+              pin a place I&apos;ve stood, every photo a moment I&apos;d rather
+              not forget.
             </p>
             <p className={`${styles.body} ${styles.bodyLast}`}>
               I travel slowly and photograph badly, but that&apos;s rather the

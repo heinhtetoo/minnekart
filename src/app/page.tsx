@@ -38,7 +38,9 @@ export default async function Home({ searchParams }: HomeProps) {
     .where(eq(photos.userId, user.id))
     .groupBy(photos.tripId);
 
-  const photosByTrip = new Map(photoCounts.map((row) => [row.tripId, row.value]));
+  const photosByTrip = new Map(
+    photoCounts.map((row) => [row.tripId, row.value]),
+  );
   const totalPhotos = photoCounts.reduce((sum, row) => sum + row.value, 0);
 
   const toHomeTrip = (row: (typeof owned)[number]): HomeTrip => ({

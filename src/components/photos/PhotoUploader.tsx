@@ -81,7 +81,10 @@ export default function PhotoUploader({ tripId }: { tripId: string }) {
         putBlob(thumbUploadUrl, processed.thumbBlob),
       ]);
       if (!displayOk || !thumbOk) {
-        patchJob(job.id, { status: 'error', error: 'Upload to storage failed.' });
+        patchJob(job.id, {
+          status: 'error',
+          error: 'Upload to storage failed.',
+        });
         return;
       }
       patchJob(job.id, { status: 'saving' });
@@ -126,7 +129,11 @@ export default function PhotoUploader({ tripId }: { tripId: string }) {
     const pairs = accepted.map(
       (file) =>
         [
-          { id: crypto.randomUUID(), name: file.name, status: 'processing' as JobStatus },
+          {
+            id: crypto.randomUUID(),
+            name: file.name,
+            status: 'processing' as JobStatus,
+          },
           file,
         ] as const,
     );
@@ -178,7 +185,7 @@ export default function PhotoUploader({ tripId }: { tripId: string }) {
               <span className={styles.jobName}>{job.name}</span>
               <span className={styles.jobStatus}>
                 {job.status === 'error'
-                  ? job.error ?? STATUS_LABEL.error
+                  ? (job.error ?? STATUS_LABEL.error)
                   : STATUS_LABEL[job.status]}
               </span>
             </li>

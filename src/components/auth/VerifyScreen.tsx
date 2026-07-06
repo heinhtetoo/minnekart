@@ -25,8 +25,8 @@ interface VerifyScreenProps {
 export default function VerifyScreen({ email }: VerifyScreenProps) {
   const router = useRouter();
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
-  const [digits, setDigits] = useState<string[]>(
-    () => Array(CODE_LENGTH).fill(''),
+  const [digits, setDigits] = useState<string[]>(() =>
+    Array(CODE_LENGTH).fill(''),
   );
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -150,7 +150,13 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
           textAlign: 'center',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 26 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: 26,
+          }}
+        >
           <Wordmark />
         </div>
         <h1
@@ -209,7 +215,13 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
           {error}
         </div>
         {notice && !error && (
-          <p style={{ fontSize: 12.5, color: 'var(--forest)', margin: '0 0 4px' }}>
+          <p
+            style={{
+              fontSize: 12.5,
+              color: 'var(--forest)',
+              margin: '0 0 4px',
+            }}
+          >
             {notice}
           </p>
         )}
@@ -221,12 +233,18 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
             className="authlink"
             onClick={resend}
             disabled={cooldown > 0}
-            style={cooldown > 0 ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
+            style={
+              cooldown > 0
+                ? { opacity: 0.55, cursor: 'not-allowed' }
+                : undefined
+            }
           >
             {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
           </button>
         </p>
-        <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '18px 0 0' }}>
+        <p
+          style={{ fontSize: 12.5, color: 'var(--muted)', margin: '18px 0 0' }}
+        >
           Not you?{' '}
           <button type="button" className="authlink" onClick={signOut}>
             Sign out

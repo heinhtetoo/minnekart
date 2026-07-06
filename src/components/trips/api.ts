@@ -15,10 +15,9 @@ export const tripsApi = {
 
 export const shareApi = {
   create: (id: string) =>
-    apiRequest<{ shareToken: string; url: string }>(
-      `/api/trips/${id}/share`,
-      { method: 'POST' },
-    ),
+    apiRequest<{ shareToken: string; url: string }>(`/api/trips/${id}/share`, {
+      method: 'POST',
+    }),
   revoke: (id: string) =>
     apiRequest<{ ok: true }>(`/api/trips/${id}/share`, { method: 'DELETE' }),
 };

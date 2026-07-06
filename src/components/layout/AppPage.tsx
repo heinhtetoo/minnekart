@@ -21,9 +21,7 @@ export default function AppPage({
     <>
       <TopNav name={user.name} email={user.email} isOwner={user.isOwner} />
       <main className={`fade ${styles.main}`}>
-        <div
-          className={width === 'narrow' ? styles.narrow : styles.wide}
-        >
+        <div className={width === 'narrow' ? styles.narrow : styles.wide}>
           {children}
         </div>
       </main>

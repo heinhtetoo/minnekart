@@ -219,18 +219,21 @@ function PlaceSearch({ onPick }: { onPick: (place: PlaceResult) => void }) {
       return;
     }
     const trimmed = query.trim();
-    const timer = setTimeout(async () => {
-      if (trimmed.length < 2) {
-        setResults([]);
-        setOpen(false);
-        return;
-      }
-      setSearching(true);
-      setOpen(true);
-      const result = await geocodeApi.search(trimmed);
-      setSearching(false);
-      setResults(result.data?.results ?? []);
-    }, trimmed.length < 2 ? 0 : 400);
+    const timer = setTimeout(
+      async () => {
+        if (trimmed.length < 2) {
+          setResults([]);
+          setOpen(false);
+          return;
+        }
+        setSearching(true);
+        setOpen(true);
+        const result = await geocodeApi.search(trimmed);
+        setSearching(false);
+        setResults(result.data?.results ?? []);
+      },
+      trimmed.length < 2 ? 0 : 400,
+    );
     return () => clearTimeout(timer);
   }, [query]);
 

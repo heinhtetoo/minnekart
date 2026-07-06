@@ -50,7 +50,12 @@ describe('POST /api/trips/[id]/share', () => {
     const trip = await insertTripFor(user.id);
 
     const response = await POST(
-      jsonRequest('POST', urlFor(trip.id), undefined, cookieHeader(sessionToken)),
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        undefined,
+        cookieHeader(sessionToken),
+      ),
       context(trip.id),
     );
 
@@ -73,11 +78,21 @@ describe('POST /api/trips/[id]/share', () => {
     const trip = await insertTripFor(user.id);
 
     const first = await POST(
-      jsonRequest('POST', urlFor(trip.id), undefined, cookieHeader(sessionToken)),
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        undefined,
+        cookieHeader(sessionToken),
+      ),
       context(trip.id),
     );
     const second = await POST(
-      jsonRequest('POST', urlFor(trip.id), undefined, cookieHeader(sessionToken)),
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        undefined,
+        cookieHeader(sessionToken),
+      ),
       context(trip.id),
     );
 
@@ -96,7 +111,12 @@ describe('POST /api/trips/[id]/share', () => {
     const trip = await insertTripFor(other.id);
 
     const response = await POST(
-      jsonRequest('POST', urlFor(trip.id), undefined, cookieHeader(sessionToken)),
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        undefined,
+        cookieHeader(sessionToken),
+      ),
       context(trip.id),
     );
 
@@ -122,7 +142,12 @@ describe('POST /api/trips/[id]/share', () => {
     const trip = await insertTripFor(user.id);
 
     const response = await POST(
-      jsonRequest('POST', urlFor(trip.id), undefined, cookieHeader(sessionToken)),
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        undefined,
+        cookieHeader(sessionToken),
+      ),
       context(trip.id),
     );
 

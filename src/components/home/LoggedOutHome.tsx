@@ -92,8 +92,8 @@ export default function LoggedOutHome({ invite }: LoggedOutHomeProps) {
             fontWeight: 300,
           }}
         >
-          Every pin a story. Spin the globe, revisit the places that shaped
-          you, and keep the memories close.
+          Every pin a story. Spin the globe, revisit the places that shaped you,
+          and keep the memories close.
         </p>
       </section>
 
@@ -138,7 +138,11 @@ export default function LoggedOutHome({ invite }: LoggedOutHomeProps) {
       >
         <div className={styles.stats}>
           <StatCell value={String(demoTrips.length)} label="Sample places" />
-          <StatCell value={String(demoStats.countries)} label="Countries" bordered />
+          <StatCell
+            value={String(demoStats.countries)}
+            label="Countries"
+            bordered
+          />
           <StatCell value={String(demoStats.years)} label="Years" bordered />
           <StatCell value="$0" label="Free forever" bordered />
         </div>
@@ -148,7 +152,9 @@ export default function LoggedOutHome({ invite }: LoggedOutHomeProps) {
         className={styles.section}
         style={{ position: 'relative', zIndex: 1 }}
       >
-        <div style={{ textAlign: 'center', maxWidth: 560, margin: '0 auto 44px' }}>
+        <div
+          style={{ textAlign: 'center', maxWidth: 560, margin: '0 auto 44px' }}
+        >
           <p
             style={{
               fontSize: 11,
@@ -173,7 +179,14 @@ export default function LoggedOutHome({ invite }: LoggedOutHomeProps) {
           >
             Everything your travels deserve
           </h2>
-          <p style={{ fontSize: 15, color: 'var(--muted)', lineHeight: 1.6, margin: 0 }}>
+          <p
+            style={{
+              fontSize: 15,
+              color: 'var(--muted)',
+              lineHeight: 1.6,
+              margin: 0,
+            }}
+          >
             A living globe that remembers every place you&apos;ve stood — and
             every photograph you took there.
           </p>
@@ -306,11 +319,23 @@ function HowCard({
       </div>
       <h3
         className="serif"
-        style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)', margin: '0 0 8px' }}
+        style={{
+          fontSize: 20,
+          fontWeight: 600,
+          color: 'var(--foreground)',
+          margin: '0 0 8px',
+        }}
       >
         {title}
       </h3>
-      <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.6, margin: 0 }}>
+      <p
+        style={{
+          fontSize: 14,
+          color: 'var(--muted)',
+          lineHeight: 1.6,
+          margin: 0,
+        }}
+      >
         {body}
       </p>
     </div>

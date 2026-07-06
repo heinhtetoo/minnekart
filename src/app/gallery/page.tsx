@@ -4,9 +4,7 @@ import Link from 'next/link';
 import { db } from '@/db';
 import { photos as photosTable, trips as tripsTable } from '@/db/schema';
 import AppPage from '@/components/layout/AppPage';
-import GalleryView, {
-  GalleryPhoto,
-} from '@/components/photos/GalleryView';
+import GalleryView, { GalleryPhoto } from '@/components/photos/GalleryView';
 import { requireVerifiedPageUser } from '@/lib/auth/session-server';
 import { toSignedPhotoDTO } from '@/lib/photos/dto';
 import { signPhoto } from '@/lib/photos/sign';
@@ -38,7 +36,14 @@ export default async function GalleryPage() {
   );
 
   return (
-    <AppPage user={{ name: user.name, email: user.email, isOwner: user.role === 'owner' }} width="wide">
+    <AppPage
+      user={{
+        name: user.name,
+        email: user.email,
+        isOwner: user.role === 'owner',
+      }}
+      width="wide"
+    >
       <header className={styles.header}>
         <p className={styles.eyebrow}>The Collection</p>
         <h1 className={`serif ${styles.title}`}>Gallery</h1>

@@ -49,7 +49,9 @@ export default function InviteList({ invites }: { invites: InviteDTO[] }) {
       {invites.map((invite) => (
         <li key={invite.id} className={styles.item}>
           <div>
-            <p className={styles.itemNote}>{invite.note || 'Untitled invite'}</p>
+            <p className={styles.itemNote}>
+              {invite.note || 'Untitled invite'}
+            </p>
             <p className={styles.itemMeta}>
               Created {invite.createdLabel} · expires {invite.expiresLabel}
               {invite.usedByUsername && ` · used by @${invite.usedByUsername}`}

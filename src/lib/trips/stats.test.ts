@@ -3,9 +3,24 @@ import { describe, expect, it } from 'vitest';
 import { computeStats } from './stats';
 
 const trips = [
-  { country: 'Japan', placeName: 'Kyoto', dateStart: '2023-04-02', dateEnd: '2023-04-11' },
-  { country: 'Japan', placeName: 'Tokyo', dateStart: '2023-11-01', dateEnd: null },
-  { country: 'Norway', placeName: 'Reine', dateStart: '2022-02-14', dateEnd: '2022-02-20' },
+  {
+    country: 'Japan',
+    placeName: 'Kyoto',
+    dateStart: '2023-04-02',
+    dateEnd: '2023-04-11',
+  },
+  {
+    country: 'Japan',
+    placeName: 'Tokyo',
+    dateStart: '2023-11-01',
+    dateEnd: null,
+  },
+  {
+    country: 'Norway',
+    placeName: 'Reine',
+    dateStart: '2022-02-14',
+    dateEnd: '2022-02-20',
+  },
 ];
 
 describe('computeStats', () => {
@@ -23,7 +38,12 @@ describe('computeStats', () => {
 
   it('spans every year a trip range crosses', () => {
     const span = [
-      { country: 'Chile', placeName: 'Santiago', dateStart: '2019-12-28', dateEnd: '2020-01-05' },
+      {
+        country: 'Chile',
+        placeName: 'Santiago',
+        dateStart: '2019-12-28',
+        dateEnd: '2020-01-05',
+      },
     ];
     expect(computeStats(span, 0).years).toBe(2);
   });

@@ -26,7 +26,12 @@ describe('POST /api/admin/invites', () => {
     const { sessionToken } = await createOwnerWithSession();
 
     const response = await POST(
-      jsonRequest('POST', url, { note: 'for Sofia' }, cookieHeader(sessionToken)),
+      jsonRequest(
+        'POST',
+        url,
+        { note: 'for Sofia' },
+        cookieHeader(sessionToken),
+      ),
     );
 
     expect(response.status).toBe(200);

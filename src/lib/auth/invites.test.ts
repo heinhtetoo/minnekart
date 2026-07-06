@@ -108,9 +108,9 @@ describe('inviteStatus', () => {
   });
 
   it('returns expired when past its expiry', () => {
-    expect(inviteStatus({ ...base, expiresAt: new Date(Date.now() - 1000) })).toBe(
-      'expired',
-    );
+    expect(
+      inviteStatus({ ...base, expiresAt: new Date(Date.now() - 1000) }),
+    ).toBe('expired');
   });
 
   it('prefers used over revoked and expired', () => {

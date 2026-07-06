@@ -37,9 +37,7 @@ export async function generateMetadata({
   return publicTripMetadata(resolved.trip, resolved.tiles);
 }
 
-export default async function SharedTripPage({
-  params,
-}: SharedTripPageProps) {
+export default async function SharedTripPage({ params }: SharedTripPageProps) {
   const { token } = await params;
   const resolved = await resolve(token);
   if (!resolved) {

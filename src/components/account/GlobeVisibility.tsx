@@ -65,7 +65,11 @@ export default function GlobeVisibility({
       {isPublic && (
         <div className={styles.linkRow}>
           <input className={styles.linkInput} readOnly value={globeUrl} />
-          <button type="button" className={styles.copyButton} onClick={copyLink}>
+          <button
+            type="button"
+            className={styles.copyButton}
+            onClick={copyLink}
+          >
             {copied ? 'Copied' : 'Copy'}
           </button>
         </div>

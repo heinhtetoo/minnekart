@@ -49,11 +49,7 @@
   top: 8px;
   bottom: 8px;
   width: 2px;
-  background: linear-gradient(
-    180deg,
-    var(--accent),
-    rgba(74, 124, 111, 0.18)
-  );
+  background: linear-gradient(180deg, var(--accent), rgba(74, 124, 111, 0.18));
 }
 
 .entry {

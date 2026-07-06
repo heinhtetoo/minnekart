@@ -35,9 +35,7 @@ export async function generateMetadata({
   return publicTripMetadata(resolved.trip, resolved.tiles);
 }
 
-export default async function PublicTripPage({
-  params,
-}: PublicTripPageProps) {
+export default async function PublicTripPage({ params }: PublicTripPageProps) {
   const { username, tripId } = await params;
   const resolved = await resolve(username, tripId);
   if (!resolved) {
