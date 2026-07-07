@@ -8,22 +8,22 @@ PR previews), Postgres on Neon, photos on Cloudflare R2, CI on GitHub Actions.
 Validated at boot by `src/lib/env.ts` — a missing/invalid required var throws on
 startup. Set these in Vercel for **both** Production and Preview unless noted.
 
-| Var                    | Required    | Notes                                                                                                                   |
-| ---------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`         | yes         | Neon connection string (`postgres…`). Also a GitHub Actions secret for the migrate job.                                 |
-| `APP_URL`              | yes in prod | Public base URL; builds invite/share/reset links. Defaults to `http://localhost:3000`. Use the preview URL for Preview. |
-| `NODE_ENV`             | auto        | Vercel sets `production`.                                                                                               |
-| `EMAIL_TRANSPORT`      | yes in prod | `console` \| `memory` \| `smtp`. Set `smtp` in prod.                                                                    |
-| `SMTP_HOST`            | when smtp   | Brevo: `smtp-relay.brevo.com`.                                                                                          |
-| `SMTP_PORT`            | when smtp   | `587` (STARTTLS — works from Vercel serverless).                                                                        |
-| `SMTP_USER`            | when smtp   | Brevo SMTP login.                                                                                                       |
-| `SMTP_PASS`            | when smtp   | Brevo SMTP key (not your account password).                                                                             |
-| `EMAIL_FROM`           | when smtp   | e.g. `Minnekart <hello@yourdomain.com>` — must be a Brevo-verified sender.                                              |
-| `STORAGE_DRIVER`       | yes in prod | `r2` \| `memory`. **Defaults to `r2`.**                                                                                 |
-| `R2_ACCOUNT_ID`        | when r2     | Cloudflare account id.                                                                                                  |
-| `R2_ACCESS_KEY_ID`     | when r2     | R2 token key id.                                                                                                        |
-| `R2_SECRET_ACCESS_KEY` | when r2     | R2 token secret.                                                                                                        |
-| `R2_BUCKET`            | when r2     | Private bucket name.                                                                                                    |
+| Var                    | Required    | Notes                                                                                                                                                                                                   |
+| ---------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`         | yes         | Neon **pooled** connection string (host contains `-pooler`) for the Vercel runtime — see the pooling note below. Also a GitHub Actions secret for the migrate job (use the direct/unpooled host there). |
+| `APP_URL`              | yes in prod | Public base URL; builds invite/share/reset links. Defaults to `http://localhost:3000`. Use the preview URL for Preview.                                                                                 |
+| `NODE_ENV`             | auto        | Vercel sets `production`.                                                                                                                                                                               |
+| `EMAIL_TRANSPORT`      | yes in prod | `console` \| `memory` \| `smtp`. Set `smtp` in prod.                                                                                                                                                    |
+| `SMTP_HOST`            | when smtp   | Brevo: `smtp-relay.brevo.com`.                                                                                                                                                                          |
+| `SMTP_PORT`            | when smtp   | `587` (STARTTLS — works from Vercel serverless).                                                                                                                                                        |
+| `SMTP_USER`            | when smtp   | Brevo SMTP login.                                                                                                                                                                                       |
+| `SMTP_PASS`            | when smtp   | Brevo SMTP key (not your account password).                                                                                                                                                             |
+| `EMAIL_FROM`           | when smtp   | e.g. `Minnekart <hello@yourdomain.com>` — must be a Brevo-verified sender.                                                                                                                              |
+| `STORAGE_DRIVER`       | yes in prod | `r2` \| `memory`. **Defaults to `r2`.**                                                                                                                                                                 |
+| `R2_ACCOUNT_ID`        | when r2     | Cloudflare account id.                                                                                                                                                                                  |
+| `R2_ACCESS_KEY_ID`     | when r2     | R2 token key id.                                                                                                                                                                                        |
+| `R2_SECRET_ACCESS_KEY` | when r2     | R2 token secret.                                                                                                                                                                                        |
+| `R2_BUCKET`            | when r2     | Private bucket name.                                                                                                                                                                                    |
 
 **Two footguns to check in the audit:**
 
@@ -34,9 +34,19 @@ startup. Set these in Vercel for **both** Production and Preview unless noted.
 2. `EMAIL_TRANSPORT=smtp` needs all four `SMTP_*` vars **and** `EMAIL_FROM`; the
    transport throws a named error if any is missing.
 
+**Neon pooling (page-transition latency):** the Vercel runtime opens short-lived
+Postgres connections per serverless invocation, so `DATABASE_URL` must point at
+Neon's **pooled** endpoint — the host with `-pooler` in it (PgBouncer,
+transaction mode). Using the direct endpoint makes cold navigations pay a fresh
+handshake and can exhaust connections. The app's two interactive transactions
+(signup, password reset) use plain `BEGIN/COMMIT`, which work under transaction
+pooling. The GitHub Actions migrate job should use the **direct** (unpooled)
+host — DDL is safest on a session-mode connection.
+
 ### Prod-vs-preview audit checklist
 
-- [ ] `DATABASE_URL` set in Vercel (prod + preview) and matches the GitHub secret.
+- [ ] `DATABASE_URL` set in Vercel (prod + preview), uses the Neon **pooled**
+      (`-pooler`) host, and the GitHub migrate secret uses the direct host.
 - [ ] `APP_URL` correct per environment (prod domain vs preview URL).
 - [ ] `EMAIL_TRANSPORT=smtp` + `SMTP_*` + `EMAIL_FROM` set in prod.
 - [ ] `STORAGE_DRIVER=r2` + all four `R2_*` set in prod (or `memory` on purpose).
