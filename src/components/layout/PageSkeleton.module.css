@@ -1,0 +1,264 @@
+.navStrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 66px;
+  padding: 0 clamp(20px, 5vw, 64px);
+  border-bottom: 1px solid rgba(28, 25, 23, 0.08);
+}
+
+.main {
+  flex: 1 0 auto;
+  padding: clamp(20px, 4vw, 40px) clamp(20px, 5vw, 64px) clamp(28px, 6vw, 56px);
+}
+
+/* Full-bleed main used by the trip hero — its own padding lives inside. */
+.mainBleed {
+  flex: 1 0 auto;
+}
+
+.wide {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.mid {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.narrow {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.form {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 28px;
+}
+
+.gap12 {
+  height: 12px;
+}
+
+.block {
+  border-radius: 10px;
+  background: rgba(28, 25, 23, 0.07);
+  position: relative;
+  overflow: hidden;
+}
+
+.block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.45),
+    transparent
+  );
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Home ------------------------------------------------------------------ */
+.heroRow {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.globe {
+  flex: 1 1 auto;
+  max-width: 460px;
+  aspect-ratio: 1;
+}
+
+.pinsCol {
+  width: 360px;
+  flex-shrink: 0;
+}
+
+.pinRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+
+.pinBody {
+  flex: 1;
+}
+
+.statsBand {
+  background: var(--forest);
+  margin: 34px 0;
+  padding: 34px clamp(20px, 5vw, 64px);
+}
+
+.statsInner {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.statCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.cardGrid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  margin-top: 26px;
+}
+
+.cardBody {
+  padding: 16px;
+}
+
+/* Gallery --------------------------------------------------------------- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.masonry {
+  columns: 3;
+  column-gap: 16px;
+}
+
+.masonryItem {
+  width: 100%;
+  margin-bottom: 16px;
+  break-inside: avoid;
+}
+
+/* Timeline -------------------------------------------------------------- */
+.thread {
+  position: relative;
+}
+
+.line {
+  position: absolute;
+  left: 7px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: rgba(28, 25, 23, 0.12);
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.entryBody {
+  flex: 1;
+}
+
+/* Trip detail ----------------------------------------------------------- */
+.tripHero {
+  height: clamp(300px, 42vw, 420px);
+  border-radius: 0;
+}
+
+.tripBody {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: clamp(28px, 5vw, 48px) clamp(20px, 5vw, 64px);
+}
+
+.bodyGrid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+
+/* About ----------------------------------------------------------------- */
+.aboutGrid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.3fr;
+  gap: 40px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.portrait {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 40px 28px;
+  border: 1px solid rgba(28, 25, 23, 0.08);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.statsRow {
+  display: flex;
+  gap: 32px;
+  margin-top: 28px;
+}
+
+/* Form ------------------------------------------------------------------ */
+.fieldRow {
+  margin-bottom: 20px;
+}
+
+@media (max-width: 860px) {
+  .bodyGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .heroRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .globe {
+    max-width: none;
+    width: 100%;
+  }
+  .pinsCol {
+    width: 100%;
+  }
+  .cardGrid3 {
+    grid-template-columns: 1fr;
+  }
+  .masonry {
+    columns: 2;
+  }
+  .aboutGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block::after {
+    animation: none;
+  }
+}

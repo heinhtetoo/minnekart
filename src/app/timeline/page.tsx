@@ -15,12 +15,14 @@ export default async function TimelinePage() {
   const user = await requireVerifiedPageUser();
   const database = db();
 
-  const trips = await database
-    .select()
-    .from(tripsTable)
-    .where(eq(tripsTable.userId, user.id))
-    .orderBy(desc(tripsTable.dateStart), desc(tripsTable.createdAt));
-  const covers = await tripCovers(user.id);
+  const [trips, covers] = await Promise.all([
+    database
+      .select()
+      .from(tripsTable)
+      .where(eq(tripsTable.userId, user.id))
+      .orderBy(desc(tripsTable.dateStart), desc(tripsTable.createdAt)),
+    tripCovers(user.id),
+  ]);
 
   return (
     <AppPage

@@ -27,16 +27,18 @@ export default async function Home({ searchParams }: HomeProps) {
   }
 
   const database = db();
-  const owned = await database
-    .select()
-    .from(trips)
-    .where(eq(trips.userId, user.id))
-    .orderBy(desc(trips.dateStart), desc(trips.createdAt));
-  const photoCounts = await database
-    .select({ tripId: photos.tripId, value: count() })
-    .from(photos)
-    .where(eq(photos.userId, user.id))
-    .groupBy(photos.tripId);
+  const [owned, photoCounts] = await Promise.all([
+    database
+      .select()
+      .from(trips)
+      .where(eq(trips.userId, user.id))
+      .orderBy(desc(trips.dateStart), desc(trips.createdAt)),
+    database
+      .select({ tripId: photos.tripId, value: count() })
+      .from(photos)
+      .where(eq(photos.userId, user.id))
+      .groupBy(photos.tripId),
+  ]);
 
   const photosByTrip = new Map(
     photoCounts.map((row) => [row.tripId, row.value]),

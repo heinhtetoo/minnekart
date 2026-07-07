@@ -18,13 +18,14 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
   const user = await requireVerifiedPageUser();
   const { id } = await params;
 
-  const trip = await loadOwnedTrip(id, user.id);
+  const [trip, tiles, neighbours] = await Promise.all([
+    loadOwnedTrip(id, user.id),
+    loadTripTiles(id),
+    loadNeighbours(user.id, id),
+  ]);
   if (!trip) {
     notFound();
   }
-
-  const tiles = await loadTripTiles(id);
-  const neighbours = await loadNeighbours(user.id, id);
 
   return (
     <>

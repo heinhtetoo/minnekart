@@ -197,3 +197,21 @@ lint clean. See PRD.md for the decisions behind everything here.
 - Repo-side Phase 11 deliverables are done. Remaining launch tasks are external
   actions (provision Brevo + set Vercel envs, provision R2, install the OCI cron,
   send the first invites), each documented in `docs/OPS.md`
+
+## Post-launch bugs (reported 2026-07-07)
+
+- [ ] **iOS Safari — text inputs hard to focus.** On iPhone Safari, tapping a
+      textbox doesn't focus it on the first tap; it takes 3–4 rapid taps to gain
+      focus, then another tap before the cursor shows. Chrome on Android, Safari
+      on Mac, and Edge on Windows are all fine — iOS Safari only. Affects text
+      inputs across the app (e.g. auth/signup fields).
+- [x] **Slow client-side page transitions (all devices).** Root cause: no
+      `loading.tsx` boundaries (old page stayed mounted until the server render
+      finished), sequential per-page DB round-trips, and raw `pg` TCP pooling on
+      serverless. Fixed in code: added `PageSkeleton` + `loading.tsx` for all app
+      routes (instant skeleton + dynamic-route prefetch) and parallelised the
+      per-page queries with `Promise.all` (home, timeline, trip detail, about).
+      DB baseline documented in `docs/OPS.md` (Neon **pooled** `-pooler` endpoint).
+      Ops follow-up: set the pooled `DATABASE_URL` in Vercel, then measure prod
+      RSC navigation timing; escalate to `@neondatabase/serverless` only if
+      connection setup (not Neon autosuspend) is still the bottleneck.

@@ -35,15 +35,14 @@ async function loadOwner() {
 
 async function loadStatsFor(userId: string) {
   const database = db();
-  const owned = await database
-    .select()
-    .from(trips)
-    .where(eq(trips.userId, userId));
-  const [photoCount] = await database
-    .select({ value: count() })
-    .from(photos)
-    .where(eq(photos.userId, userId));
-  return computeStats(owned, photoCount?.value ?? 0);
+  const [owned, photoCountRows] = await Promise.all([
+    database.select().from(trips).where(eq(trips.userId, userId)),
+    database
+      .select({ value: count() })
+      .from(photos)
+      .where(eq(photos.userId, userId)),
+  ]);
+  return computeStats(owned, photoCountRows[0]?.value ?? 0);
 }
 
 export default async function AboutPage() {
