@@ -24,44 +24,40 @@ export const metadata: Metadata = {
 };
 
 async function loadOwner() {
-  const database = db();
-  const [owner] = await database
+  const [owner] = await db()
     .select()
     .from(users)
     .where(eq(users.role, 'owner'))
     .orderBy(asc(users.createdAt))
     .limit(1);
-  if (!owner) {
-    return null;
-  }
+  return owner ?? null;
+}
 
+async function loadStatsFor(userId: string) {
+  const database = db();
   const owned = await database
     .select()
     .from(trips)
-    .where(eq(trips.userId, owner.id));
+    .where(eq(trips.userId, userId));
   const [photoCount] = await database
     .select({ value: count() })
     .from(photos)
-    .where(eq(photos.userId, owner.id));
-
-  return { owner, stats: computeStats(owned, photoCount?.value ?? 0) };
+    .where(eq(photos.userId, userId));
+  return computeStats(owned, photoCount?.value ?? 0);
 }
 
 export default async function AboutPage() {
-  const [data, viewer] = await Promise.all([
-    loadOwner(),
-    getServerSessionUser(),
-  ]);
-  if (!data) {
+  const viewer = await getServerSessionUser();
+  const loggedIn = viewer !== null && isVerified(viewer);
+  const subject = loggedIn ? viewer : await loadOwner();
+  if (!subject) {
     notFound();
   }
-  const { owner, stats } = data;
-  const initial = (owner.name || owner.username || '?')
+  const stats = await loadStatsFor(subject.id);
+  const initial = (subject.name || subject.username || '?')
     .trim()
     .charAt(0)
     .toUpperCase();
-
-  const loggedIn = viewer !== null && isVerified(viewer);
 
   return (
     <>
@@ -72,14 +68,14 @@ export default async function AboutPage() {
           isOwner={viewer.role === 'owner'}
         />
       ) : (
-        <PublicChrome ownerName={owner.name} />
+        <PublicChrome ownerName={subject.name} />
       )}
       <main className="fade">
         <section className={styles.grid}>
           <div className={styles.card}>
             <div>
               <div className={styles.avatar}>{initial}</div>
-              <div className={styles.cardName}>{owner.name}</div>
+              <div className={styles.cardName}>{subject.name}</div>
               <div className={styles.cardTagline}>{TAGLINE}</div>
             </div>
           </div>
