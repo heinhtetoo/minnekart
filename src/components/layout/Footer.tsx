@@ -19,24 +19,15 @@ export default function Footer({ loggedIn }: FooterProps) {
           <Wordmark base="#f4efe6" accent="#9ec2b2" stroke="#9ec2b2" />
         </Link>
 
-        <nav className={styles.links} aria-label="Footer">
-          {loggedIn ? (
-            navItems.map((item) => (
+        {loggedIn && (
+          <nav className={styles.links} aria-label="Footer">
+            {navItems.map((item) => (
               <Link key={item.href} href={item.href} className={styles.link}>
                 {item.label}
               </Link>
-            ))
-          ) : (
-            <>
-              <Link href="/about" className={styles.link}>
-                About
-              </Link>
-              <Link href="/" className={styles.link}>
-                Sign in
-              </Link>
-            </>
-          )}
-        </nav>
+            ))}
+          </nav>
+        )}
 
         <p className={styles.copy}>© {year} · A memory palace you can spin</p>
       </div>

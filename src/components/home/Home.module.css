@@ -168,7 +168,7 @@
   position: relative;
 }
 
-.pinsListWrap::after {
+.pinsListWrap[data-overflow='true']::after {
   content: '';
   position: absolute;
   left: 0;

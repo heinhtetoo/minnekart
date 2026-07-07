@@ -86,7 +86,7 @@ export default function Globe({
 
     const base = (Math.min(width, height) / 2 - 20) / MAX_ZOOM;
     const view = { rotation: [0, -25, 0] as Rotation, scale: base };
-    let lastInteraction = 0;
+    let lastInteraction = -Infinity;
     let dragging = false;
     let animating = false;
     let raf = 0;

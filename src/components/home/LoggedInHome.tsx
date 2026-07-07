@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Globe, { GlobePin } from '@/components/globe/Globe';
 import Footer from '@/components/layout/Footer';
@@ -148,14 +148,26 @@ function PinsList({
   selected: number | null;
   onSelect: (index: number) => void;
 }) {
+  const listRef = useRef<HTMLUListElement>(null);
+  const [overflowing, setOverflowing] = useState(false);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const measure = () => setOverflowing(el.scrollHeight > el.clientHeight + 1);
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [trips.length]);
+
   return (
     <div>
       <div className={styles.pinsHead}>
         <span className={styles.pinsLabel}>Your Pins</span>
         <span className={styles.pinsHint}>Drag to spin · scroll to zoom</span>
       </div>
-      <div className={styles.pinsListWrap}>
-        <ul className={styles.pinsList}>
+      <div className={styles.pinsListWrap} data-overflow={overflowing}>
+        <ul ref={listRef} className={styles.pinsList}>
           {trips.map((trip, index) => (
             <li key={trip.id}>
               <button
