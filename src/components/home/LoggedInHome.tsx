@@ -13,7 +13,6 @@ import { TripStats } from '@/lib/trips/stats';
 
 import styles from './Home.module.css';
 import { formatTripDates } from './format';
-import PeekPanel from './PeekPanel';
 import StatCell from './StatCell';
 
 export interface HomeTrip extends TripDTO {
@@ -90,29 +89,23 @@ export default function LoggedInHome({
               focusId={selected === null ? null : String(selected)}
               onSelect={(id) => setSelected(Number(id))}
             />
-            {trip && (
-              <PeekPanel
-                title={trip.placeName}
-                subtitle={`${trip.country} · ${formatTripDates(
-                  trip.dateStart,
-                  trip.dateEnd,
-                )}`}
-                highlight={trip.highlight}
-                story={trip.story}
-                href={`/trip/${trip.id}`}
-                onClose={() => setSelected(null)}
-              />
-            )}
           </div>
           <div className={styles.formWrap}>
             {trips.length === 0 ? (
               <EmptyState />
             ) : (
-              <PinsList
-                trips={trips}
-                selected={selected}
-                onSelect={setSelected}
-              />
+              <>
+                <PinsList
+                  trips={trips}
+                  selected={selected}
+                  onSelect={setSelected}
+                />
+                <DetailCard
+                  key={trip ? trip.id : 'empty'}
+                  trip={trip}
+                  onReset={() => setSelected(null)}
+                />
+              </>
             )}
           </div>
         </section>
@@ -193,6 +186,64 @@ function PinsList({
             </li>
           ))}
         </ul>
+      </div>
+    </div>
+  );
+}
+
+function DetailCard({
+  trip,
+  onReset,
+}: {
+  trip: HomeTrip | null;
+  onReset: () => void;
+}) {
+  if (!trip) {
+    return (
+      <div className={`fade ${styles.detailCard}`}>
+        <div className={styles.detailTop}>
+          <span className={styles.detailLabel}>
+            <span className={styles.detailDot} />
+            Highlight
+          </span>
+        </div>
+        <p className={`serif ${styles.detailPrompt}`}>
+          Click any pin on the globe — or in the list — to relive a memory.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`fade ${styles.detailCard}`}>
+      <div className={styles.detailTop}>
+        <span className={styles.detailLabel}>
+          <span className={styles.detailDot} />
+          {trip.country} · {formatTripDates(trip.dateStart, trip.dateEnd)}
+        </span>
+        <button type="button" className={styles.detailReset} onClick={onReset}>
+          Reset view
+        </button>
+      </div>
+      <div className={styles.detailBody}>
+        <span
+          className={styles.detailThumb}
+          style={{ background: coverGradient(trip.id) }}
+        />
+        <div className={styles.detailMain}>
+          <div className={`serif ${styles.detailName}`}>{trip.placeName}</div>
+          {trip.highlight && (
+            <p className={`serif ${styles.detailQuote}`}>“{trip.highlight}”</p>
+          )}
+          <div className={styles.detailFoot}>
+            <span className={styles.detailPhotos}>
+              {trip.photoCount} photos
+            </span>
+            <Link href={`/trip/${trip.id}`} className={styles.detailOpen}>
+              Open journey →
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

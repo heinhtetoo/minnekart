@@ -33,17 +33,6 @@
   width: min(100%, 420px);
 }
 
-.peek {
-  position: absolute;
-  left: 50%;
-  bottom: 12%;
-  transform: translateX(-50%);
-  width: min(96%, 570px);
-  max-height: 62%;
-  overflow-y: auto;
-  z-index: 5;
-}
-
 .placesPanel {
   background: #fff;
   border-radius: 16px;
@@ -187,7 +176,7 @@
   display: flex;
   flex-direction: column;
   gap: 7px;
-  max-height: 460px;
+  max-height: 300px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(28, 25, 23, 0.18) transparent;
@@ -274,6 +263,125 @@
   color: var(--accent);
   font-weight: 600;
   flex-shrink: 0;
+}
+
+.detailCard {
+  margin-top: 14px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px 20px;
+  border: 1px solid rgba(28, 25, 23, 0.07);
+  box-shadow: 0 2px 10px rgba(28, 25, 23, 0.04);
+}
+
+.detailTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.detailLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.detailDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.detailReset {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 11px;
+  color: #b0a898;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.detailPrompt {
+  font-size: 16px;
+  color: var(--foreground);
+  margin: 0;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.detailBody {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+}
+
+.detailThumb {
+  flex-shrink: 0;
+  width: 74px;
+  height: 56px;
+  border-radius: 9px;
+}
+
+.detailMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.detailName {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0 0 6px;
+  line-height: 1.2;
+}
+
+.detailQuote {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 0 9px;
+  line-height: 1.5;
+  font-style: italic;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.detailFoot {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.detailPhotos {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.detailOpen {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.detailOpen:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .featuredSection {

@@ -90,6 +90,7 @@ export default function Globe({
     let dragging = false;
     let animating = false;
     let raf = 0;
+    let animationFrame = 0;
 
     const projection = geoOrthographic()
       .scale(view.scale)
@@ -232,6 +233,7 @@ export default function Globe({
       targetScale: number,
       onDone?: () => void,
     ) {
+      cancelAnimationFrame(animationFrame);
       const startRotation: Rotation = [...view.rotation];
       const startScale = view.scale;
       const deltaLng =
@@ -252,13 +254,14 @@ export default function Globe({
         view.scale = startScale + (targetScale - startScale) * eased;
         redraw();
         if (progress < 1) {
-          requestAnimationFrame(step);
+          animationFrame = requestAnimationFrame(step);
         } else {
           animating = false;
+          animationFrame = 0;
           onDone?.();
         }
       };
-      requestAnimationFrame(step);
+      animationFrame = requestAnimationFrame(step);
     }
 
     function focusPin(pin: GlobePin) {
@@ -326,6 +329,7 @@ export default function Globe({
 
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(animationFrame);
       svg.on('wheel', null);
       svg.on('.drag', null);
       apiRef.current = null;

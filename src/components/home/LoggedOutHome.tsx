@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode, useRef } from 'react';
 
 import demoTrips from '@/data/demo-trips.json';
 import { computeStats } from '@/lib/trips/stats';
@@ -10,8 +10,6 @@ import Wordmark from '@/components/brand/Wordmark';
 import Footer from '@/components/layout/Footer';
 
 import styles from './Home.module.css';
-import { formatTripDates } from './format';
-import PeekPanel from './PeekPanel';
 import StatCell from './StatCell';
 
 const pins: GlobePin[] = demoTrips.map((trip, index) => ({
@@ -36,8 +34,6 @@ interface LoggedOutHomeProps {
 }
 
 export default function LoggedOutHome({ invite }: LoggedOutHomeProps) {
-  const [selected, setSelected] = useState<number | null>(null);
-  const trip = selected === null ? null : demoTrips[selected];
   const authRef = useRef<AuthCardHandle>(null);
   const getStartedRef = useRef<HTMLDivElement>(null);
 
@@ -99,21 +95,7 @@ export default function LoggedOutHome({ invite }: LoggedOutHomeProps) {
 
       <section className={styles.hero}>
         <div className={styles.globeLayer}>
-          <Globe
-            pins={pins}
-            width={960}
-            height={960}
-            onSelect={(id) => setSelected(Number(id))}
-          />
-          {trip && (
-            <PeekPanel
-              title={trip.placeName}
-              subtitle={`${trip.country} · ${formatTripDates(trip.dateStart, trip.dateEnd)}`}
-              highlight={trip.highlight}
-              story={trip.story}
-              onClose={() => setSelected(null)}
-            />
-          )}
+          <Globe pins={pins} width={960} height={960} />
         </div>
         <div ref={getStartedRef} id="get-started" className={styles.formWrap}>
           <AuthCard ref={authRef} invite={invite} />
@@ -126,8 +108,8 @@ export default function LoggedOutHome({ invite }: LoggedOutHomeProps) {
               fontStyle: 'italic',
             }}
           >
-            Drag the globe to spin it · click any pin to peek inside a sample
-            journey.
+            Drag the globe to spin it · click any pin to zoom in on a sample
+            place.
           </p>
         </div>
       </section>

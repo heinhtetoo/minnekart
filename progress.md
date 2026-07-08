@@ -205,6 +205,14 @@ lint clean. See PRD.md for the decisions behind everything here.
       focus, then another tap before the cursor shows. Chrome on Android, Safari
       on Mac, and Edge on Windows are all fine — iOS Safari only. Affects text
       inputs across the app (e.g. auth/signup fields).
+- [ ] **Globe not zoomable on mobile (iOS Safari + Android Chrome).** Pinch-to-
+      zoom does nothing on touch devices. Root cause: `Globe.tsx` only wires zoom
+      to the `wheel` event (mouse/trackpad); there's no touch pinch handler, so
+      the `MIN_ZOOM`/`MAX_ZOOM` scale never changes on phones. Drag-to-spin works
+      (d3-drag is touch-aware); only zoom is missing. Fix: add a two-finger pinch
+      gesture (e.g. `touchmove` distance delta, or d3-zoom's touch support) that
+      drives the same `view.scale` clamp, and update the "scroll to zoom" hint on
+      touch. Full-bleed globe layout must stay untouched.
 - [x] **Slow client-side page transitions (all devices).** Root cause: no
       `loading.tsx` boundaries (old page stayed mounted until the server render
       finished), sequential per-page DB round-trips, and raw `pg` TCP pooling on
@@ -215,3 +223,10 @@ lint clean. See PRD.md for the decisions behind everything here.
       Ops follow-up: set the pooled `DATABASE_URL` in Vercel, then measure prod
       RSC navigation timing; escalate to `@neondatabase/serverless` only if
       connection setup (not Neon autosuspend) is still the bottleneck.
+- [x] **Home detail card docked (design match).** The logged-in home peek card
+      floated over the globe and overlapped the forest-green stats band. Replaced
+      it with the design's docked inspector card (`Atlas Travel Site.dc.html`)
+      below the pins list — empty + filled states, "Reset view" and "Open
+      journey →". Capped the pins list height so both fit; the list's overflow
+      fade is unchanged. The logged-out globe now zooms only on pin click (no
+      card). Public globe (`/u/<username>`) left unchanged.
