@@ -52,8 +52,8 @@ lint clean. See PRD.md for the decisions behind everything here.
 - [x] Auth API integration tests (full flows, expiry, abuse cases)
 - [x] Owner bootstrap + one-time invite CLI scripts (admin UI is
       Phase 9)
-- [ ] Pick + integrate real email provider; verified sender
-      (deferred — this is the same task as Phase 11 below)
+- [x] Pick + integrate real email provider; verified sender
+      (Brevo provisioned + Vercel envs set — live and working)
 
 ## Phase 4 — Memory (Trip) API + Geocoding (backend-only)
 
@@ -76,10 +76,9 @@ lint clean. See PRD.md for the decisions behind everything here.
       list, delete — with object cleanup); trip delete purges objects
 - [x] Signed GET URLs (~1h) minted at render for photo reads
 - [x] Integration tests: presign authz, record lifecycle, cleanup
-- [ ] Create real private R2 bucket + API token; set env/secrets
-      (user action, ops-only — code is switch-ready via `STORAGE_DRIVER`;
-      build/tests use the in-memory adapter until then. Tracked under the
-      Phase 11 env audit)
+- [x] Create real private R2 bucket + API token; set env/secrets
+      (R2 bucket + token provisioned, `STORAGE_DRIVER=r2` in prod — live and
+      working; build/tests still use the in-memory adapter)
 - [x] Client-side processing (resize → WebP + thumbnail, HEIC, EXIF
       strip) + upload UI (multi-select, progress) — delivered in Phase 7
       (`process.ts`, `PhotoUploader.tsx`). Reorder stays deferred (no
@@ -200,13 +199,19 @@ lint clean. See PRD.md for the decisions behind everything here.
 
 ## Post-launch bugs (reported 2026-07-07)
 
-- [x] **iOS Safari — text inputs hard to focus.** On iPhone Safari, tapping a
-      textbox didn't focus it on the first tap; it took 3–4 rapid taps, then
-      another before the caret showed. iOS Safari only. Root cause: every typed
-      input uses the shared `.field` class at `font-size: 14px`, under iOS's 16px
-      threshold, so focus triggered an auto-zoom that fought the taps. Fixed by
-      raising `.field` (and the read-only `.linkInput` fields) to 16px, which
-      removes the focus-zoom — no viewport/zoom disabling. Verify on-device.
+- [x] **iOS Safari — sign-in/sign-up taps need repeating.** On iPhone Safari,
+      buttons AND text fields on the sign-in/sign-up form took 2–3 taps to
+      respond (focus, then another tap for the caret; even "Sign in" needed a
+      double tap). Only that form — every form after login was fine. Real root
+      cause: the form shares the logged-out home with the globe, whose idle
+      auto-spin redraws all ~177 country paths **every frame, forever** (nothing
+      resets `lastInteraction` while you tap the card, not the globe). That
+      continuous main-thread work starves iOS Safari's tap/click dispatch for the
+      whole page. Fixed by disabling the globe's auto-spin on touch devices
+      (`matchMedia('(pointer: coarse)')`) — desktop spin unchanged; drag-to-spin
+      still works on touch. (The earlier 16px `.field`/`.linkInput` change,
+      `b047a43`, was a correct anti-focus-zoom improvement but not this cause.)
+      Confirmed fixed on iPhone Safari — single-tap focus and actions.
 - [x] **Globe not zoomable on mobile (iOS Safari + Android Chrome).** Pinch-to-
       zoom did nothing on touch devices — `Globe.tsx` only wired zoom to the
       `wheel` event (mouse/trackpad), with no touch pinch handler. Fixed by adding
@@ -214,7 +219,9 @@ lint clean. See PRD.md for the decisions behind everything here.
       `view.scale` clamp and `redraw()` the wheel path uses (via a shared `zoomTo`
       helper), guarding drag-rotation during a pinch. `touch-action: pan-y` kept,
       so single-finger spin and page scroll are unaffected. Hint updated to
-      "pinch or scroll to zoom". Verify on-device.
+      "pinch or scroll to zoom". A follow-up (`0976b99`) registers the touch
+      handlers before d3-drag, whose `touchstart` `stopImmediatePropagation()`
+      was blocking them. Confirmed working on Android Chrome.
 - [x] **Slow client-side page transitions (all devices).** Root cause: no
       `loading.tsx` boundaries (old page stayed mounted until the server render
       finished), sequential per-page DB round-trips, and raw `pg` TCP pooling on
@@ -222,9 +229,9 @@ lint clean. See PRD.md for the decisions behind everything here.
       routes (instant skeleton + dynamic-route prefetch) and parallelised the
       per-page queries with `Promise.all` (home, timeline, trip detail, about).
       DB baseline documented in `docs/OPS.md` (Neon **pooled** `-pooler` endpoint).
-      Ops follow-up: set the pooled `DATABASE_URL` in Vercel, then measure prod
-      RSC navigation timing; escalate to `@neondatabase/serverless` only if
-      connection setup (not Neon autosuspend) is still the bottleneck.
+      Resolved by the skeletons + parallel queries. Pooled `DATABASE_URL` was
+      already set in Vercel, so no change there; remaining cold-start latency is
+      Neon free-tier autosuspend, accepted for now.
 - [x] **Home detail card docked (design match).** The logged-in home peek card
       floated over the globe and overlapped the forest-green stats band. Replaced
       it with the design's docked inspector card (`Atlas Travel Site.dc.html`)
