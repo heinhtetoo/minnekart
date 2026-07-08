@@ -277,27 +277,6 @@ export default function Globe({
       animateTo([...view.rotation], base);
     }
 
-    const dragBehavior = drag<SVGSVGElement, unknown>()
-      .on('start', () => {
-        dragging = true;
-        lastInteraction = performance.now();
-      })
-      .on('drag', (event) => {
-        if (pinching) return;
-        view.rotation = [
-          view.rotation[0] + event.dx * 0.26,
-          Math.max(-80, Math.min(80, view.rotation[1] - event.dy * 0.26)),
-          0,
-        ];
-        lastInteraction = performance.now();
-        redraw();
-      })
-      .on('end', () => {
-        dragging = false;
-        lastInteraction = performance.now();
-      });
-    svg.call(dragBehavior);
-
     function zoomTo(next: number) {
       view.scale = Math.max(base * MIN_ZOOM, Math.min(base * MAX_ZOOM, next));
       redraw();
@@ -310,16 +289,9 @@ export default function Globe({
       );
     }
 
-    svg.on(
-      'wheel',
-      (event: WheelEvent) => {
-        event.preventDefault();
-        lastInteraction = performance.now();
-        const factor = event.deltaY < 0 ? 1.09 : 0.92;
-        zoomTo(view.scale * factor);
-      },
-      { passive: false } as never,
-    );
+    // Register the pinch handlers before d3-drag: on touchstart d3-drag calls
+    // stopImmediatePropagation(), which would block any later-registered
+    // touchstart listener on the same element.
     svg.on(
       'touchstart',
       (event: TouchEvent) => {
@@ -348,6 +320,38 @@ export default function Globe({
     };
     svg.on('touchend', endPinch);
     svg.on('touchcancel', endPinch);
+
+    const dragBehavior = drag<SVGSVGElement, unknown>()
+      .on('start', () => {
+        dragging = true;
+        lastInteraction = performance.now();
+      })
+      .on('drag', (event) => {
+        if (pinching) return;
+        view.rotation = [
+          view.rotation[0] + event.dx * 0.26,
+          Math.max(-80, Math.min(80, view.rotation[1] - event.dy * 0.26)),
+          0,
+        ];
+        lastInteraction = performance.now();
+        redraw();
+      })
+      .on('end', () => {
+        dragging = false;
+        lastInteraction = performance.now();
+      });
+    svg.call(dragBehavior);
+
+    svg.on(
+      'wheel',
+      (event: WheelEvent) => {
+        event.preventDefault();
+        lastInteraction = performance.now();
+        const factor = event.deltaY < 0 ? 1.09 : 0.92;
+        zoomTo(view.scale * factor);
+      },
+      { passive: false } as never,
+    );
 
     apiRef.current = { focusPin, resetView };
 
