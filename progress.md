@@ -200,11 +200,13 @@ lint clean. See PRD.md for the decisions behind everything here.
 
 ## Post-launch bugs (reported 2026-07-07)
 
-- [ ] **iOS Safari — text inputs hard to focus.** On iPhone Safari, tapping a
-      textbox doesn't focus it on the first tap; it takes 3–4 rapid taps to gain
-      focus, then another tap before the cursor shows. Chrome on Android, Safari
-      on Mac, and Edge on Windows are all fine — iOS Safari only. Affects text
-      inputs across the app (e.g. auth/signup fields).
+- [x] **iOS Safari — text inputs hard to focus.** On iPhone Safari, tapping a
+      textbox didn't focus it on the first tap; it took 3–4 rapid taps, then
+      another before the caret showed. iOS Safari only. Root cause: every typed
+      input uses the shared `.field` class at `font-size: 14px`, under iOS's 16px
+      threshold, so focus triggered an auto-zoom that fought the taps. Fixed by
+      raising `.field` (and the read-only `.linkInput` fields) to 16px, which
+      removes the focus-zoom — no viewport/zoom disabling. Verify on-device.
 - [ ] **Globe not zoomable on mobile (iOS Safari + Android Chrome).** Pinch-to-
       zoom does nothing on touch devices. Root cause: `Globe.tsx` only wires zoom
       to the `wheel` event (mouse/trackpad); there's no touch pinch handler, so

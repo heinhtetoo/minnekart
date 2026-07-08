@@ -48,7 +48,7 @@
 .linkInput {
   flex: 1;
   min-width: 0;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--foreground);
   background: #f4efe6;
   border: 1px solid rgba(28, 25, 23, 0.1);
