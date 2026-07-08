@@ -370,7 +370,13 @@ export default function Globe({
     };
 
     redraw();
-    raf = requestAnimationFrame(spin);
+    // Skip the idle auto-spin on touch devices: its per-frame redraw runs
+    // continuously (nothing resets lastInteraction while the user taps the
+    // page, not the globe) and starves tap/click dispatch on iOS Safari.
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    if (autoSpin && !coarsePointer) {
+      raf = requestAnimationFrame(spin);
+    }
 
     return () => {
       cancelAnimationFrame(raf);
