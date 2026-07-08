@@ -157,7 +157,9 @@ function PinsList({
     <div>
       <div className={styles.pinsHead}>
         <span className={styles.pinsLabel}>Your Pins</span>
-        <span className={styles.pinsHint}>Drag to spin · scroll to zoom</span>
+        <span className={styles.pinsHint}>
+          Drag to spin · pinch or scroll to zoom
+        </span>
       </div>
       <div className={styles.pinsListWrap} data-overflow={overflowing}>
         <ul ref={listRef} className={styles.pinsList}>

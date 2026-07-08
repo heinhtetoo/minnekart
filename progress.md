@@ -207,14 +207,14 @@ lint clean. See PRD.md for the decisions behind everything here.
       threshold, so focus triggered an auto-zoom that fought the taps. Fixed by
       raising `.field` (and the read-only `.linkInput` fields) to 16px, which
       removes the focus-zoom — no viewport/zoom disabling. Verify on-device.
-- [ ] **Globe not zoomable on mobile (iOS Safari + Android Chrome).** Pinch-to-
-      zoom does nothing on touch devices. Root cause: `Globe.tsx` only wires zoom
-      to the `wheel` event (mouse/trackpad); there's no touch pinch handler, so
-      the `MIN_ZOOM`/`MAX_ZOOM` scale never changes on phones. Drag-to-spin works
-      (d3-drag is touch-aware); only zoom is missing. Fix: add a two-finger pinch
-      gesture (e.g. `touchmove` distance delta, or d3-zoom's touch support) that
-      drives the same `view.scale` clamp, and update the "scroll to zoom" hint on
-      touch. Full-bleed globe layout must stay untouched.
+- [x] **Globe not zoomable on mobile (iOS Safari + Android Chrome).** Pinch-to-
+      zoom did nothing on touch devices — `Globe.tsx` only wired zoom to the
+      `wheel` event (mouse/trackpad), with no touch pinch handler. Fixed by adding
+      two-finger `touchstart`/`touchmove`/`touchend` handlers that drive the same
+      `view.scale` clamp and `redraw()` the wheel path uses (via a shared `zoomTo`
+      helper), guarding drag-rotation during a pinch. `touch-action: pan-y` kept,
+      so single-finger spin and page scroll are unaffected. Hint updated to
+      "pinch or scroll to zoom". Verify on-device.
 - [x] **Slow client-side page transitions (all devices).** Root cause: no
       `loading.tsx` boundaries (old page stayed mounted until the server render
       finished), sequential per-page DB round-trips, and raw `pg` TCP pooling on

@@ -91,6 +91,9 @@ export default function Globe({
     let animating = false;
     let raf = 0;
     let animationFrame = 0;
+    let pinching = false;
+    let pinchStartDist = 0;
+    let pinchStartScale = base;
 
     const projection = geoOrthographic()
       .scale(view.scale)
@@ -280,6 +283,7 @@ export default function Globe({
         lastInteraction = performance.now();
       })
       .on('drag', (event) => {
+        if (pinching) return;
         view.rotation = [
           view.rotation[0] + event.dx * 0.26,
           Math.max(-80, Math.min(80, view.rotation[1] - event.dy * 0.26)),
@@ -293,20 +297,57 @@ export default function Globe({
         lastInteraction = performance.now();
       });
     svg.call(dragBehavior);
+
+    function zoomTo(next: number) {
+      view.scale = Math.max(base * MIN_ZOOM, Math.min(base * MAX_ZOOM, next));
+      redraw();
+    }
+
+    function touchDistance(touches: TouchList): number {
+      return Math.hypot(
+        touches[0].clientX - touches[1].clientX,
+        touches[0].clientY - touches[1].clientY,
+      );
+    }
+
     svg.on(
       'wheel',
       (event: WheelEvent) => {
         event.preventDefault();
         lastInteraction = performance.now();
         const factor = event.deltaY < 0 ? 1.09 : 0.92;
-        view.scale = Math.max(
-          base * MIN_ZOOM,
-          Math.min(base * MAX_ZOOM, view.scale * factor),
-        );
-        redraw();
+        zoomTo(view.scale * factor);
       },
       { passive: false } as never,
     );
+    svg.on(
+      'touchstart',
+      (event: TouchEvent) => {
+        if (event.touches.length !== 2) return;
+        event.preventDefault();
+        pinching = true;
+        pinchStartDist = touchDistance(event.touches);
+        pinchStartScale = view.scale;
+        lastInteraction = performance.now();
+      },
+      { passive: false } as never,
+    );
+    svg.on(
+      'touchmove',
+      (event: TouchEvent) => {
+        if (!pinching || event.touches.length !== 2) return;
+        event.preventDefault();
+        const ratio = touchDistance(event.touches) / pinchStartDist;
+        zoomTo(pinchStartScale * ratio);
+        lastInteraction = performance.now();
+      },
+      { passive: false } as never,
+    );
+    const endPinch = (event: TouchEvent) => {
+      if (event.touches.length < 2) pinching = false;
+    };
+    svg.on('touchend', endPinch);
+    svg.on('touchcancel', endPinch);
 
     apiRef.current = { focusPin, resetView };
 
@@ -331,6 +372,10 @@ export default function Globe({
       cancelAnimationFrame(raf);
       cancelAnimationFrame(animationFrame);
       svg.on('wheel', null);
+      svg.on('touchstart', null);
+      svg.on('touchmove', null);
+      svg.on('touchend', null);
+      svg.on('touchcancel', null);
       svg.on('.drag', null);
       apiRef.current = null;
     };
