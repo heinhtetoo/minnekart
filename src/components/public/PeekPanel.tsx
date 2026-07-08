@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import styles from './Home.module.css';
+import styles from './PeekPanel.module.css';
 
 interface PeekPanelProps {
   title: string;

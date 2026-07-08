@@ -4,9 +4,10 @@ import { useState } from 'react';
 
 import Globe, { GlobePin } from '@/components/globe/Globe';
 import homeStyles from '@/components/home/Home.module.css';
-import PeekPanel from '@/components/home/PeekPanel';
 import { formatTripDates } from '@/components/home/format';
 import { TripDTO } from '@/lib/trips/dto';
+
+import PeekPanel from './PeekPanel';
 
 interface PublicGlobeProps {
   ownerName: string;
@@ -66,6 +67,7 @@ export default function PublicGlobe({
             pins={pins}
             width={960}
             height={960}
+            focusId={selected === null ? null : String(selected)}
             onSelect={(id) => setSelected(Number(id))}
           />
           {trip && (

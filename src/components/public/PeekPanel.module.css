@@ -1,0 +1,10 @@
+.peek {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  transform: translateX(-50%);
+  width: min(96%, 570px);
+  max-height: 62%;
+  overflow-y: auto;
+  z-index: 5;
+}

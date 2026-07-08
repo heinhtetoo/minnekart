@@ -239,3 +239,18 @@ lint clean. See PRD.md for the decisions behind everything here.
       journey →". Capped the pins list height so both fit; the list's overflow
       fade is unchanged. The logged-out globe now zooms only on pin click (no
       card). Public globe (`/u/<username>`) left unchanged.
+- [x] **Public globe detail card floated again.** The claim above that the public
+      globe was "left unchanged" held for its TSX but not for the stylesheet it
+      shared: docking the home card deleted `.peek` from `Home.module.css`, and
+      `PeekPanel` — used only by `PublicGlobe` — still read `styles.peek`. It
+      resolved to `undefined`, so the card lost all positioning and became a flex
+      item beside the globe (`.globeLayer` is `display: flex`), squeezing the
+      globe to a marble on mobile. Restored the rule verbatim and co-located it
+      as `public/PeekPanel.module.css`, moving `PeekPanel` out of `home/` so a
+      home refactor can't silently take its layout again. Also wired the
+      `focusId` prop that `PublicGlobe` never passed (added to `Globe` in
+      `7c56c1e`, only ever used by `LoggedInHome`) — the public globe now flies
+      to the selected pin and resets on close, like the logged-in one. Neither
+      `Globe.tsx` nor `.globeLayer` was touched. Nothing caught this because
+      Next types `*.module.css` as `{ [key: string]: string }`, so a missing
+      class still typechecks, and the suite has no component tests.
