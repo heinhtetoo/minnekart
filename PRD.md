@@ -60,7 +60,7 @@ by us in the same visual language.
 ### F1 — Home / Globe
 
 - D3 orthographic SVG globe (topojson world atlas): drag to spin,
-  scroll to zoom, clickable pins.
+  scroll or pinch to zoom, clickable pins.
 - **Logged out:** marketing hero, inline sign-in/sign-up card (with
   wordmark above it), product stats band, "how it works" cards. Globe
   shows a **canned demo dataset** (fictional trips from a bundled JSON
@@ -204,9 +204,8 @@ OCI box (Tailscale-only, zero open ports):
 | Data layer | Drizzle ORM + drizzle-kit migrations               |
 | Photos     | Cloudflare R2 free tier (10GB), S3 API, presigned  |
 | Auth       | Hand-rolled: DB sessions, argon2, OTP, invites     |
-| Email      | Abstracted `sendEmail()`; provider chosen at       |
-|            | implementation (Brevo / Gmail SMTP candidates);    |
-|            | console output in dev                              |
+| Email      | Abstracted `sendEmail()`; Brevo SMTP in prod       |
+|            | (nodemailer transport), console output in dev      |
 | Geocoding  | Nominatim or Photon (free, rate-limited)           |
 | Globe      | D3 + topojson-client, orthographic SVG projection  |
 | Testing    | Vitest, integration-first                          |
@@ -309,7 +308,6 @@ Watch-items: R2 at ~10GB (pennies beyond), Neon cold starts
 
 ## Deferred / open items
 
-- Email provider pick (at auth implementation time).
 - Custom domain purchase; then DKIM-signed email via Resend/Brevo.
 - Open signup + CAPTCHA/quotas; per-user public bios; journey
   grouping; originals opt-in; map fine-tune pin placement; EXIF GPS
