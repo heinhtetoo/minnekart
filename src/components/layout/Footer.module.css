@@ -40,6 +40,12 @@
   margin: 0;
 }
 
+@media (max-width: 720px) {
+  .links {
+    display: none;
+  }
+}
+
 @media (max-width: 560px) {
   .inner {
     flex-direction: column;

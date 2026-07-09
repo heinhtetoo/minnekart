@@ -5,6 +5,7 @@ import { db } from '@/db';
 import Footer from '@/components/layout/Footer';
 import PublicChrome from '@/components/public/PublicChrome';
 import PublicGlobe from '@/components/public/PublicGlobe';
+import { getServerSessionUser } from '@/lib/auth/session-server';
 import { toTripDTO } from '@/lib/trips/dto';
 import { getPublicTrips, getPublicUser } from '@/lib/trips/sharing';
 
@@ -38,15 +39,19 @@ export default async function PublicGlobePage({
     notFound();
   }
 
-  const trips = await getPublicTrips(db(), owner.id);
+  const [trips, viewer] = await Promise.all([
+    getPublicTrips(db(), owner.id),
+    getServerSessionUser(),
+  ]);
 
   return (
     <>
-      <PublicChrome ownerName={owner.name} />
+      <PublicChrome ownerName={owner.name} viewerLoggedIn={viewer !== null} />
       <PublicGlobe
         ownerName={owner.name}
         username={owner.username}
         trips={trips.map(toTripDTO)}
+        viewerLoggedIn={viewer !== null}
       />
       <Footer loggedIn={false} />
     </>

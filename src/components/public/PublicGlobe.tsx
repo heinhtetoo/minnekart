@@ -13,12 +13,14 @@ interface PublicGlobeProps {
   ownerName: string;
   username: string;
   trips: TripDTO[];
+  viewerLoggedIn: boolean;
 }
 
 export default function PublicGlobe({
   ownerName,
   username,
   trips,
+  viewerLoggedIn,
 }: PublicGlobeProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const trip = selected === null ? null : trips[selected];
@@ -80,6 +82,7 @@ export default function PublicGlobe({
               highlight={trip.highlight}
               story={trip.story}
               href={`/u/${username}/${trip.id}`}
+              showSignupHook={!viewerLoggedIn}
               onClose={() => setSelected(null)}
             />
           )}

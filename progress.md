@@ -254,3 +254,35 @@ lint clean. See PRD.md for the decisions behind everything here.
       `Globe.tsx` nor `.globeLayer` was touched. Nothing caught this because
       Next types `*.module.css` as `{ [key: string]: string }`, so a missing
       class still typechecks, and the suite has no component tests.
+- [x] **Mobile design polish (from the Claude Design prototype).** Compared the
+      imported `Travel Globe Mobile Prototype.dc.html` to the live site and pulled
+      across the worthwhile bits, globe untouched throughout:
+      (1) Bottom nav (logged-in only) now has line icons over labels, accent-active
+      tabs, and an elevated centre "Add" FAB (`Globe · Timeline · [＋] · Gallery ·
+About`); the redundant top-bar "+ New memory" is hidden on mobile. New
+      `nav/navIcons.tsx`; `NavLinks`, `navItems`, `Nav.module.css`.
+      (2) Sticky mobile-only auth header on the logged-out home (wordmark + Sign in
+      /Sign up) that smooth-scrolls to the `AuthCard` and switches its mode
+      (added `openLogin()` to `AuthCardHandle`).
+      (3) Community/personal stats become an inset rounded forest card on mobile;
+      full-bleed band kept on desktop (CSS-only on `.band`/`.stats`).
+      (4) Footer's nav row (a duplicate of the bottom nav) hidden < 720px; kept on
+      desktop.
+      (5) Public-globe peek gained a "Sign up to save places like this →" hook
+      (→ `/`) for signed-out viewers only.
+- [x] **Home + public-globe follow-up tweaks.** (a) Highlight/detail card moved
+      **above** the pins list on the logged-in home (both breakpoints) so it's in
+      view straight after a pin tap and the list's bottom fade reads as the column
+      end. (b) Public globe top bar gained a "Sign up" button beside "Sign in"
+      (text + filled pill, both → `/`); for signed-in viewers both are replaced by
+      a single "My globe →" pill (→ `/`), and the peek signup hook stays hidden —
+      threaded `viewerLoggedIn` through the shared `PublicChrome` (also `about`,
+      `PublicTripView`, and the trip / share-token pages). (c) Fixed a real bug:
+      the `1fr auto 1fr` top bars relied on grid auto-placement, so when the middle
+      column was `display:none` on mobile the right group (avatar / sign-in) fell
+      into the centre column — pinned each child to an explicit `grid-column`.
+      (d) Lowered the public peek card on mobile (`bottom: 2%`) so it clears more of
+      the globe.
+- [ ] **Push the public-globe peek card further down on mobile.** The mobile peek
+      still overlaps the lower third of the globe. Nudge it lower again (public
+      globe, mobile only) in `public/PeekPanel.module.css` — desktop stays as-is.

@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import PublicTripView from '@/components/public/PublicTripView';
+import { getServerSessionUser } from '@/lib/auth/session-server';
 import { loadTripTiles } from '@/lib/photos/tiles';
 import { publicTripMetadata } from '@/lib/trips/public-meta';
 import { getTripByShareToken } from '@/lib/trips/sharing';
@@ -39,7 +40,10 @@ export async function generateMetadata({
 
 export default async function SharedTripPage({ params }: SharedTripPageProps) {
   const { token } = await params;
-  const resolved = await resolve(token);
+  const [resolved, viewer] = await Promise.all([
+    resolve(token),
+    getServerSessionUser(),
+  ]);
   if (!resolved) {
     notFound();
   }
@@ -47,6 +51,7 @@ export default async function SharedTripPage({ params }: SharedTripPageProps) {
   return (
     <PublicTripView
       ownerName={resolved.ownerName}
+      viewerLoggedIn={viewer !== null}
       backHref="/"
       backLabel="← Minnekart"
       trip={resolved.trip}

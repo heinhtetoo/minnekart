@@ -67,7 +67,7 @@ export default async function AboutPage() {
           isOwner={viewer.role === 'owner'}
         />
       ) : (
-        <PublicChrome ownerName={subject.name} />
+        <PublicChrome ownerName={subject.name} viewerLoggedIn={false} />
       )}
       <main className="fade">
         <section className={styles.grid}>

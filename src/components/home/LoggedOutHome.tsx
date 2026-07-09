@@ -37,18 +37,46 @@ export default function LoggedOutHome({ invite }: LoggedOutHomeProps) {
   const authRef = useRef<AuthCardHandle>(null);
   const getStartedRef = useRef<HTMLDivElement>(null);
 
-  function startSignup() {
-    authRef.current?.openSignup();
+  function scrollToAuth() {
     getStartedRef.current?.scrollIntoView({
       behavior: 'smooth',
       block: 'center',
     });
   }
 
+  function startSignup() {
+    authRef.current?.openSignup();
+    scrollToAuth();
+  }
+
+  function startLogin() {
+    authRef.current?.openLogin();
+    scrollToAuth();
+  }
+
   return (
     <main className="fade" style={{ isolation: 'isolate' }}>
+      <header className={styles.mobileAuthHeader}>
+        <Wordmark />
+        <div className={styles.mobileAuthActions}>
+          <button
+            type="button"
+            className={styles.mobileSignIn}
+            onClick={startLogin}
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            className={styles.mobileSignUp}
+            onClick={startSignup}
+          >
+            Sign up
+          </button>
+        </div>
+      </header>
       <section className={styles.intro}>
-        <div style={{ marginBottom: 34 }}>
+        <div className={styles.introWordmark} style={{ marginBottom: 34 }}>
           <Wordmark />
         </div>
         <p

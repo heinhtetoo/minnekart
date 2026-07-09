@@ -8,6 +8,7 @@ interface PeekPanelProps {
   highlight: string | null;
   story: string | null;
   href?: string;
+  showSignupHook?: boolean;
   onClose: () => void;
 }
 
@@ -17,6 +18,7 @@ export default function PeekPanel({
   highlight,
   story,
   href,
+  showSignupHook,
   onClose,
 }: PeekPanelProps) {
   return (
@@ -105,6 +107,20 @@ export default function PeekPanel({
           style={{ display: 'inline-block', fontSize: 13, marginTop: 14 }}
         >
           View memory →
+        </Link>
+      )}
+      {showSignupHook && (
+        <Link
+          href="/"
+          style={{
+            display: 'block',
+            fontSize: 12.5,
+            fontWeight: 600,
+            color: 'var(--accent)',
+            marginTop: 10,
+          }}
+        >
+          Sign up to save places like this →
         </Link>
       )}
     </div>

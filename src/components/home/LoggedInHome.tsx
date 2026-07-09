@@ -95,15 +95,15 @@ export default function LoggedInHome({
               <EmptyState />
             ) : (
               <>
-                <PinsList
-                  trips={trips}
-                  selected={selected}
-                  onSelect={setSelected}
-                />
                 <DetailCard
                   key={trip ? trip.id : 'empty'}
                   trip={trip}
                   onReset={() => setSelected(null)}
+                />
+                <PinsList
+                  trips={trips}
+                  selected={selected}
+                  onSelect={setSelected}
                 />
               </>
             )}
@@ -154,7 +154,7 @@ function PinsList({
   }, [trips.length]);
 
   return (
-    <div>
+    <div className={styles.pinsBlock}>
       <div className={styles.pinsHead}>
         <span className={styles.pinsLabel}>Your Pins</span>
         <span className={styles.pinsHint}>

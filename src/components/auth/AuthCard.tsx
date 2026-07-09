@@ -9,6 +9,7 @@ type Mode = 'login' | 'signup' | 'forgot' | 'forgotSent';
 
 export interface AuthCardHandle {
   openSignup: () => void;
+  openLogin: () => void;
 }
 
 interface AuthCardProps {
@@ -44,6 +45,10 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
   useImperativeHandle(ref, () => ({
     openSignup: () => {
       setMode('signup');
+      setError('');
+    },
+    openLogin: () => {
+      setMode('login');
       setError('');
     },
   }));

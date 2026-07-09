@@ -6,6 +6,7 @@ import PublicChrome from './PublicChrome';
 
 interface PublicTripViewProps {
   ownerName: string;
+  viewerLoggedIn: boolean;
   backHref: string;
   backLabel: string;
   trip: {
@@ -22,6 +23,7 @@ interface PublicTripViewProps {
 
 export default function PublicTripView({
   ownerName,
+  viewerLoggedIn,
   backHref,
   backLabel,
   trip,
@@ -29,7 +31,7 @@ export default function PublicTripView({
 }: PublicTripViewProps) {
   return (
     <>
-      <PublicChrome ownerName={ownerName} />
+      <PublicChrome ownerName={ownerName} viewerLoggedIn={viewerLoggedIn} />
       <TripDetailBody
         tripId={trip.id}
         placeName={trip.placeName}
