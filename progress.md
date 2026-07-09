@@ -283,6 +283,27 @@ About`); the redundant top-bar "+ New memory" is hidden on mobile. New
       into the centre column — pinned each child to an explicit `grid-column`.
       (d) Lowered the public peek card on mobile (`bottom: 2%`) so it clears more of
       the globe.
+- [x] **About page shows "Coming soon" in production.** The `/about` bio was
+      hard-coded placeholder prose (an invented headline + two paragraphs) that
+      shouldn't face real visitors before editable profiles exist. In production
+      (`process.env.NODE_ENV === 'production'`) the headline and both paragraphs
+      are replaced by a single "Coming soon" (reusing the `.title` serif style);
+      the `About` eyebrow, the portrait card (name initial + tagline), and the
+      Countries/Photos/Years stats are unchanged. Dev keeps the original copy so
+      it's still visible while iterating. `src/app/about/page.tsx` only.
+- [ ] **Editable profile.** Let the owner edit their own About content — name,
+      tagline, and bio body (the prose the "Coming soon" placeholder currently
+      stands in for), stored per user rather than hard-coded. Once shipped, drop
+      the `NODE_ENV` gate above and render the stored bio (with "Coming soon" as
+      the empty-state fallback). Likely touches the `users` schema (a bio/tagline
+      field + migration), a settings/profile editor, and `src/app/about/page.tsx`.
 - [ ] **Push the public-globe peek card further down on mobile.** The mobile peek
       still overlaps the lower third of the globe. Nudge it lower again (public
       globe, mobile only) in `public/PeekPanel.module.css` — desktop stays as-is.
+- [ ] **Investigate `prettier --write` not persisting locally.** During the
+      mobile-polish commit, `prettier --write progress.md` reported success but
+      `prettier --check` kept failing on the same file. The workaround was to
+      redirect prettier's stdout to a temp file and move it back over the
+      original. So `--write` may not be writing atomically in this dev
+      environment. Check the prettier version and whether it reproduces on
+      other files before relying on `npm run format` locally.

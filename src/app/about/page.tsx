@@ -53,6 +53,7 @@ export default async function AboutPage() {
     notFound();
   }
   const stats = await loadStatsFor(subject.id);
+  const showComingSoon = process.env.NODE_ENV === 'production';
   const initial = (subject.name || subject.username || '?')
     .trim()
     .charAt(0)
@@ -81,20 +82,26 @@ export default async function AboutPage() {
 
           <div>
             <p className={styles.eyebrow}>About</p>
-            <h1 className={`serif ${styles.title}`}>
-              I collect places the way others collect stamps.
-            </h1>
-            <p className={styles.body}>
-              Minnekart started as a shoebox of ticket stubs and a habit of
-              never writing anything down. Now it&apos;s a living globe — every
-              pin a place I&apos;ve stood, every photo a moment I&apos;d rather
-              not forget.
-            </p>
-            <p className={`${styles.body} ${styles.bodyLast}`}>
-              I travel slowly and photograph badly, but that&apos;s rather the
-              point. This is less a highlight reel and more a memory palace you
-              can spin with your thumb.
-            </p>
+            {showComingSoon ? (
+              <h1 className={`serif ${styles.title}`}>Coming soon</h1>
+            ) : (
+              <>
+                <h1 className={`serif ${styles.title}`}>
+                  I collect places the way others collect stamps.
+                </h1>
+                <p className={styles.body}>
+                  Minnekart started as a shoebox of ticket stubs and a habit of
+                  never writing anything down. Now it&apos;s a living globe —
+                  every pin a place I&apos;ve stood, every photo a moment
+                  I&apos;d rather not forget.
+                </p>
+                <p className={`${styles.body} ${styles.bodyLast}`}>
+                  I travel slowly and photograph badly, but that&apos;s rather
+                  the point. This is less a highlight reel and more a memory
+                  palace you can spin with your thumb.
+                </p>
+              </>
+            )}
             <div className={styles.stats}>
               <div>
                 <div className={styles.statValue}>{stats.countries}</div>
