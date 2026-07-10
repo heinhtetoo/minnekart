@@ -11,6 +11,7 @@
 
 @media (max-width: 720px) {
   .peek {
-    bottom: 2%;
+    bottom: 1%;
+    max-height: 46%;
   }
 }

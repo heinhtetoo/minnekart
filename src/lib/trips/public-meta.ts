@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 
-import type { PhotoTile } from '@/components/photos/PhotoGrid';
-
 interface MetaTrip {
   placeName: string;
   country: string;
@@ -9,13 +7,11 @@ interface MetaTrip {
   story: string | null;
 }
 
-export function publicTripMetadata(
-  trip: MetaTrip,
-  tiles: PhotoTile[],
-): Metadata {
+// og:image comes from the opengraph-image.tsx convention in each route,
+// so previews use a stable URL instead of the ~1h signed photo URL.
+export function publicTripMetadata(trip: MetaTrip): Metadata {
   const title = `${trip.placeName} · ${trip.country}`;
   const description = summarise(trip.highlight, trip.story);
-  const image = tiles[0]?.displayUrl;
   return {
     title,
     description,
@@ -23,7 +19,6 @@ export function publicTripMetadata(
       title,
       description,
       type: 'article',
-      images: image ? [image] : undefined,
     },
   };
 }

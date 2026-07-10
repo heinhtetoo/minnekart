@@ -331,15 +331,33 @@ list is the execution order.
       `vercel.app` costs trust at the worst moment, OTP/reset deliverability
       improves, and the SEO clock (domain authority) only starts once it
       exists — ranking on `vercel.app` and migrating later throws away equity.
-- [ ] **2. Stable OG-image route + public-globe shareability polish.** Pulled
-      ahead of billing deliberately: it's the top of the funnel (BUSINESS.md
-      Pillar 1, "the product is the marketing"), pure engineering with no ops
-      dependency, and actively broken today — OG previews die with the ~1h
-      signed URL, so every share posted now gets a dead preview. Absorbs the
-      BACKLOG's "stable OG-image route". Includes a screenshot-worthiness
-      pass, link-preview QA (iMessage, WhatsApp, Slack, X), and the mobile
-      peek-card nudge (`public/PeekPanel.module.css`, mobile only — the card
-      still overlaps the lower third of the globe).
+- [x] **2. Stable OG-image route + public-globe shareability polish.** OG
+      previews used the ~1h-signed R2 URL (dead after expiry) and the globe
+      page had no preview image at all. Shipped branded 1200×630 cards via the
+      `opengraph-image.tsx` convention + `ImageResponse` (`next/og`): trip
+      card (framed photo on parchment, Playfair place name, country · dates,
+      wordmark; deterministic `coverGradient` fallback when the photo can't
+      be fetched) on `/u/<user>/<trip>` and `/t/<token>`, and a stats card
+      (countries · places · years) on `/u/<user>`. Shared module
+      `src/lib/og/` (cards, committed OFL TTFs, `firstPhotoDataUri`);
+      `metadataBase` + `twitter:card summary_large_image` in the root layout;
+      signed URL removed from `public-meta.ts`. Visibility enforced by the
+      tested `sharing.ts` helpers — private trips, unknown users, and revoked
+      tokens all 404. Two satori gotchas: it can't embed WebP data URIs
+      (crashes) and can't take numeric JSX children — photos are sniffed and
+      re-encoded to downscaled JPEG via `sharp` (now a declared dependency;
+      it already shipped transitively under `next`), which also handles the
+      legacy PNG-as-webp objects, and stat values are stringified. All cards
+      measured 36–520KB, under WhatsApp's ~600KB ceiling. Also lowered the
+      mobile peek card (`bottom: 1%`, `max-height: 46%` — the height cap is
+      what frees globe on content-heavy cards); desktop untouched. Verified:
+      direct card renders + all routes E2E (statuses, meta tags, 1200×630),
+      prod-mode build serves the route with fonts, 187 tests green.
+- [ ] **2b. Post-deploy link-preview QA.** After the next deploy, validate
+      the live previews once per platform: X card validator, Facebook/Meta
+      sharing debugger, WhatsApp, iMessage, Slack. Check both a trip link and
+      the globe link; confirm images stay live past the old 1h window and
+      that Vercel's file tracing bundled the `src/lib/og/fonts` TTFs.
 - [ ] **3. Billing schema & data model.** `users` gains `plan`
       (`free`/`paid`), `subscription_status`, and `paddle_customer_id` +
       migration. Decide grandfathering for the existing invite cohort —

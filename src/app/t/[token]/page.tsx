@@ -35,7 +35,7 @@ export async function generateMetadata({
   if (!resolved) {
     return { title: 'Memory not found · Minnekart' };
   }
-  return publicTripMetadata(resolved.trip, resolved.tiles);
+  return publicTripMetadata(resolved.trip);
 }
 
 export default async function SharedTripPage({ params }: SharedTripPageProps) {
