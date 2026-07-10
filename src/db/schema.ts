@@ -14,6 +14,14 @@ import {
 
 export const userRole = pgEnum('user_role', ['owner', 'member']);
 export const authTokenType = pgEnum('auth_token_type', ['verify_otp', 'reset']);
+export const userPlan = pgEnum('user_plan', ['free', 'paid']);
+export const subscriptionStatus = pgEnum('subscription_status', [
+  'active',
+  'trialing',
+  'past_due',
+  'paused',
+  'canceled',
+]);
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -24,6 +32,9 @@ export const users = pgTable('users', {
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
   role: userRole('role').notNull().default('member'),
   globePublic: boolean('globe_public').notNull().default(false),
+  plan: userPlan('plan').notNull().default('free'),
+  subscriptionStatus: subscriptionStatus('subscription_status'),
+  paddleCustomerId: text('paddle_customer_id').unique(),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -135,6 +146,15 @@ export const photos = pgTable(
     index('photos_user_id_idx').on(table.userId),
   ],
 );
+
+export const webhookEvents = pgTable('webhook_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  eventId: text('event_id').notNull().unique(),
+  eventType: text('event_type').notNull(),
+  receivedAt: timestamp('received_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
 
 export const rateLimits = pgTable(
   'rate_limits',

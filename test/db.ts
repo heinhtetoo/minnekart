@@ -18,6 +18,6 @@ export function testDb() {
 export async function resetDb() {
   await testDb().execute(
     sql`TRUNCATE users, sessions, auth_tokens, invites, trips, photos,
-        rate_limits RESTART IDENTITY CASCADE`,
+        rate_limits, webhook_events RESTART IDENTITY CASCADE`,
   );
 }
