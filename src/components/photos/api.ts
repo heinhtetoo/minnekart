@@ -1,4 +1,5 @@
 import { apiRequest, jsonBody } from '@/lib/http/client';
+import { PhotoContentType } from '@/lib/photos/content-type';
 import { SignedPhoto } from '@/lib/photos/dto';
 
 export interface PresignResult {
@@ -19,10 +20,10 @@ export interface CreatePhotoInput {
 export const photosApi = {
   list: (tripId: string) =>
     apiRequest<{ photos: SignedPhoto[] }>(`/api/trips/${tripId}/photos`),
-  presign: (tripId: string) =>
+  presign: (tripId: string, contentType: PhotoContentType) =>
     apiRequest<PresignResult>(
       `/api/trips/${tripId}/photos/presign`,
-      jsonBody('POST', { contentType: 'image/webp' }),
+      jsonBody('POST', { contentType }),
     ),
   createRecord: (tripId: string, body: CreatePhotoInput) =>
     apiRequest<{ photo: SignedPhoto }>(
@@ -44,7 +45,7 @@ export async function putBlob(url: string, blob: Blob): Promise<boolean> {
   try {
     const response = await fetch(url, {
       method: 'PUT',
-      headers: { 'content-type': 'image/webp' },
+      headers: { 'content-type': blob.type },
       body: blob,
     });
     return response.ok;

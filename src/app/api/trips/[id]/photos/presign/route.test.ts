@@ -67,7 +67,29 @@ describe('POST /api/trips/[id]/photos/presign', () => {
     expect(body.thumbUploadUrl).toContain(body.thumbKey);
   });
 
-  it('rejects a non-webp content type', async () => {
+  it('accepts image/jpeg and issues jpg keys', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+
+    const response = await POST(
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        { contentType: 'image/jpeg' },
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.displayKey.endsWith('.jpg')).toBe(true);
+    expect(body.thumbKey.endsWith('_thumb.jpg')).toBe(true);
+  });
+
+  it('rejects an unsupported content type', async () => {
     const { user, sessionToken } = await createMemberWithSession({
       verified: true,
     });

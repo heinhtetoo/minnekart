@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
+import { PHOTO_CONTENT_TYPES } from './content-type';
+
 export const presignSchema = z.object({
-  contentType: z.literal('image/webp'),
+  contentType: z.enum(PHOTO_CONTENT_TYPES),
 });
 
 export const createPhotoSchema = z.object({

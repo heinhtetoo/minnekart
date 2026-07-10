@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { photos } from '@/db/schema';
 import { requireVerifiedUser } from '@/lib/auth/current-user';
 import { jsonResponse, readJsonBody } from '@/lib/auth/http';
+import { isPhotoContentType } from '@/lib/photos/content-type';
 import { isKeyUnderPrefix, photoPrefix } from '@/lib/photos/keys';
 import { signPhotos } from '@/lib/photos/sign';
 import { createPhotoSchema } from '@/lib/photos/validation';
@@ -116,7 +117,7 @@ export async function GET(
 function isAcceptable(object: StoredObject | null, maxBytes: number): boolean {
   return (
     object !== null &&
-    object.contentType === 'image/webp' &&
+    isPhotoContentType(object.contentType) &&
     object.size <= maxBytes
   );
 }

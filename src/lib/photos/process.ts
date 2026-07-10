@@ -1,3 +1,4 @@
+import { isPhotoContentType, PhotoContentType } from './content-type';
 import { scaledDimensions } from './dimensions';
 
 const DISPLAY_MAX = 2560;
@@ -5,9 +6,15 @@ const DISPLAY_QUALITY = 0.82;
 const THUMB_MAX = 400;
 const THUMB_QUALITY = 0.7;
 
+// Chromium encodes WebP from a canvas; Safari and Firefox silently fall
+// back to PNG (huge, quality ignored), so those get JPEG instead. Cached
+// after the first encode.
+let webpSupported: boolean | null = null;
+
 export interface ProcessedImage {
   displayBlob: Blob;
   thumbBlob: Blob;
+  contentType: PhotoContentType;
   width: number;
   height: number;
   takenAt: string | null;
@@ -51,7 +58,15 @@ async function toDecodableBlob(file: File): Promise<Blob> {
   return Array.isArray(converted) ? converted[0] : converted;
 }
 
-async function encodeWebp(
+function toBlob(
+  canvas: HTMLCanvasElement,
+  type: PhotoContentType,
+  quality: number,
+): Promise<Blob | null> {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
+async function encodeImage(
   bitmap: ImageBitmap,
   max: number,
   quality: number,
@@ -65,11 +80,16 @@ async function encodeWebp(
     throw new Error('Canvas is not available in this browser.');
   }
   context.drawImage(bitmap, 0, 0, width, height);
-  const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, 'image/webp', quality),
-  );
+  let blob: Blob | null = null;
+  if (webpSupported !== false) {
+    blob = await toBlob(canvas, 'image/webp', quality);
+    webpSupported = blob?.type === 'image/webp';
+  }
+  if (!webpSupported) {
+    blob = await toBlob(canvas, 'image/jpeg', quality);
+  }
   if (!blob) {
-    throw new Error('Could not encode the image to WebP.');
+    throw new Error('Could not encode the image.');
   }
   return { blob, width, height };
 }
@@ -79,11 +99,15 @@ export async function processImage(file: File): Promise<ProcessedImage> {
   const decodable = await toDecodableBlob(file);
   const bitmap = await createImageBitmap(decodable);
   try {
-    const display = await encodeWebp(bitmap, DISPLAY_MAX, DISPLAY_QUALITY);
-    const thumb = await encodeWebp(bitmap, THUMB_MAX, THUMB_QUALITY);
+    const display = await encodeImage(bitmap, DISPLAY_MAX, DISPLAY_QUALITY);
+    const thumb = await encodeImage(bitmap, THUMB_MAX, THUMB_QUALITY);
+    if (!isPhotoContentType(display.blob.type)) {
+      throw new Error('Could not encode the image.');
+    }
     return {
       displayBlob: display.blob,
       thumbBlob: thumb.blob,
+      contentType: display.blob.type,
       width: display.width,
       height: display.height,
       takenAt,

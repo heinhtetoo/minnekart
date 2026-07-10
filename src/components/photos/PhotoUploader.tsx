@@ -66,7 +66,7 @@ export default function PhotoUploader({ tripId }: { tripId: string }) {
         return;
       }
       patchJob(job.id, { status: 'uploading' });
-      const presign = await photosApi.presign(tripId);
+      const presign = await photosApi.presign(tripId, processed.contentType);
       if (!presign.ok || !presign.data) {
         patchJob(job.id, {
           status: 'error',

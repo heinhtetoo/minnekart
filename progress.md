@@ -300,6 +300,34 @@ About`); the redundant top-bar "+ New memory" is hidden on mobile. New
 - [ ] **Push the public-globe peek card further down on mobile.** The mobile peek
       still overlaps the lower third of the globe. Nudge it lower again (public
       globe, mobile only) in `public/PeekPanel.module.css` — desktop stays as-is.
+- [x] **Photo uploads: WebP encode silently fell back to PNG on Safari/Firefox.**
+      One root cause behind all three logged upload issues ("can't upload large
+      photos", ~3MB originals landing in R2 at ~6MB, "Image is too large" on
+      ~6MB originals) — and it wasn't the canvas-cap/HEIC speculation recorded
+      earlier. `canvas.toBlob(cb, 'image/webp', q)` is only honoured by
+      Chromium; Safari and Firefox silently return **PNG and ignore the quality
+      argument** (spec-permitted fallback). A 2560px photo as PNG is ~6–12MB,
+      so Safari uploads inflated ~2× and bigger originals blew past the 8MB
+      `MAX_DISPLAY_BYTES` cap → "Image is too large". Confirmed against prod:
+      an R2 "webp" display object was 6,408,546 bytes with PNG magic bytes
+      (`89504e47`), and its 400px thumb ~196KB (vs ~20KB expected). Measured in
+      WebKit: a 2560px webp request returned `image/png` at 11.49MB; JPEG at
+      the same quality was 2.05MB. Nothing checked `blob.type` after encoding,
+      and the server only validated the _declared_ PUT content-type, which
+      `putBlob` hard-coded to `image/webp`. Fixed with a JPEG fallback:
+      `process.ts` tries WebP, checks the blob's actual type, and re-encodes as
+      JPEG when the browser lied (detection cached per page); the content type
+      is threaded through presign → keys (`.webp`/`.jpg`) → PUT header → the
+      record route's type check (`content-type.ts` shared union). Verified
+      end-to-end with a 5.44MB 4000px JPEG: Chromium → `.webp` upload, WebKit →
+      `.jpg` upload, both 201 + rendered, no "Image is too large". Tests
+      176 → 183.
+- [ ] **Re-encode the legacy PNG-as-webp objects in R2.** Photos uploaded from
+      Safari/Firefox before the JPEG-fallback fix are PNGs stored under `.webp`
+      keys with an `image/webp` content-type (~6MB displays, ~200KB thumbs).
+      They display fine because browsers sniff the real format, but they waste
+      storage and bandwidth. A one-off script (e.g. sharp server-side) could
+      re-encode and replace them; low urgency.
 - [ ] **Investigate `prettier --write` not persisting locally.** During the
       mobile-polish commit, `prettier --write progress.md` reported success but
       `prettier --check` kept failing on the same file. The workaround was to

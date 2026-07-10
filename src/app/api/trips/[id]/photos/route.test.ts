@@ -44,11 +44,15 @@ function urlFor(id: string) {
 }
 
 // Simulates a completed browser upload by registering both objects.
-async function uploadedKeys(userId: string, tripId: string) {
-  const keys = newPhotoKeys(userId, tripId);
+async function uploadedKeys(
+  userId: string,
+  tripId: string,
+  contentType: 'image/webp' | 'image/jpeg' = 'image/webp',
+) {
+  const keys = newPhotoKeys(userId, tripId, contentType);
   const store = getMemoryStorage();
-  await store.presignPut(keys.displayKey, 'image/webp');
-  await store.presignPut(keys.thumbKey, 'image/webp');
+  await store.presignPut(keys.displayKey, contentType);
+  await store.presignPut(keys.thumbKey, contentType);
   return keys;
 }
 
@@ -80,6 +84,54 @@ describe('POST /api/trips/[id]/photos', () => {
     expect(stored).toHaveLength(1);
     expect(stored[0].displayKey).toBe(keys.displayKey);
     expect(stored[0].position).toBe(0);
+  });
+
+  it('creates a photo record for a jpeg upload', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+    const keys = await uploadedKeys(user.id, trip.id, 'image/jpeg');
+
+    const response = await POST(
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        { ...keys, width: 2560, height: 1707 },
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id),
+    );
+
+    expect(response.status).toBe(201);
+    const stored = await db.select().from(photos);
+    expect(stored).toHaveLength(1);
+    expect(stored[0].displayKey.endsWith('.jpg')).toBe(true);
+  });
+
+  it('rejects and purges an upload with an unsupported content type', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+    const keys = newPhotoKeys(user.id, trip.id);
+    const store = getMemoryStorage();
+    store.seed(keys.displayKey, { size: 500_000, contentType: 'image/png' });
+    store.seed(keys.thumbKey, { size: 50_000, contentType: 'image/png' });
+
+    const response = await POST(
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        { ...keys, width: 2560, height: 1707 },
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await store.stat(keys.displayKey)).toBeNull();
+    expect(await store.stat(keys.thumbKey)).toBeNull();
   });
 
   it('assigns increasing positions', async () => {
