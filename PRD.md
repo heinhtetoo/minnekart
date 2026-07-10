@@ -309,6 +309,7 @@ Watch-items: R2 at ~10GB (pennies beyond), Neon cold starts
 ## Deferred / open items
 
 - Custom domain purchase; then DKIM-signed email via Resend/Brevo.
-- Open signup + CAPTCHA/quotas; per-user public bios; journey
+- Open signup + CAPTCHA/quotas; editable per-user bio (About page +
+  stats ship; bio body is a "Coming soon" placeholder in prod); journey
   grouping; originals opt-in; map fine-tune pin placement; EXIF GPS
   pin suggestions; R2→box photo backup job.
