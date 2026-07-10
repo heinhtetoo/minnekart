@@ -51,7 +51,7 @@ export default async function EditTripPage({ params }: EditTripPageProps) {
         Edit memory
       </h1>
       <TripForm mode="edit" tripId={id} initial={toTripDTO(trip)} />
-      <PhotoUploader tripId={id} />
+      <PhotoUploader tripId={id} plan={user.plan} />
       <ShareCard
         tripId={id}
         isPublic={trip.isPublic}

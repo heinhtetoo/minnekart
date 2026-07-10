@@ -4,6 +4,10 @@ import { db } from '@/db';
 import { photos } from '@/db/schema';
 import { requireVerifiedUser } from '@/lib/auth/current-user';
 import { jsonResponse, readJsonBody } from '@/lib/auth/http';
+import {
+  PAID_ACCOUNT_PHOTO_CEILING,
+  photosPerTripFor,
+} from '@/lib/billing/limits';
 import { isPhotoContentType } from '@/lib/photos/content-type';
 import { isKeyUnderPrefix, photoPrefix } from '@/lib/photos/keys';
 import { signPhotos } from '@/lib/photos/sign';
@@ -14,7 +18,6 @@ import { getOwnedTrip } from '@/lib/trips/access';
 
 type Context = { params: Promise<{ id: string }> };
 
-const MAX_PHOTOS_PER_TRIP = 50;
 const MAX_DISPLAY_BYTES = 8 * 1024 * 1024;
 const MAX_THUMB_BYTES = 1 * 1024 * 1024;
 
@@ -53,8 +56,18 @@ export async function POST(
     .select({ count: sql<number>`count(*)::int` })
     .from(photos)
     .where(eq(photos.tripId, trip.id));
-  if (count >= MAX_PHOTOS_PER_TRIP) {
+  if (count >= photosPerTripFor(guard.user.plan)) {
     return jsonResponse({ error: 'photo_limit_reached' }, 409);
+  }
+
+  if (guard.user.plan === 'paid') {
+    const [{ count: accountCount }] = await database
+      .select({ count: sql<number>`count(*)::int` })
+      .from(photos)
+      .where(eq(photos.userId, guard.user.id));
+    if (accountCount >= PAID_ACCOUNT_PHOTO_CEILING) {
+      return jsonResponse({ error: 'photo_limit_reached' }, 409);
+    }
   }
 
   const store = storage();

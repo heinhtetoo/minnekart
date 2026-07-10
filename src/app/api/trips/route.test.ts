@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { trips } from '@/db/schema';
+import { trips, users } from '@/db/schema';
+import { FREE_TRIP_LIMIT } from '@/lib/billing/limits';
 
 import { GET, POST } from './route';
 
@@ -76,6 +77,69 @@ describe('POST /api/trips', () => {
     );
 
     expect(response.status).toBe(400);
+  });
+
+  async function insertTrips(userId: string, howMany: number) {
+    await db.insert(trips).values(
+      Array.from({ length: howMany }, (_, i) => ({
+        ...tripBody,
+        userId,
+        placeName: `Trip ${i}`,
+      })),
+    );
+  }
+
+  it('blocks a free user past the 15-trip limit', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    await insertTrips(user.id, FREE_TRIP_LIMIT);
+
+    const response = await POST(
+      jsonRequest('POST', url, tripBody, cookieHeader(sessionToken)),
+    );
+
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error).toBe('trip_limit_reached');
+    const stored = await db
+      .select()
+      .from(trips)
+      .where(eq(trips.userId, user.id));
+    expect(stored).toHaveLength(FREE_TRIP_LIMIT);
+  });
+
+  it('unblocks trip creation after an upgrade to paid', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    await insertTrips(user.id, FREE_TRIP_LIMIT);
+
+    const blocked = await POST(
+      jsonRequest('POST', url, tripBody, cookieHeader(sessionToken)),
+    );
+    expect(blocked.status).toBe(409);
+
+    await db.update(users).set({ plan: 'paid' }).where(eq(users.id, user.id));
+
+    const allowed = await POST(
+      jsonRequest('POST', url, tripBody, cookieHeader(sessionToken)),
+    );
+    expect(allowed.status).toBe(201);
+  });
+
+  it('lets a paid user create past 15 trips', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+      plan: 'paid',
+    });
+    await insertTrips(user.id, FREE_TRIP_LIMIT);
+
+    const response = await POST(
+      jsonRequest('POST', url, tripBody, cookieHeader(sessionToken)),
+    );
+
+    expect(response.status).toBe(201);
   });
 });
 

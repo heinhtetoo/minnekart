@@ -1,9 +1,10 @@
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 
 import { db } from '@/db';
 import { trips } from '@/db/schema';
 import { requireVerifiedUser } from '@/lib/auth/current-user';
 import { jsonResponse, readJsonBody } from '@/lib/auth/http';
+import { FREE_TRIP_LIMIT } from '@/lib/billing/limits';
 import { createTripSchema } from '@/lib/trips/validation';
 
 export async function POST(request: Request): Promise<Response> {
@@ -19,6 +20,16 @@ export async function POST(request: Request): Promise<Response> {
   }
   const { placeName, country, lat, lng, dateStart, dateEnd, highlight, story } =
     parsed.data;
+
+  if (guard.user.plan === 'free') {
+    const [{ count }] = await database
+      .select({ count: sql<number>`count(*)::int` })
+      .from(trips)
+      .where(eq(trips.userId, guard.user.id));
+    if (count >= FREE_TRIP_LIMIT) {
+      return jsonResponse({ error: 'trip_limit_reached' }, 409);
+    }
+  }
 
   const [trip] = await database
     .insert(trips)

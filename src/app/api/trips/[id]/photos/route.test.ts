@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { photos, trips } from '@/db/schema';
+import {
+  FREE_PHOTOS_PER_TRIP,
+  MAX_PHOTOS_PER_TRIP,
+  PAID_ACCOUNT_PHOTO_CEILING,
+} from '@/lib/billing/limits';
 import { newPhotoKeys } from '@/lib/photos/keys';
 import { getMemoryStorage, resetMemoryStorage } from '@/lib/storage';
 
@@ -252,17 +257,13 @@ describe('POST /api/trips/[id]/photos', () => {
     expect(response.status).toBe(404);
   });
 
-  it('rejects creation past the per-trip photo cap', async () => {
-    const { user, sessionToken } = await createMemberWithSession({
-      verified: true,
-    });
-    const trip = await insertTripFor(user.id);
+  async function bulkPhotos(userId: string, tripId: string, howMany: number) {
     await db.insert(photos).values(
-      Array.from({ length: 50 }, (_, i) => {
-        const keys = newPhotoKeys(user.id, trip.id);
+      Array.from({ length: howMany }, (_, i) => {
+        const keys = newPhotoKeys(userId, tripId);
         return {
-          tripId: trip.id,
-          userId: user.id,
+          tripId,
+          userId,
           displayKey: keys.displayKey,
           thumbKey: keys.thumbKey,
           width: 100,
@@ -271,19 +272,78 @@ describe('POST /api/trips/[id]/photos', () => {
         };
       }),
     );
-    const keys = await uploadedKeys(user.id, trip.id);
+  }
 
-    const response = await POST(
+  async function postPhoto(userId: string, tripId: string, token: string) {
+    const keys = await uploadedKeys(userId, tripId);
+    return POST(
       jsonRequest(
         'POST',
-        urlFor(trip.id),
+        urlFor(tripId),
         { ...keys, width: 100, height: 100 },
-        cookieHeader(sessionToken),
+        cookieHeader(token),
       ),
-      context(trip.id),
+      context(tripId),
     );
+  }
+
+  it('rejects creation past the paid per-trip photo cap', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+      plan: 'paid',
+    });
+    const trip = await insertTripFor(user.id);
+    await bulkPhotos(user.id, trip.id, MAX_PHOTOS_PER_TRIP);
+
+    const response = await postPhoto(user.id, trip.id, sessionToken);
 
     expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error).toBe('photo_limit_reached');
+  });
+
+  it('blocks a free user past 6 photos on a trip', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+    await bulkPhotos(user.id, trip.id, FREE_PHOTOS_PER_TRIP);
+
+    const response = await postPhoto(user.id, trip.id, sessionToken);
+
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error).toBe('photo_limit_reached');
+    expect(await db.select().from(photos)).toHaveLength(FREE_PHOTOS_PER_TRIP);
+  });
+
+  it('lets a paid user add a 7th photo to a trip', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+      plan: 'paid',
+    });
+    const trip = await insertTripFor(user.id);
+    await bulkPhotos(user.id, trip.id, FREE_PHOTOS_PER_TRIP);
+
+    const response = await postPhoto(user.id, trip.id, sessionToken);
+
+    expect(response.status).toBe(201);
+  });
+
+  it('enforces the paid account-wide photo ceiling', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+      plan: 'paid',
+    });
+    const archiveTrip = await insertTripFor(user.id);
+    await bulkPhotos(user.id, archiveTrip.id, PAID_ACCOUNT_PHOTO_CEILING);
+    const freshTrip = await insertTripFor(user.id);
+
+    const response = await postPhoto(user.id, freshTrip.id, sessionToken);
+
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error).toBe('photo_limit_reached');
   });
 });
 

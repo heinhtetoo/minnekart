@@ -2,21 +2,23 @@
 
 import { useEffect, useState } from 'react';
 
+import { photosPerTripFor } from '@/lib/billing/limits';
 import { SignedPhoto } from '@/lib/photos/dto';
 import { processImage } from '@/lib/photos/process';
 
 import { photosApi, putBlob } from './api';
 import styles from './PhotoUploader.module.css';
 
-const MAX_PER_TRIP = 50;
 const MAX_DISPLAY_BYTES = 8 * 1024 * 1024;
 
-const UPLOAD_ERRORS: Record<string, string> = {
-  photo_limit_reached: `This memory already has ${MAX_PER_TRIP} photos.`,
-  rate_limited: 'Too many uploads at once. Please wait a moment.',
-  invalid_upload: 'That file could not be processed. Try another.',
-  invalid_key: 'Upload failed. Please try again.',
-};
+function uploadErrors(limitMessage: string): Record<string, string> {
+  return {
+    photo_limit_reached: limitMessage,
+    rate_limited: 'Too many uploads at once. Please wait a moment.',
+    invalid_upload: 'That file could not be processed. Try another.',
+    invalid_key: 'Upload failed. Please try again.',
+  };
+}
 
 type JobStatus = 'processing' | 'uploading' | 'saving' | 'error';
 
@@ -34,11 +36,24 @@ const STATUS_LABEL: Record<JobStatus, string> = {
   error: 'Failed',
 };
 
-export default function PhotoUploader({ tripId }: { tripId: string }) {
+interface PhotoUploaderProps {
+  tripId: string;
+  plan: 'free' | 'paid';
+}
+
+export default function PhotoUploader({ tripId, plan }: PhotoUploaderProps) {
   const [photos, setPhotos] = useState<SignedPhoto[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [banner, setBanner] = useState('');
+
+  const maxPhotos = photosPerTripFor(plan);
+  const limitMessage =
+    plan === 'free'
+      ? `This memory has all ${maxPhotos} photos of the free plan. ` +
+        'Upgrade in Settings for more.'
+      : `This memory already has ${maxPhotos} photos.`;
+  const UPLOAD_ERRORS = uploadErrors(limitMessage);
 
   useEffect(() => {
     let active = true;
@@ -117,9 +132,9 @@ export default function PhotoUploader({ tripId }: { tripId: string }) {
     if (!fileList || fileList.length === 0) return;
     const files = Array.from(fileList);
     const active = jobs.filter((job) => job.status !== 'error').length;
-    const remaining = MAX_PER_TRIP - photos.length - active;
+    const remaining = maxPhotos - photos.length - active;
     if (remaining <= 0) {
-      setBanner(`This memory already has ${MAX_PER_TRIP} photos.`);
+      setBanner(limitMessage);
       return;
     }
     const accepted = files.slice(0, remaining);
@@ -155,7 +170,7 @@ export default function PhotoUploader({ tripId }: { tripId: string }) {
       <div className={styles.head}>
         <h2 className={styles.heading}>Photos</h2>
         <span className={styles.count}>
-          {count} / {MAX_PER_TRIP}
+          {count} / {maxPhotos}
         </span>
       </div>
 

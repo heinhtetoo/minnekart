@@ -14,6 +14,8 @@ const SAVE_ERRORS: Record<string, string> = {
   invalid_request: 'Please check the details and try again.',
   not_found: 'This memory could not be found.',
   rate_limited: 'Too many requests. Please wait a moment.',
+  trip_limit_reached:
+    "You've used your 15 free memories. Upgrade in Settings for unlimited.",
 };
 
 interface TripFormProps {
