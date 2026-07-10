@@ -15,7 +15,8 @@ export const signupSchema = z.object({
   username: usernameSchema,
   name: z.string().trim().min(1).max(80),
   password: passwordSchema,
-  invite: z.string().min(1),
+  invite: z.string().min(1).optional(),
+  captchaToken: z.string().min(1).optional(),
 });
 
 export const loginSchema = z.object({

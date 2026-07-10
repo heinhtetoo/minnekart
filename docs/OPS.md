@@ -30,6 +30,9 @@ startup. Set these in Vercel for **both** Production and Preview unless noted.
 | `PADDLE_PRICE_ANNUAL`   | for billing | Price id (`pri_…`) for $39/yr. Checkout buttons hide without it.                                                                                                                                        |
 | `PADDLE_PRICE_MONTHLY`  | no          | Price id for ~$5/mo. Optional secondary button.                                                                                                                                                         |
 | `PADDLE_PRICE_LIFETIME` | no          | Price id for the $99 founding-member one-off. Set it to show the offer; **unset it to retire the offer** (time-boxed by env, no code change).                                                           |
+| `OPEN_SIGNUP`           | no          | `true` \| `false`. **Defaults to `false`** (invite-only). Setting `true` in Vercel is the public-launch moment — see the open-signup section.                                                           |
+| `TURNSTILE_SITE_KEY`    | for launch  | Cloudflare Turnstile site key (public-safe). Renders the CAPTCHA on the signup form.                                                                                                                    |
+| `TURNSTILE_SECRET_KEY`  | for launch  | Turnstile secret. When set, signups without a valid CAPTCHA token are rejected. **Set both Turnstile vars or neither.**                                                                                 |
 
 **Two footguns to check in the audit:**
 
@@ -59,6 +62,8 @@ host — DDL is safest on a session-mode connection.
 - [ ] `PADDLE_ENV=production` + prod webhook secret/client token/price ids in
       prod; sandbox values in preview (never mix — sandbox tokens fail against
       live Paddle and vice versa).
+- [ ] `OPEN_SIGNUP` deliberate per environment (`true` only once launched);
+      both `TURNSTILE_*` keys set together wherever signup is open.
 - [ ] Neon and R2 usage within free-tier quotas.
 
 ## Email (Brevo)
@@ -202,6 +207,40 @@ gunzip -c /var/backups/minnekart/minnekart-YYYY-MM-DD-HHMM.sql.gz \
 # spot-check row counts, then drop it
 dropdb minnekart_restore_test
 ```
+
+## Open signup (Turnstile)
+
+Signup is invite-only until `OPEN_SIGNUP=true` is set — deploying the code
+changes nothing by itself, so billing and the free-tier caps can be tested
+with the invite cohort first (BUSINESS.md §4.4). Invites keep working after
+opening; they're just no longer required.
+
+### Setup (once, before launch)
+
+1. Cloudflare dashboard → Turnstile → Add widget. Hostnames: the prod domain
+   (and preview domains if you want CAPTCHA there). Mode: **Managed**
+   (invisible for most humans).
+2. Copy the site key → `TURNSTILE_SITE_KEY`, secret → `TURNSTILE_SECRET_KEY`
+   in Vercel. Set both or neither: with only the site key the widget renders
+   but the server never checks it; with only the secret every signup fails.
+3. For a dry run, Turnstile's test keys always pass:
+   site `1x00000000000000000000AA`, secret `1x0000000000000000000000000000000AA`.
+
+### Launch / rollback
+
+- **Launch:** set `OPEN_SIGNUP=true` in Vercel prod and redeploy (env changes
+  need a redeploy to take effect). The signup tab stops requiring an invite
+  and shows the free-tier copy; `/signup` is the direct link.
+- **Rollback:** set it back to `false` and redeploy — signup is invite-only
+  again immediately. Accounts created while open keep working.
+
+### Abuse posture
+
+Signups are throttled at 5/hour and 20/day per IP, plus a global 100/day
+kill-valve across all IPs (bump `SIGNUPS_GLOBAL_DAY` in
+`src/app/api/auth/signup/route.ts` if launch traffic is real). Every account
+still needs email-OTP verification before it can create anything, and free
+accounts are capped at 15 memories / 6 photos each.
 
 ## Invite the first users
 

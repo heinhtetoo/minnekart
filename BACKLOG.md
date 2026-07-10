@@ -14,8 +14,6 @@ the build. Roughly ordered by likely value.
 
 ## Product
 
-- **Open public signup.** Currently invite-only. Add open signup gated by
-  CAPTCHA + quotas when opening up.
 - **Multi-stop journey grouping.** A pin is one place-visit; add a grouping
   layer over trips (no schema pain expected).
 - **Original-resolution photo archival.** Web-optimised only today; `original_key`
@@ -32,7 +30,5 @@ the build. Roughly ordered by likely value.
 
 - **Photo reorder.** `position` is only set at upload time; photos render in
   upload order. Needs a reorder endpoint + UI (progress.md Phase 5/7).
-- **Stable OG-image route.** OG images currently use the ~1h signed display URL,
-  so they expire. Add a durable OG-image route (progress.md Phase 8).
 - **Muted-text contrast → WCAG AA.** Muted text sits ~3.4:1 by design; bump to
   meet strict AA if wanted (progress.md Phase 10).

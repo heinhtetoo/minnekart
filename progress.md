@@ -395,16 +395,38 @@ list is the execution order.
       the settings Billing card via Paddle's customer portal links (needs
       `PADDLE_API_KEY`). Until then Paddle's own receipt emails carry the
       management links, so this is polish, not launch-blocking.
-- [ ] **5. Free-tier enforcement.** Server-side: block trip creation past 15
-      pins and photo creation past 6 per pin on the free plan (currently only
-      the global 50-per-trip cap exists). Friendly upgrade message: "15 free
-      memories, 6 photos each." Unadvertised ~5,000-photo soft ceiling on
-      paid as an abuse valve. Integration tests for both caps + the upgrade
-      path. Depends on 3.
-- [ ] **6. Open signup + CAPTCHA/quotas** _(BACKLOG; deferred → freemium
-      prerequisite)_. A free tier can't exist invite-only — BUSINESS.md §5
-      omits this. Deliberately last in the milestone: billing and caps get
-      tested with the invite cohort before the doors open.
+- [x] **5. Free-tier enforcement.** Server-side caps in the API routes,
+      driven by `guard.user.plan` and shared constants in
+      `src/lib/billing/limits.ts`: trip creation blocked at 15 for free
+      users (`trip_limit_reached` 409, new check), photos per trip 6 free /
+      50 paid (the existing `photo_limit_reached` check made plan-aware),
+      and an unadvertised 5,000-photo account ceiling on paid as the abuse
+      valve (same generic error). Client: `TripForm` maps
+      `trip_limit_reached` to "You've used your 15 free memories. Upgrade
+      in Settings for unlimited."; `PhotoUploader`'s hardcoded 50 became a
+      plan prop (counter shows `n / 6` on free, pre-check + banner mention
+      upgrading). Integration tests cover the full matrix incl. the
+      upgrade path (free blocked at 15 → flipped to paid → 201);
+      `createMember` fixture gained a `plan` override. Grandfathered
+      (paid) accounts are untouched by any of it.
+- [x] **6. Open signup + CAPTCHA/quotas** _(BACKLOG → shipped)_. Behind
+      **`OPEN_SIGNUP=true`** (default false) so the deploy and the launch
+      moment stay decoupled — flag off preserves invite-only exactly.
+      When open: `invite` is optional (still validated + consumed when
+      present, so the admin invite page keeps working), and signups are
+      gated by Cloudflare **Turnstile** when `TURNSTILE_SECRET_KEY` is set
+      (raw siteverify call in `src/lib/auth/captcha.ts`, fail-closed,
+      injectable fetch; widget in `AuthCard` via the new
+      `src/components/auth/Turnstile.tsx`, reset on failed submits).
+      Quotas: 5/hour + 20/day per IP and a global 100/day kill-valve on
+      top of email OTP. `/signup` without an invite now lands on the
+      signup tab (`/?signup=1`) instead of bouncing home. Env vars +
+      Cloudflare setup + launch/rollback runbook in `docs/OPS.md`;
+      BACKLOG.md item removed (along with the stale OG-image entry that
+      shipped in task 2). Tests: 6 captcha units + 6 open-mode route tests
+      (`vi.mock`ing the new `signup-mode` gate) + a closed-mode
+      missing-invite test; existing signup tests unchanged. Live Turnstile
+      widget render needs real keys — part of the combined manual test.
 
 ### Tier 2 — conversion & trust (post-milestone, pre-launch-post)
 

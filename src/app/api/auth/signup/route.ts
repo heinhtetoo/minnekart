@@ -2,6 +2,7 @@ import { or, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
 import { users } from '@/db/schema';
+import { verifySignupCaptcha } from '@/lib/auth/captcha';
 import { sessionCookieHeader } from '@/lib/auth/cookies';
 import { sendOtpEmail } from '@/lib/auth/emails';
 import { clientIp, jsonResponse, readJsonBody } from '@/lib/auth/http';
@@ -10,9 +11,14 @@ import { issueOtp } from '@/lib/auth/otp';
 import { hashPassword } from '@/lib/auth/password';
 import { consumeRateLimit } from '@/lib/auth/rate-limit';
 import { createSession } from '@/lib/auth/session';
+import { openSignupEnabled } from '@/lib/auth/signup-mode';
 import { signupSchema } from '@/lib/auth/validation';
 
 const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+const SIGNUPS_PER_IP_HOUR = 5;
+const SIGNUPS_PER_IP_DAY = 20;
+const SIGNUPS_GLOBAL_DAY = 100;
 
 class InviteUnavailableError extends Error {}
 
@@ -21,16 +27,38 @@ export async function POST(request: Request): Promise<Response> {
   if (!parsed.success) {
     return jsonResponse({ error: 'invalid_request' }, 400);
   }
-  const { email, username, name, password, invite } = parsed.data;
+  const { email, username, name, password, invite, captchaToken } = parsed.data;
+
+  if (!openSignupEnabled() && !invite) {
+    return jsonResponse({ error: 'invalid_invite' }, 400);
+  }
+
+  const ip = clientIp(request);
+  if (!(await verifySignupCaptcha(captchaToken, ip))) {
+    return jsonResponse({ error: 'captcha_failed' }, 400);
+  }
 
   const database = db();
-  const allowed = await consumeRateLimit(
-    database,
-    `signup:${clientIp(request)}`,
-    5,
-    HOUR_MS,
-  );
-  if (!allowed) {
+  const withinQuotas =
+    (await consumeRateLimit(
+      database,
+      `signup:${ip}`,
+      SIGNUPS_PER_IP_HOUR,
+      HOUR_MS,
+    )) &&
+    (await consumeRateLimit(
+      database,
+      `signup-day:${ip}`,
+      SIGNUPS_PER_IP_DAY,
+      DAY_MS,
+    )) &&
+    (await consumeRateLimit(
+      database,
+      'signup-global',
+      SIGNUPS_GLOBAL_DAY,
+      DAY_MS,
+    ));
+  if (!withinQuotas) {
     return jsonResponse({ error: 'rate_limited' }, 429);
   }
 
@@ -42,8 +70,8 @@ export async function POST(request: Request): Promise<Response> {
     return jsonResponse({ error: 'account_exists' }, 409);
   }
 
-  const usableInvite = await findUsableInvite(database, invite);
-  if (!usableInvite) {
+  const usableInvite = invite ? await findUsableInvite(database, invite) : null;
+  if (invite && !usableInvite) {
     return jsonResponse({ error: 'invalid_invite' }, 400);
   }
 
@@ -56,9 +84,11 @@ export async function POST(request: Request): Promise<Response> {
         .insert(users)
         .values({ email, username, name, passwordHash })
         .returning({ id: users.id });
-      const consumed = await consumeInvite(tx, usableInvite.id, user.id);
-      if (!consumed) {
-        throw new InviteUnavailableError();
+      if (usableInvite) {
+        const consumed = await consumeInvite(tx, usableInvite.id, user.id);
+        if (!consumed) {
+          throw new InviteUnavailableError();
+        }
       }
       return user.id;
     });

@@ -26,7 +26,8 @@ export const authApi = {
     username: string;
     name: string;
     password: string;
-    invite: string;
+    invite?: string;
+    captchaToken?: string;
   }) => post('/api/auth/signup', input),
   verify: (code: string) => post('/api/auth/verify', { code }),
   resend: () => post('/api/auth/resend', {}),

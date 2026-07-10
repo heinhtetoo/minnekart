@@ -6,5 +6,5 @@ interface SignupPageProps {
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
   const { invite } = await searchParams;
-  redirect(invite ? `/?invite=${encodeURIComponent(invite)}` : '/');
+  redirect(invite ? `/?invite=${encodeURIComponent(invite)}` : '/?signup=1');
 }

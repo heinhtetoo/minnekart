@@ -4,6 +4,8 @@ import { db } from '@/db';
 import { photos, trips } from '@/db/schema';
 import { isVerified } from '@/lib/auth/current-user';
 import { getServerSessionUser } from '@/lib/auth/session-server';
+import { openSignupEnabled } from '@/lib/auth/signup-mode';
+import { env } from '@/lib/env';
 import { toTripDTO } from '@/lib/trips/dto';
 import { computeStats } from '@/lib/trips/stats';
 import LoggedInHome, { HomeTrip } from '@/components/home/LoggedInHome';
@@ -11,15 +13,22 @@ import LoggedOutHome from '@/components/home/LoggedOutHome';
 import VerifyScreen from '@/components/auth/VerifyScreen';
 
 interface HomeProps {
-  searchParams: Promise<{ invite?: string }>;
+  searchParams: Promise<{ invite?: string; signup?: string }>;
 }
 
 export default async function Home({ searchParams }: HomeProps) {
   const user = await getServerSessionUser();
-  const { invite } = await searchParams;
+  const { invite, signup } = await searchParams;
 
   if (!user) {
-    return <LoggedOutHome invite={invite} />;
+    return (
+      <LoggedOutHome
+        invite={invite}
+        openSignup={openSignupEnabled()}
+        turnstileSiteKey={env().TURNSTILE_SITE_KEY}
+        startOnSignup={signup === '1'}
+      />
+    );
   }
 
   if (!isVerified(user)) {

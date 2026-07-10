@@ -31,9 +31,17 @@ const demoStats = computeStats(
 
 interface LoggedOutHomeProps {
   invite?: string;
+  openSignup?: boolean;
+  turnstileSiteKey?: string;
+  startOnSignup?: boolean;
 }
 
-export default function LoggedOutHome({ invite }: LoggedOutHomeProps) {
+export default function LoggedOutHome({
+  invite,
+  openSignup,
+  turnstileSiteKey,
+  startOnSignup,
+}: LoggedOutHomeProps) {
   const authRef = useRef<AuthCardHandle>(null);
   const getStartedRef = useRef<HTMLDivElement>(null);
 
@@ -126,7 +134,13 @@ export default function LoggedOutHome({ invite }: LoggedOutHomeProps) {
           <Globe pins={pins} width={960} height={960} />
         </div>
         <div ref={getStartedRef} id="get-started" className={styles.formWrap}>
-          <AuthCard ref={authRef} invite={invite} />
+          <AuthCard
+            ref={authRef}
+            invite={invite}
+            openSignup={openSignup}
+            turnstileSiteKey={turnstileSiteKey}
+            startOnSignup={startOnSignup}
+          />
           <p
             style={{
               textAlign: 'center',

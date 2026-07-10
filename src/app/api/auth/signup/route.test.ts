@@ -66,6 +66,17 @@ describe('POST /api/auth/signup', () => {
     expect(await db.select().from(users)).toHaveLength(0);
   });
 
+  it('rejects a missing invite while signup is invite-only', async () => {
+    const body: Record<string, unknown> = signupBody('placeholder');
+    delete body.invite;
+
+    const response = await POST(postRequest(url, body));
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toBe('invalid_invite');
+    expect(await db.select().from(users)).toHaveLength(0);
+  });
+
   it('rejects a reused invite', async () => {
     const { inviteToken } = await createOwnerWithInvite();
     await POST(postRequest(url, signupBody(inviteToken)));

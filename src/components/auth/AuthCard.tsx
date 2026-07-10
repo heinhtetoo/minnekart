@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, forwardRef, useImperativeHandle, useState } from 'react';
 
 import { authApi } from './api';
+import Turnstile from './Turnstile';
 
 type Mode = 'login' | 'signup' | 'forgot' | 'forgotSent';
 
@@ -14,6 +15,9 @@ export interface AuthCardHandle {
 
 interface AuthCardProps {
   invite?: string;
+  openSignup?: boolean;
+  turnstileSiteKey?: string;
+  startOnSignup?: boolean;
 }
 
 const LOGIN_ERRORS: Record<string, string> = {
@@ -26,14 +30,17 @@ const SIGNUP_ERRORS: Record<string, string> = {
   invalid_invite: 'This invite link is invalid, used, or expired.',
   rate_limited: 'Too many attempts. Please wait a moment and try again.',
   invalid_request: 'Please check your details and try again.',
+  captcha_failed: 'Verification failed. Please try again.',
 };
 
 const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
-  { invite },
+  { invite, openSignup = false, turnstileSiteKey, startOnSignup = false },
   ref,
 ) {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>(invite ? 'signup' : 'login');
+  const [mode, setMode] = useState<Mode>(
+    invite || startOnSignup ? 'signup' : 'login',
+  );
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -41,6 +48,10 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaNonce, setCaptchaNonce] = useState(0);
+
+  const canSignup = openSignup || Boolean(invite);
 
   useImperativeHandle(ref, () => ({
     openSignup: () => {
@@ -77,8 +88,12 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
       setError('Passwords do not match.');
       return;
     }
-    if (!invite) {
+    if (!canSignup) {
       setError('Signups are invite-only. Ask your host for an invite link.');
+      return;
+    }
+    if (turnstileSiteKey && !captchaToken) {
+      setError('Please complete the verification first.');
       return;
     }
     setBusy(true);
@@ -88,11 +103,15 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
       name: name.trim(),
       password,
       invite,
+      captchaToken: captchaToken || undefined,
     });
     setBusy(false);
     if (result.ok) {
       router.refresh();
       return;
+    }
+    if (turnstileSiteKey) {
+      setCaptchaNonce((nonce) => nonce + 1);
     }
     setError(SIGNUP_ERRORS[result.error ?? ''] ?? 'Could not create account.');
   }
@@ -218,8 +237,11 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
                 lineHeight: 1.5,
               }}
             >
-              Minnekart is invite-only for now. Open your invite link to create
-              an account.
+              {openSignup
+                ? 'Free to join — 15 memories with 6 photos each. Upgrade ' +
+                  'any time for unlimited.'
+                : 'Minnekart is invite-only for now. Open your invite link ' +
+                  'to create an account.'}
             </p>
           )}
           <Field
@@ -262,8 +284,19 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
             placeholder="Re-enter password"
             autoComplete="new-password"
           />
+          {turnstileSiteKey && canSignup && (
+            <Turnstile
+              siteKey={turnstileSiteKey}
+              onToken={setCaptchaToken}
+              resetNonce={captchaNonce}
+            />
+          )}
           <ErrorLine error={error} />
-          <button className="button" type="submit" disabled={busy || !invite}>
+          <button
+            className="button"
+            type="submit"
+            disabled={busy || !canSignup}
+          >
             {busy ? 'Creating…' : 'Create account'}
           </button>
         </form>
