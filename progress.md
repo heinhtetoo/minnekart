@@ -291,15 +291,6 @@ About`); the redundant top-bar "+ New memory" is hidden on mobile. New
       the `About` eyebrow, the portrait card (name initial + tagline), and the
       Countries/Photos/Years stats are unchanged. Dev keeps the original copy so
       it's still visible while iterating. `src/app/about/page.tsx` only.
-- [ ] **Editable profile.** Let the owner edit their own About content — name,
-      tagline, and bio body (the prose the "Coming soon" placeholder currently
-      stands in for), stored per user rather than hard-coded. Once shipped, drop
-      the `NODE_ENV` gate above and render the stored bio (with "Coming soon" as
-      the empty-state fallback). Likely touches the `users` schema (a bio/tagline
-      field + migration), a settings/profile editor, and `src/app/about/page.tsx`.
-- [ ] **Push the public-globe peek card further down on mobile.** The mobile peek
-      still overlaps the lower third of the globe. Nudge it lower again (public
-      globe, mobile only) in `public/PeekPanel.module.css` — desktop stays as-is.
 - [x] **Photo uploads: WebP encode silently fell back to PNG on Safari/Firefox.**
       One root cause behind all three logged upload issues ("can't upload large
       photos", ~3MB originals landing in R2 at ~6MB, "Image is too large" on
@@ -322,16 +313,103 @@ About`); the redundant top-bar "+ New memory" is hidden on mobile. New
       end-to-end with a 5.44MB 4000px JPEG: Chromium → `.webp` upload, WebKit →
       `.jpg` upload, both 201 + rendered, no "Image is too large". Tests
       176 → 183.
-- [ ] **Re-encode the legacy PNG-as-webp objects in R2.** Photos uploaded from
-      Safari/Firefox before the JPEG-fallback fix are PNGs stored under `.webp`
-      keys with an `image/webp` content-type (~6MB displays, ~200KB thumbs).
-      They display fine because browsers sniff the real format, but they waste
-      storage and bandwidth. A one-off script (e.g. sharp server-side) could
-      re-encode and replace them; low urgency.
-- [ ] **Investigate `prettier --write` not persisting locally.** During the
-      mobile-polish commit, `prettier --write progress.md` reported success but
-      `prettier --check` kept failing on the same file. The workaround was to
-      redirect prettier's stdout to a temp file and move it back over the
-      original. So `--write` may not be writing atomically in this dev
-      environment. Check the prettier version and whether it reproduces on
-      other files before relying on `npm run format` locally.
+
+## Pending work — ranked for implementation by business value
+
+Every open task, ordered. Ranking logic follows `docs/BUSINESS.md`:
+distribution and perceived value are the constraints, and revenue needs the
+launch milestone (billing + domain + enforcement) shipped as one piece.
+Engineering tasks only — the GTM/owner actions (Reddit warm-up, launch posts,
+founding-member offer timing) live in `docs/BUSINESS.md` §4 and are not
+tracked here. Items marked _(BACKLOG)_ are described in `BACKLOG.md`; this
+list is the execution order.
+
+### Tier 1 — the revenue engine (launch-blocking, in dependency order)
+
+- [ ] **1. Custom domain + DKIM email** _(BACKLOG; deferred →
+      launch-blocking)_. First even though it's mostly ops: checkout under
+      `vercel.app` costs trust at the worst moment, OTP/reset deliverability
+      improves, and the SEO clock (domain authority) only starts once it
+      exists — ranking on `vercel.app` and migrating later throws away equity.
+- [ ] **2. Stable OG-image route + public-globe shareability polish.** Pulled
+      ahead of billing deliberately: it's the top of the funnel (BUSINESS.md
+      Pillar 1, "the product is the marketing"), pure engineering with no ops
+      dependency, and actively broken today — OG previews die with the ~1h
+      signed URL, so every share posted now gets a dead preview. Absorbs the
+      BACKLOG's "stable OG-image route". Includes a screenshot-worthiness
+      pass, link-preview QA (iMessage, WhatsApp, Slack, X), and the mobile
+      peek-card nudge (`public/PeekPanel.module.css`, mobile only — the card
+      still overlaps the lower third of the globe).
+- [ ] **3. Billing schema & data model.** `users` gains `plan`
+      (`free`/`paid`), `subscription_status`, and `paddle_customer_id` +
+      migration. Decide grandfathering for the existing invite cohort —
+      BUSINESS.md earmarks them as the founding-member cohort, so they
+      shouldn't wake up capped. New signups default to `free`.
+- [ ] **4. Paddle checkout + subscription webhook handler.** Paddle as
+      Merchant of Record. Webhook endpoint with signature verification +
+      idempotency, handling created / renewed / canceled / payment-failed →
+      updates `users` via `paddle_customer_id`. Products: $39/yr (primary),
+      ~$5/mo, ~$99 lifetime founding member (time-boxed). Env secrets in
+      Vercel; sandbox-tested. Ops steps (Paddle account, product setup)
+      documented in `docs/OPS.md`. Depends on 3.
+- [ ] **5. Free-tier enforcement.** Server-side: block trip creation past 15
+      pins and photo creation past 6 per pin on the free plan (currently only
+      the global 50-per-trip cap exists). Friendly upgrade message: "15 free
+      memories, 6 photos each." Unadvertised ~5,000-photo soft ceiling on
+      paid as an abuse valve. Integration tests for both caps + the upgrade
+      path. Depends on 3.
+- [ ] **6. Open signup + CAPTCHA/quotas** _(BACKLOG; deferred → freemium
+      prerequisite)_. A free tier can't exist invite-only — BUSINESS.md §5
+      omits this. Deliberately last in the milestone: billing and caps get
+      tested with the invite cohort before the doors open.
+
+### Tier 2 — conversion & trust (post-milestone, pre-launch-post)
+
+- [ ] **7. Editable profile.** Owner edits their About name, tagline, and bio
+      (stored per user); then drop the `NODE_ENV` "Coming soon" gate and
+      render the stored bio with "Coming soon" as the empty-state fallback.
+      Matters here because visitors arriving via shared globes currently hit
+      a "Coming soon" About page — weak first impression for exactly the
+      traffic Pillar 1 generates. Touches `users` schema (bio/tagline +
+      migration), a settings/profile editor, `src/app/about/page.tsx`.
+- [ ] **8. R2 photo backup job** _(BACKLOG, elevated)_. `rclone` sync R2 →
+      the OCI box beside the Neon `pg_dump` cron. Elevated above its backlog
+      slot: charging for "your entire travel history, safely kept" while
+      photos are single-copy contradicts the value proposition. Cheap
+      relative to the liability.
+- [ ] **9. Marketing + SEO base layer.** Privacy as a marketed feature (a
+      line on the logged-out home/marketing page). Two evergreen SEO pages to
+      start: "how to keep a private record of every place you've travelled"
+      and "Polarsteps alternatives that don't track your live location."
+      Requires 1 (domain). Slow channel (6–12 months to rank) — ship early,
+      leave to compound.
+
+### Tier 3 — product polish (activation & paid experience)
+
+- [ ] **10. EXIF GPS pin suggestions** _(BACKLOG)_. Prefill coordinates from
+      photo GPS on upload. Sleeper pick: the ICP's first session is
+      backfilling years of trips, and GPS prefill shortens both time-to-aha
+      and time-to-hitting-the-15-pin cap.
+- [ ] **11. Photo reorder** _(BACKLOG)_. Reorder endpoint + UI; `position` is
+      currently set only at upload time. Paid-user quality of life.
+- [ ] **12. Muted-text contrast → WCAG AA** _(BACKLOG)_. ~3.4:1 by design;
+      bump if strict AA is wanted. Small, do opportunistically.
+
+### Tier 4 — hygiene / post-PMF
+
+- [ ] **13. Re-encode the legacy PNG-as-webp objects in R2.** Photos uploaded
+      from Safari/Firefox before the JPEG-fallback fix are PNGs stored under
+      `.webp` keys with an `image/webp` content-type (~6MB displays, ~200KB
+      thumbs). They display fine (browsers sniff the real format) but waste
+      storage/bandwidth. One-off script (e.g. sharp server-side); low
+      urgency.
+- [ ] **14. Investigate `prettier --write` not persisting locally.** During
+      the mobile-polish commit, `prettier --write progress.md` reported
+      success but `prettier --check` kept failing on the same file. The
+      workaround was to redirect prettier's stdout to a temp file and move it
+      back over the original. So `--write` may not be writing atomically in
+      this dev environment. Check the prettier version and whether it
+      reproduces on other files before relying on `npm run format` locally.
+- Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
+  opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
+  real usage data exists.
