@@ -17,6 +17,8 @@ export default defineConfig({
     env: {
       EMAIL_TRANSPORT: 'memory',
       STORAGE_DRIVER: 'memory',
+      PADDLE_WEBHOOK_SECRET: 'pdl_ntfset_test_secret',
+      PADDLE_PRICE_LIFETIME: 'pri_lifetime_test',
       ...(databaseUrl ? { DATABASE_URL: testDatabaseUrl(databaseUrl) } : {}),
     },
   },

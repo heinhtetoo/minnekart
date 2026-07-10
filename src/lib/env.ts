@@ -17,6 +17,12 @@ const envSchema = z.object({
   R2_ACCESS_KEY_ID: z.string().optional(),
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   R2_BUCKET: z.string().optional(),
+  PADDLE_ENV: z.enum(['sandbox', 'production']).default('sandbox'),
+  PADDLE_WEBHOOK_SECRET: z.string().optional(),
+  PADDLE_CLIENT_TOKEN: z.string().optional(),
+  PADDLE_PRICE_ANNUAL: z.string().optional(),
+  PADDLE_PRICE_MONTHLY: z.string().optional(),
+  PADDLE_PRICE_LIFETIME: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

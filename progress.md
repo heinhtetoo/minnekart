@@ -358,18 +358,43 @@ list is the execution order.
       sharing debugger, WhatsApp, iMessage, Slack. Check both a trip link and
       the globe link; confirm images stay live past the old 1h window and
       that Vercel's file tracing bundled the `src/lib/og/fonts` TTFs.
-- [ ] **3. Billing schema & data model.** `users` gains `plan`
-      (`free`/`paid`), `subscription_status`, and `paddle_customer_id` +
-      migration. Decide grandfathering for the existing invite cohort —
-      BUSINESS.md earmarks them as the founding-member cohort, so they
-      shouldn't wake up capped. New signups default to `free`.
-- [ ] **4. Paddle checkout + subscription webhook handler.** Paddle as
-      Merchant of Record. Webhook endpoint with signature verification +
-      idempotency, handling created / renewed / canceled / payment-failed →
-      updates `users` via `paddle_customer_id`. Products: $39/yr (primary),
-      ~$5/mo, ~$99 lifetime founding member (time-boxed). Env secrets in
-      Vercel; sandbox-tested. Ops steps (Paddle account, product setup)
-      documented in `docs/OPS.md`. Depends on 3.
+- [x] **3. Billing schema & data model.** `users` gained `plan`
+      (`user_plan` enum, default `free`), nullable `subscription_status`
+      (`active`/`trialing`/`past_due`/`paused`/`canceled` — null for free
+      users and non-subscription paid), and a nullable unique
+      `paddle_customer_id`; plus a `webhook_events` table (unique
+      `event_id`) for webhook idempotency. Migration `0002_perpetual_loa`
+      also backfills **all pre-existing users to `paid`** (decided: the
+      invite cohort is grandfathered — never capped; the founding-member
+      offer stays voluntary support). New signups default to `free`
+      (verified both ways on the local DB). `SessionUser` infers from the
+      schema, so `user.plan` is available on every guard automatically.
+- [x] **4. Paddle checkout + subscription webhook handler.** Paddle as
+      Merchant of Record. `POST /api/webhooks/paddle`: raw-body HMAC-SHA256
+      verification of the `Paddle-Signature` header (`timingSafeEqual`,
+      60s timestamp tolerance), `webhook_events` insert-or-skip dedupe,
+      then `subscription.*` handled generically off `data.status`
+      (`active`/`trialing` → paid, `past_due` → stays paid — Paddle
+      dunning is the grace period, `paused`/`canceled` → free) and
+      `transaction.completed` grants lifetime paid when the items include
+      `PADDLE_PRICE_LIFETIME`. Users matched by checkout
+      `custom_data.userId` first, then stored `paddle_customer_id`;
+      unmatched/unknown events are acked 200 (no retry storms). New
+      `src/lib/billing/` (signature + webhook), settings **Billing card**
+      (plan badge, past-due warning, overlay checkout via
+      `@paddle/paddle-js` with annual primary / monthly secondary /
+      env-gated lifetime buttons; hides checkout entirely when Paddle env
+      is absent), all six `PADDLE_*` env vars optional-at-parse in
+      `env.ts`, and a `## Billing (Paddle)` runbook in `docs/OPS.md`
+      (sandbox setup, test flow, go-live checklist). Verified: 8 signature
+      units + 13 webhook integration tests (TDD), settings card
+      screenshot-checked with and without Paddle config; 208 tests green.
+      Real sandbox checkout → webhook round-trip is an ops step
+      (needs the Paddle sandbox account — see OPS.md).
+- [ ] **4b. In-app subscription management.** "Cancel / update card" from
+      the settings Billing card via Paddle's customer portal links (needs
+      `PADDLE_API_KEY`). Until then Paddle's own receipt emails carry the
+      management links, so this is polish, not launch-blocking.
 - [ ] **5. Free-tier enforcement.** Server-side: block trip creation past 15
       pins and photo creation past 6 per pin on the free plan (currently only
       the global 50-per-trip cap exists). Friendly upgrade message: "15 free

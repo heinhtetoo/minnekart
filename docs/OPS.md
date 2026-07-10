@@ -8,22 +8,28 @@ PR previews), Postgres on Neon, photos on Cloudflare R2, CI on GitHub Actions.
 Validated at boot by `src/lib/env.ts` — a missing/invalid required var throws on
 startup. Set these in Vercel for **both** Production and Preview unless noted.
 
-| Var                    | Required    | Notes                                                                                                                                                                                                   |
-| ---------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`         | yes         | Neon **pooled** connection string (host contains `-pooler`) for the Vercel runtime — see the pooling note below. Also a GitHub Actions secret for the migrate job (use the direct/unpooled host there). |
-| `APP_URL`              | yes in prod | Public base URL; builds invite/share/reset links. Defaults to `http://localhost:3000`. Use the preview URL for Preview.                                                                                 |
-| `NODE_ENV`             | auto        | Vercel sets `production`.                                                                                                                                                                               |
-| `EMAIL_TRANSPORT`      | yes in prod | `console` \| `memory` \| `smtp`. Set `smtp` in prod.                                                                                                                                                    |
-| `SMTP_HOST`            | when smtp   | Brevo: `smtp-relay.brevo.com`.                                                                                                                                                                          |
-| `SMTP_PORT`            | when smtp   | `587` (STARTTLS — works from Vercel serverless).                                                                                                                                                        |
-| `SMTP_USER`            | when smtp   | Brevo SMTP login.                                                                                                                                                                                       |
-| `SMTP_PASS`            | when smtp   | Brevo SMTP key (not your account password).                                                                                                                                                             |
-| `EMAIL_FROM`           | when smtp   | e.g. `Minnekart <hello@yourdomain.com>` — must be a Brevo-verified sender.                                                                                                                              |
-| `STORAGE_DRIVER`       | yes in prod | `r2` \| `memory`. **Defaults to `r2`.**                                                                                                                                                                 |
-| `R2_ACCOUNT_ID`        | when r2     | Cloudflare account id.                                                                                                                                                                                  |
-| `R2_ACCESS_KEY_ID`     | when r2     | R2 token key id.                                                                                                                                                                                        |
-| `R2_SECRET_ACCESS_KEY` | when r2     | R2 token secret.                                                                                                                                                                                        |
-| `R2_BUCKET`            | when r2     | Private bucket name.                                                                                                                                                                                    |
+| Var                     | Required    | Notes                                                                                                                                                                                                   |
+| ----------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`          | yes         | Neon **pooled** connection string (host contains `-pooler`) for the Vercel runtime — see the pooling note below. Also a GitHub Actions secret for the migrate job (use the direct/unpooled host there). |
+| `APP_URL`               | yes in prod | Public base URL; builds invite/share/reset links. Defaults to `http://localhost:3000`. Use the preview URL for Preview.                                                                                 |
+| `NODE_ENV`              | auto        | Vercel sets `production`.                                                                                                                                                                               |
+| `EMAIL_TRANSPORT`       | yes in prod | `console` \| `memory` \| `smtp`. Set `smtp` in prod.                                                                                                                                                    |
+| `SMTP_HOST`             | when smtp   | Brevo: `smtp-relay.brevo.com`.                                                                                                                                                                          |
+| `SMTP_PORT`             | when smtp   | `587` (STARTTLS — works from Vercel serverless).                                                                                                                                                        |
+| `SMTP_USER`             | when smtp   | Brevo SMTP login.                                                                                                                                                                                       |
+| `SMTP_PASS`             | when smtp   | Brevo SMTP key (not your account password).                                                                                                                                                             |
+| `EMAIL_FROM`            | when smtp   | e.g. `Minnekart <hello@yourdomain.com>` — must be a Brevo-verified sender.                                                                                                                              |
+| `STORAGE_DRIVER`        | yes in prod | `r2` \| `memory`. **Defaults to `r2`.**                                                                                                                                                                 |
+| `R2_ACCOUNT_ID`         | when r2     | Cloudflare account id.                                                                                                                                                                                  |
+| `R2_ACCESS_KEY_ID`      | when r2     | R2 token key id.                                                                                                                                                                                        |
+| `R2_SECRET_ACCESS_KEY`  | when r2     | R2 token secret.                                                                                                                                                                                        |
+| `R2_BUCKET`             | when r2     | Private bucket name.                                                                                                                                                                                    |
+| `PADDLE_ENV`            | no          | `sandbox` \| `production`. **Defaults to `sandbox`** — set `production` when going live.                                                                                                                |
+| `PADDLE_WEBHOOK_SECRET` | for billing | Notification destination secret (`pdl_ntfset_…`). Without it the webhook returns 503 and no plan changes apply.                                                                                         |
+| `PADDLE_CLIENT_TOKEN`   | for billing | Client-side token (`live_…`/`test_…`). Public-safe; enables the checkout overlay.                                                                                                                       |
+| `PADDLE_PRICE_ANNUAL`   | for billing | Price id (`pri_…`) for $39/yr. Checkout buttons hide without it.                                                                                                                                        |
+| `PADDLE_PRICE_MONTHLY`  | no          | Price id for ~$5/mo. Optional secondary button.                                                                                                                                                         |
+| `PADDLE_PRICE_LIFETIME` | no          | Price id for the $99 founding-member one-off. Set it to show the offer; **unset it to retire the offer** (time-boxed by env, no code change).                                                           |
 
 **Two footguns to check in the audit:**
 
@@ -50,6 +56,9 @@ host — DDL is safest on a session-mode connection.
 - [ ] `APP_URL` correct per environment (prod domain vs preview URL).
 - [ ] `EMAIL_TRANSPORT=smtp` + `SMTP_*` + `EMAIL_FROM` set in prod.
 - [ ] `STORAGE_DRIVER=r2` + all four `R2_*` set in prod (or `memory` on purpose).
+- [ ] `PADDLE_ENV=production` + prod webhook secret/client token/price ids in
+      prod; sandbox values in preview (never mix — sandbox tokens fail against
+      live Paddle and vice versa).
 - [ ] Neon and R2 usage within free-tier quotas.
 
 ## Email (Brevo)
@@ -108,6 +117,61 @@ both bit us at launch — check them when creating a new bucket or adding a doma
 If an upload fails: status `—`/no response = CORS; `403 SignatureDoesNotMatch`
 with a body = credentials (`R2_SECRET_ACCESS_KEY` not matching the key id) or the
 checksum setting.
+
+## Billing (Paddle)
+
+Paddle is the Merchant of Record — it is the legal seller and remits VAT/GST,
+which is the whole reason it was chosen (see `docs/BUSINESS.md` §3.4). The app
+side is a webhook (`/api/webhooks/paddle`) that updates `users.plan` /
+`users.subscription_status`, and an overlay checkout on `/settings`. Everything
+below is dashboard/ops work.
+
+### Sandbox setup (do this first)
+
+1. Create a **sandbox** account at `sandbox-vendors.paddle.com` (separate from
+   the live account).
+2. Create one product ("Minnekart Paid") with three prices: **$39/year**
+   (annual), **$5/month** (monthly), and a **$99 one-time** price for the
+   founding-member offer. Copy each `pri_…` id.
+3. Create a client-side token (Developer Tools → Authentication) →
+   `PADDLE_CLIENT_TOKEN`.
+4. Create a notification destination (Developer Tools → Notifications):
+   - URL: `https://<deployment>/api/webhooks/paddle`
+   - Type: webhook. Subscribe to **all `subscription.*` events and
+     `transaction.completed`** (unknown events are acked and ignored, so
+     over-subscribing is safe).
+   - Copy the secret (`pdl_ntfset_…`) → `PADDLE_WEBHOOK_SECRET`.
+5. Set the five `PADDLE_*` vars in Vercel **Preview** (leave `PADDLE_ENV`
+   unset — it defaults to `sandbox`).
+
+### Sandbox test flow
+
+1. On a preview deploy, log in, open `/settings` — the plan card should show
+   upgrade buttons.
+2. Buy with Paddle's test card `4242 4242 4242 4242` (any future expiry/CVC).
+3. Within seconds the webhook should flip the user to `paid` — reload
+   `/settings` and check the badge. Paddle's dashboard (Notifications → logs)
+   shows delivery attempts + responses for debugging; events can be replayed
+   from there (replays are deduped by `event_id`, so they're safe).
+4. Cancel the subscription in the Paddle dashboard and confirm the user drops
+   back to `free` after the `subscription.canceled` event.
+
+### Go-live checklist
+
+- [ ] Paddle **live** account approved (Paddle reviews your website before you
+      can charge — needs the custom domain, terms, privacy and refund pages).
+- [ ] Product + three prices recreated in the live account (ids differ from
+      sandbox).
+- [ ] Live notification destination pointing at the prod domain; live secret.
+- [ ] Vercel prod: `PADDLE_ENV=production` + live token/secret/price ids.
+- [ ] One real $39 checkout end-to-end (refund it from the Paddle dashboard —
+      also proves the refund path).
+- [ ] To retire the founding-member offer later: delete `PADDLE_PRICE_LIFETIME`
+      from Vercel prod and redeploy.
+
+Cancellations/card updates are handled by Paddle's own emails and checkout for
+now — there is no in-app "manage subscription" yet (needs the Paddle API key;
+logged as a follow-up in `progress.md`).
 
 ## Backups (Neon → OCI box)
 

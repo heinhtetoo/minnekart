@@ -1,6 +1,30 @@
 import AppPage from '@/components/layout/AppPage';
+import BillingCard, {
+  PaddleCheckoutConfig,
+} from '@/components/account/BillingCard';
 import GlobeVisibility from '@/components/account/GlobeVisibility';
 import { requireVerifiedPageUser } from '@/lib/auth/session-server';
+import { env } from '@/lib/env';
+
+function paddleCheckoutConfig(): PaddleCheckoutConfig | null {
+  const {
+    PADDLE_ENV,
+    PADDLE_CLIENT_TOKEN,
+    PADDLE_PRICE_ANNUAL,
+    PADDLE_PRICE_MONTHLY,
+    PADDLE_PRICE_LIFETIME,
+  } = env();
+  if (!PADDLE_CLIENT_TOKEN || !PADDLE_PRICE_ANNUAL) {
+    return null;
+  }
+  return {
+    environment: PADDLE_ENV,
+    clientToken: PADDLE_CLIENT_TOKEN,
+    priceAnnual: PADDLE_PRICE_ANNUAL,
+    priceMonthly: PADDLE_PRICE_MONTHLY,
+    priceLifetime: PADDLE_PRICE_LIFETIME,
+  };
+}
 
 export default async function SettingsPage() {
   const user = await requireVerifiedPageUser();
@@ -41,6 +65,13 @@ export default async function SettingsPage() {
       <GlobeVisibility
         initialPublic={user.globePublic}
         username={user.username}
+      />
+      <BillingCard
+        plan={user.plan}
+        subscriptionStatus={user.subscriptionStatus}
+        userId={user.id}
+        email={user.email}
+        paddle={paddleCheckoutConfig()}
       />
     </AppPage>
   );
