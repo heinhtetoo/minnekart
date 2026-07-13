@@ -331,6 +331,35 @@ list is the execution order.
       `vercel.app` costs trust at the worst moment, OTP/reset deliverability
       improves, and the SEO clock (domain authority) only starts once it
       exists — ranking on `vercel.app` and migrating later throws away equity.
+      Domain `minnekart.com` bought 13 July 2026; DNS/Brevo DKIM still to do.
+- [x] **1b. Public pricing + policy pages.** Paddle reviews the website before
+      it approves a live account, and it requires pricing, terms, privacy and
+      refund pages — none existed, so this blocked the whole billing
+      milestone. Shipped `/pricing`, `/terms`, `/privacy`, `/refunds` on a
+      shared `ContentPage` shell (chrome + the prose scale the app never had;
+      `PublicChrome.ownerName` became optional so it works as marketing
+      chrome), linked from a new always-visible footer legal row, plus
+      `sitemap.ts` + `robots.ts` (which also keeps `/t/` share links out of
+      search indexes). Pricing reads the real limits from `limits.ts` and
+      gates the founding-member tier on `PADDLE_PRICE_LIFETIME`, mirroring
+      settings — retiring the offer stays a pure env change. Copy is grounded
+      in the code, not boilerplate: EXIF is stripped by the browser-side
+      re-encode, one essential cookie, no analytics anywhere, Paddle as
+      merchant of record, and the honest admission that account deletion is
+      email-only today. Pure `pricing.ts` helpers are unit-tested (7 tests);
+      the pages have no render tests, matching the repo's convention. The repo
+      is public, so the business identity is **configuration, not content**:
+      `src/lib/legal.ts` reads `LEGAL_ENTITY_NAME` / `LEGAL_ENTITY_ABN` from
+      env (real values live only in the gitignored `.env` and Vercel) and falls
+      back to the obvious `HHO` / `ABN XXXX XXXX XXX` placeholders, so the
+      legal name and ABN never enter git history. **Set both in Vercel prod
+      before submitting to Paddle.** Two things surfaced on the way: a
+      developer's
+      `.env` was leaking `TURNSTILE_SECRET_KEY`/`OPEN_SIGNUP` into the test
+      run through `dotenv/config` in `vitest.config.ts` (now pinned in the
+      test env, which is why 4 signup tests could fail locally but pass in
+      CI), and JSX text that follows an inline element loses its leading space
+      when the text contains an HTML entity — worked around, worth knowing.
 - [x] **2. Stable OG-image route + public-globe shareability polish.** OG
       previews used the ~1h-signed R2 URL (dead after expiry) and the globe
       page had no preview image at all. Shipped branded 1200×630 cards via the
@@ -459,6 +488,11 @@ list is the execution order.
       currently set only at upload time. Paid-user quality of life.
 - [ ] **12. Muted-text contrast → WCAG AA** _(BACKLOG)_. ~3.4:1 by design;
       bump if strict AA is wanted. Small, do opportunistically.
+- [ ] **12b. Self-serve account deletion.** The privacy page promises deletion
+      within 30 days of an email to `hello@minnekart.com` — honest, but manual,
+      and it becomes a real support cost the moment signup opens. Needs a
+      settings flow (confirm → delete user, trips, photos in R2, sessions) plus
+      the same job reachable by an admin.
 
 ### Tier 4 — hygiene / post-PMF
 

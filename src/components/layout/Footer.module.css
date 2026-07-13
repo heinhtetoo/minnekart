@@ -24,6 +24,12 @@
   flex-wrap: wrap;
 }
 
+.legal {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
 .link {
   font-size: 13px;
   color: #a8a090;

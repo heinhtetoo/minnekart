@@ -9,6 +9,13 @@ interface FooterProps {
   loggedIn: boolean;
 }
 
+const legalItems = [
+  { href: '/pricing', label: 'Pricing' },
+  { href: '/terms', label: 'Terms' },
+  { href: '/privacy', label: 'Privacy' },
+  { href: '/refunds', label: 'Refunds' },
+];
+
 export default function Footer({ loggedIn }: FooterProps) {
   const year = new Date().getFullYear();
 
@@ -28,6 +35,14 @@ export default function Footer({ loggedIn }: FooterProps) {
             ))}
           </nav>
         )}
+
+        <nav className={styles.legal} aria-label="Legal">
+          {legalItems.map((item) => (
+            <Link key={item.href} href={item.href} className={styles.link}>
+              {item.label}
+            </Link>
+          ))}
+        </nav>
 
         <p className={styles.copy}>© {year} · A memory palace you can spin</p>
       </div>

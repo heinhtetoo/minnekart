@@ -33,6 +33,8 @@ startup. Set these in Vercel for **both** Production and Preview unless noted.
 | `OPEN_SIGNUP`           | no          | `true` \| `false`. **Defaults to `false`** (invite-only). Setting `true` in Vercel is the public-launch moment — see the open-signup section.                                                           |
 | `TURNSTILE_SITE_KEY`    | for launch  | Cloudflare Turnstile site key (public-safe). Renders the CAPTCHA on the signup form.                                                                                                                    |
 | `TURNSTILE_SECRET_KEY`  | for launch  | Turnstile secret. When set, signups without a valid CAPTCHA token are rejected. **Set both Turnstile vars or neither.**                                                                                 |
+| `LEGAL_ENTITY_NAME`     | for billing | Legal/trading name printed on `/terms`, `/privacy`, `/refunds`. **Kept out of the (public) repo — set here, never in code.** Falls back to the placeholder `HHO`.                                       |
+| `LEGAL_ENTITY_ABN`      | for billing | ABN printed beside the legal name. Same rule. Falls back to `ABN XXXX XXXX XXX`.                                                                                                                        |
 
 **Two footguns to check in the audit:**
 
@@ -64,6 +66,9 @@ host — DDL is safest on a session-mode connection.
       live Paddle and vice versa).
 - [ ] `OPEN_SIGNUP` deliberate per environment (`true` only once launched);
       both `TURNSTILE_*` keys set together wherever signup is open.
+- [ ] `LEGAL_ENTITY_NAME` + `LEGAL_ENTITY_ABN` set in prod — otherwise the
+      policy pages render the `HHO` / `ABN XXXX XXXX XXX` placeholders and
+      Paddle's reviewer sees them.
 - [ ] Neon and R2 usage within free-tier quotas.
 
 ## Email (Brevo)
@@ -165,6 +170,12 @@ below is dashboard/ops work.
 
 - [ ] Paddle **live** account approved (Paddle reviews your website before you
       can charge — needs the custom domain, terms, privacy and refund pages).
+      The four pages ship at `/pricing`, `/terms`, `/privacy` and `/refunds`,
+      linked from the footer. **Before submitting for verification, set
+      `LEGAL_ENTITY_NAME` and `LEGAL_ENTITY_ABN` in Vercel prod** — the real
+      identity lives only in env (the repo is public), and without them the
+      pages show placeholders. They also assume `hello@minnekart.com` receives
+      mail.
 - [ ] Product + three prices recreated in the live account (ids differ from
       sandbox).
 - [ ] Live notification destination pointing at the prod domain; live secret.
