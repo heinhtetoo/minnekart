@@ -56,7 +56,7 @@ profile page for anyone who wants to show their globe off.
 | Email     | Abstracted `sendEmail()`; Brevo SMTP in prod, console output in dev  |
 | Styling   | CSS Modules, co-located per component                                |
 | Testing   | Vitest, integration-first against real Postgres                      |
-| Hosting   | Vercel, auto-deploy from `main`, preview deploys on PRs              |
+| Hosting   | Vercel: `main` deploys production, `dev` deploys the preview         |
 
 The absences are deliberate: no CSS framework, no auth library, no component
 library. The dependency list is short and every entry earns its place.

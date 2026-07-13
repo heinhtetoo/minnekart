@@ -1,40 +1,88 @@
 # Minnekart — Ops Runbook
 
-Launch and day-two operations. The app is on Vercel (auto-deploy `main`,
-PR previews), Postgres on Neon, photos on Cloudflare R2, CI on GitHub Actions.
+Launch and day-two operations. The app is on Vercel, Postgres on Neon, photos on
+Cloudflare R2, CI on GitHub Actions.
+
+## Environments
+
+Two, and only two. `main` is production; `dev` is the preview. Work flows
+`feature → dev → PR → main`.
+
+| Branch    | Vercel     | Database          | Photos          | Paddle  |
+| --------- | ---------- | ----------------- | --------------- | ------- |
+| `main`    | Production | Neon prod         | prod bucket     | live    |
+| `dev`     | Preview    | Neon `dev` branch | `minnekart-dev` | sandbox |
+| any other | no deploy  | —                 | —               | —       |
+
+`vercel.json` pins `git.deploymentEnabled` so only those two branches deploy.
+Feature branches still run CI; they just don't get a preview URL — which is
+deliberate, because a preview's origin has to be known in advance to be listed in
+the R2 CORS policy, the Turnstile hostnames and the Paddle webhook destination.
+`dev` has a stable alias (`minnekart-git-dev-<scope>.vercel.app`) that all three
+point at; a feature branch's URL changes every push.
+
+CI migrates whichever database matches the branch: a push to `main` runs
+`drizzle-kit migrate` against `secrets.DATABASE_URL`, a push to `dev` against
+`secrets.DATABASE_URL_DEV`. Both are Neon's **direct** (unpooled) host.
+
+The Neon `dev` branch is copy-on-write off production, so it starts as a full
+copy of prod data and costs almost nothing. When it drifts — a migration you
+rewrote, test data you don't want — reset it from prod in the Neon dashboard
+rather than untangling it.
+
+**Don't turn on Vercel Deployment Protection for previews.** It 401s every
+unauthenticated request, Paddle's sandbox webhook included, and billing on `dev`
+would fail silently with no obvious cause.
 
 ## Environment variables
 
 Validated at boot by `src/lib/env.ts` — a missing/invalid required var throws on
-startup. Set these in Vercel for **both** Production and Preview unless noted.
+startup. Vercel scopes each var per environment, and the dashboard ticks all
+environments by default: **the vars below must differ between Production and
+Preview**, or the preview writes to production's data. Everything else can be
+shared.
 
-| Var                     | Required    | Notes                                                                                                                                                                                                   |
-| ----------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`          | yes         | Neon **pooled** connection string (host contains `-pooler`) for the Vercel runtime — see the pooling note below. Also a GitHub Actions secret for the migrate job (use the direct/unpooled host there). |
-| `APP_URL`               | yes in prod | Public base URL; builds invite/share/reset links. Defaults to `http://localhost:3000`. Use the preview URL for Preview.                                                                                 |
-| `NODE_ENV`              | auto        | Vercel sets `production`.                                                                                                                                                                               |
-| `EMAIL_TRANSPORT`       | yes in prod | `console` \| `memory` \| `smtp`. Set `smtp` in prod.                                                                                                                                                    |
-| `SMTP_HOST`             | when smtp   | Brevo: `smtp-relay.brevo.com`.                                                                                                                                                                          |
-| `SMTP_PORT`             | when smtp   | `587` (STARTTLS — works from Vercel serverless).                                                                                                                                                        |
-| `SMTP_USER`             | when smtp   | Brevo SMTP login.                                                                                                                                                                                       |
-| `SMTP_PASS`             | when smtp   | Brevo SMTP key (not your account password).                                                                                                                                                             |
-| `EMAIL_FROM`            | when smtp   | e.g. `Minnekart <hello@yourdomain.com>` — must be a Brevo-verified sender.                                                                                                                              |
-| `STORAGE_DRIVER`        | yes in prod | `r2` \| `memory`. **Defaults to `r2`.**                                                                                                                                                                 |
-| `R2_ACCOUNT_ID`         | when r2     | Cloudflare account id.                                                                                                                                                                                  |
-| `R2_ACCESS_KEY_ID`      | when r2     | R2 token key id.                                                                                                                                                                                        |
-| `R2_SECRET_ACCESS_KEY`  | when r2     | R2 token secret.                                                                                                                                                                                        |
-| `R2_BUCKET`             | when r2     | Private bucket name.                                                                                                                                                                                    |
-| `PADDLE_ENV`            | no          | `sandbox` \| `production`. **Defaults to `sandbox`** — set `production` when going live.                                                                                                                |
-| `PADDLE_WEBHOOK_SECRET` | for billing | Notification destination secret (`pdl_ntfset_…`). Without it the webhook returns 503 and no plan changes apply.                                                                                         |
-| `PADDLE_CLIENT_TOKEN`   | for billing | Client-side token (`live_…`/`test_…`). Public-safe; enables the checkout overlay.                                                                                                                       |
-| `PADDLE_PRICE_ANNUAL`   | for billing | Price id (`pri_…`) for $39/yr. Checkout buttons hide without it.                                                                                                                                        |
-| `PADDLE_PRICE_MONTHLY`  | no          | Price id for ~$5/mo. Optional secondary button.                                                                                                                                                         |
-| `PADDLE_PRICE_LIFETIME` | no          | Price id for the $99 founding-member one-off. Set it to show the offer; **unset it to retire the offer** (time-boxed by env, no code change).                                                           |
-| `OPEN_SIGNUP`           | no          | `true` \| `false`. **Defaults to `false`** (invite-only). Setting `true` in Vercel is the public-launch moment — see the open-signup section.                                                           |
-| `TURNSTILE_SITE_KEY`    | for launch  | Cloudflare Turnstile site key (public-safe). Renders the CAPTCHA on the signup form.                                                                                                                    |
-| `TURNSTILE_SECRET_KEY`  | for launch  | Turnstile secret. When set, signups without a valid CAPTCHA token are rejected. **Set both Turnstile vars or neither.**                                                                                 |
-| `LEGAL_ENTITY_NAME`     | for billing | Legal/trading name printed on `/terms`, `/privacy`, `/refunds`. **Kept out of the (public) repo — set here, never in code.** Falls back to the placeholder `HHO`.                                       |
-| `LEGAL_ENTITY_ABN`      | for billing | ABN printed beside the legal name. Same rule. Falls back to `ABN XXXX XXXX XXX`.                                                                                                                        |
+| Var               | Production        | Preview (`dev`)                                                                           |
+| ----------------- | ----------------- | ----------------------------------------------------------------------------------------- |
+| `DATABASE_URL`    | Neon prod, pooled | Neon `dev` branch, pooled                                                                 |
+| `APP_URL`         | prod domain       | the `dev` branch alias                                                                    |
+| `EMAIL_TRANSPORT` | `smtp`            | `console` — OTPs, resets and invites go to the Vercel function logs; nothing real is sent |
+| `R2_BUCKET`       | prod bucket       | `minnekart-dev`                                                                           |
+| `PADDLE_ENV`      | `production`      | unset (defaults to `sandbox`)                                                             |
+| `PADDLE_*` ids    | live              | sandbox (ids differ between accounts)                                                     |
+| `OPEN_SIGNUP`     | deliberate        | `true`, to exercise it                                                                    |
+| `TURNSTILE_*`     | live keys         | the always-pass test keys                                                                 |
+| `LEGAL_ENTITY_*`  | real values       | unset → placeholders                                                                      |
+
+Full reference for every var:
+
+| Var                     | Required    | Notes                                                                                                                                                                                                                                                                                                  |
+| ----------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`          | yes         | Neon **pooled** connection string (host contains `-pooler`) for the Vercel runtime — see the pooling note below. Prod and Preview point at different Neon branches. Also two GitHub Actions secrets for the migrate job, `DATABASE_URL` and `DATABASE_URL_DEV` (use the direct/unpooled host in both). |
+| `APP_URL`               | yes in prod | Public base URL; builds invite/share/reset links. Defaults to `http://localhost:3000`. In Preview, the stable `dev` branch alias — **not** a per-deployment URL, or emailed and shared links point at a deploy that has moved on.                                                                      |
+| `NODE_ENV`              | auto        | Vercel sets `production`.                                                                                                                                                                                                                                                                              |
+| `EMAIL_TRANSPORT`       | yes in prod | `console` \| `memory` \| `smtp`. Set `smtp` in prod.                                                                                                                                                                                                                                                   |
+| `SMTP_HOST`             | when smtp   | Brevo: `smtp-relay.brevo.com`.                                                                                                                                                                                                                                                                         |
+| `SMTP_PORT`             | when smtp   | `587` (STARTTLS — works from Vercel serverless).                                                                                                                                                                                                                                                       |
+| `SMTP_USER`             | when smtp   | Brevo SMTP login.                                                                                                                                                                                                                                                                                      |
+| `SMTP_PASS`             | when smtp   | Brevo SMTP key (not your account password).                                                                                                                                                                                                                                                            |
+| `EMAIL_FROM`            | when smtp   | e.g. `Minnekart <hello@yourdomain.com>` — must be a Brevo-verified sender.                                                                                                                                                                                                                             |
+| `STORAGE_DRIVER`        | yes in prod | `r2` \| `memory`. **Defaults to `r2`.**                                                                                                                                                                                                                                                                |
+| `R2_ACCOUNT_ID`         | when r2     | Cloudflare account id.                                                                                                                                                                                                                                                                                 |
+| `R2_ACCESS_KEY_ID`      | when r2     | R2 token key id.                                                                                                                                                                                                                                                                                       |
+| `R2_SECRET_ACCESS_KEY`  | when r2     | R2 token secret.                                                                                                                                                                                                                                                                                       |
+| `R2_BUCKET`             | when r2     | Private bucket name.                                                                                                                                                                                                                                                                                   |
+| `PADDLE_ENV`            | no          | `sandbox` \| `production`. **Defaults to `sandbox`** — set `production` when going live.                                                                                                                                                                                                               |
+| `PADDLE_WEBHOOK_SECRET` | for billing | Notification destination secret (`pdl_ntfset_…`). Without it the webhook returns 503 and no plan changes apply.                                                                                                                                                                                        |
+| `PADDLE_CLIENT_TOKEN`   | for billing | Client-side token (`live_…`/`test_…`). Public-safe; enables the checkout overlay.                                                                                                                                                                                                                      |
+| `PADDLE_PRICE_ANNUAL`   | for billing | Price id (`pri_…`) for $39/yr. Checkout buttons hide without it.                                                                                                                                                                                                                                       |
+| `PADDLE_PRICE_MONTHLY`  | no          | Price id for ~$5/mo. Optional secondary button.                                                                                                                                                                                                                                                        |
+| `PADDLE_PRICE_LIFETIME` | no          | Price id for the $99 founding-member one-off. Set it to show the offer; **unset it to retire the offer** (time-boxed by env, no code change).                                                                                                                                                          |
+| `OPEN_SIGNUP`           | no          | `true` \| `false`. **Defaults to `false`** (invite-only). Setting `true` in Vercel is the public-launch moment — see the open-signup section.                                                                                                                                                          |
+| `TURNSTILE_SITE_KEY`    | for launch  | Cloudflare Turnstile site key (public-safe). Renders the CAPTCHA on the signup form.                                                                                                                                                                                                                   |
+| `TURNSTILE_SECRET_KEY`  | for launch  | Turnstile secret. When set, signups without a valid CAPTCHA token are rejected. **Set both Turnstile vars or neither.**                                                                                                                                                                                |
+| `LEGAL_ENTITY_NAME`     | for billing | Legal/trading name printed on `/terms`, `/privacy`, `/refunds`. **Kept out of the (public) repo — set here, never in code.** Falls back to the placeholder `HHO`.                                                                                                                                      |
+| `LEGAL_ENTITY_ABN`      | for billing | ABN printed beside the legal name. Same rule. Falls back to `ABN XXXX XXXX XXX`.                                                                                                                                                                                                                       |
 
 **Two footguns to check in the audit:**
 
@@ -56,16 +104,30 @@ host — DDL is safest on a session-mode connection.
 
 ### Prod-vs-preview audit checklist
 
-- [ ] `DATABASE_URL` set in Vercel (prod + preview), uses the Neon **pooled**
-      (`-pooler`) host, and the GitHub migrate secret uses the direct host.
-- [ ] `APP_URL` correct per environment (prod domain vs preview URL).
-- [ ] `EMAIL_TRANSPORT=smtp` + `SMTP_*` + `EMAIL_FROM` set in prod.
-- [ ] `STORAGE_DRIVER=r2` + all four `R2_*` set in prod (or `memory` on purpose).
+Do this **before** the first `dev` push. Vercel ticks every environment when you
+add a var, so the danger is a shared value, not a missing one — a Preview
+`DATABASE_URL` still pointing at prod means the first `dev` deploy writes to
+production and CI applies unreleased migrations to it.
+
+- [ ] `DATABASE_URL` in Vercel points at the Neon **prod** branch in Production
+      and the Neon **`dev`** branch in Preview, both on the **pooled**
+      (`-pooler`) host. They are different values.
+- [ ] GitHub secrets `DATABASE_URL` **and** `DATABASE_URL_DEV` both set, both on
+      the direct (unpooled) host.
+- [ ] `APP_URL` correct per environment (prod domain vs the stable `dev` alias).
+- [ ] `EMAIL_TRANSPORT=smtp` + `SMTP_*` + `EMAIL_FROM` set in prod;
+      `console` in preview.
+- [ ] `STORAGE_DRIVER=r2` + all four `R2_*` set in prod (or `memory` on purpose),
+      and `R2_BUCKET` is the **dev bucket** in Preview — a shared bucket lets a
+      preview delete production photos.
+- [ ] The dev bucket has its own CORS policy naming the `dev` alias as an
+      allowed origin, or uploads fail preflight there.
 - [ ] `PADDLE_ENV=production` + prod webhook secret/client token/price ids in
       prod; sandbox values in preview (never mix — sandbox tokens fail against
       live Paddle and vice versa).
 - [ ] `OPEN_SIGNUP` deliberate per environment (`true` only once launched);
-      both `TURNSTILE_*` keys set together wherever signup is open.
+      both `TURNSTILE_*` keys set together wherever signup is open, with the
+      `dev` alias in the widget's hostname list.
 - [ ] `LEGAL_ENTITY_NAME` + `LEGAL_ENTITY_ABN` set in prod — otherwise the
       policy pages render the `HHO` / `ABN XXXX XXXX XXX` placeholders and
       Paddle's reviewer sees them.
@@ -118,6 +180,10 @@ both bit us at launch — check them when creating a new bucket or adding a doma
    CORS-gated — this is only for the upload `fetch`. Takes effect immediately, no
    redeploy.
 
+   Prod and preview use **separate buckets** (`minnekart-dev` for preview), so
+   each needs its own policy: the prod bucket allows the prod domain, the dev
+   bucket allows the `dev` branch alias.
+
 2. **SDK checksums off** — already handled in code (`src/lib/storage/r2.ts` sets
    `requestChecksumCalculation`/`responseChecksumValidation` to `'WHEN_REQUIRED'`).
    The aws-sdk v3 default bakes checksum headers into the presigned `PUT`'s signed
@@ -146,7 +212,9 @@ below is dashboard/ops work.
 3. Create a client-side token (Developer Tools → Authentication) →
    `PADDLE_CLIENT_TOKEN`.
 4. Create a notification destination (Developer Tools → Notifications):
-   - URL: `https://<deployment>/api/webhooks/paddle`
+   - URL: `https://minnekart-git-dev-<scope>.vercel.app/api/webhooks/paddle` —
+     the **stable `dev` alias**, which is why previews are restricted to that one
+     branch. A per-deployment URL would go stale on the next push.
    - Type: webhook. Subscribe to **all `subscription.*` events and
      `transaction.completed`** (unknown events are acked and ignored, so
      over-subscribing is safe).
@@ -156,7 +224,7 @@ below is dashboard/ops work.
 
 ### Sandbox test flow
 
-1. On a preview deploy, log in, open `/settings` — the plan card should show
+1. On the `dev` preview, log in, open `/settings` — the plan card should show
    upgrade buttons.
 2. Buy with Paddle's test card `4242 4242 4242 4242` (any future expiry/CVC).
 3. Within seconds the webhook should flip the user to `paid` — reload

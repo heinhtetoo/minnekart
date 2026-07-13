@@ -360,6 +360,29 @@ list is the execution order.
       test env, which is why 4 signup tests could fail locally but pass in
       CI), and JSX text that follows an inline element loses its leading space
       when the text contains an HTML entity — worked around, worth knowing.
+- [ ] **1c. Prod/preview environment split.** Everything ran as one
+      environment: `main` deployed to production and CI migrated the
+      production database on every push, so there was nowhere to try a schema
+      change or a half-finished feature against real infrastructure. Now
+      `main` is production and a long-lived `dev` branch is the preview
+      (`feature → dev → PR → main`). Vercel has no "make this branch the
+      preview" switch — every non-production branch already is one — so the
+      work was isolating it: `vercel.json` pins `git.deploymentEnabled` to
+      `main` + `dev` only, which gives the preview a **stable** alias that the
+      R2 CORS policy, the Turnstile hostnames, the Paddle sandbox webhook and
+      `APP_URL` can all be configured against (a feature branch's URL changes
+      every push, so those deploys would be half-broken by construction). CI
+      now runs on both branches and migrates whichever database matches the
+      ref (`DATABASE_URL` vs a new `DATABASE_URL_DEV` secret). The landmine
+      was Vercel's env-var scoping: it ticks every environment by default, so
+      a Preview `DATABASE_URL` left pointing at prod would have had the first
+      `dev` deploy writing to production data and CI applying unreleased
+      migrations to it — hence the expanded audit checklist in `docs/OPS.md`.
+      Preview gets its own Neon branch, its own R2 bucket (`minnekart-dev`),
+      sandbox Paddle, and `EMAIL_TRANSPORT=console` so OTPs land in the Vercel
+      logs instead of real inboxes. **Ops steps are the user's:** Neon branch,
+      dev bucket + CORS, `DATABASE_URL_DEV` secret, and the Preview env scoping
+      — all in `docs/OPS.md` § Environments.
 - [x] **2. Stable OG-image route + public-globe shareability polish.** OG
       previews used the ~1h-signed R2 URL (dead after expiry) and the globe
       page had no preview image at all. Shipped branded 1200×630 cards via the

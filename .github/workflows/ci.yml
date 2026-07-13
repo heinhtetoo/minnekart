@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 permissions:
   contents: read
@@ -56,14 +56,20 @@ jobs:
       - name: Test
         run: npm test
 
+  # main migrates production, dev migrates the Neon `dev` branch. Both secrets
+  # hold Neon's direct (unpooled) host — DDL wants a session connection.
   migrate:
     name: Migrate Neon
     runs-on: ubuntu-latest
     needs: checks
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
 
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL: >-
+        ${{ github.ref == 'refs/heads/main'
+        && secrets.DATABASE_URL || secrets.DATABASE_URL_DEV }}
 
     steps:
       - uses: actions/checkout@v4
