@@ -5,7 +5,7 @@ import Wordmark from '@/components/brand/Wordmark';
 import styles from './PublicChrome.module.css';
 
 interface PublicChromeProps {
-  ownerName: string;
+  ownerName?: string;
   viewerLoggedIn: boolean;
 }
 
@@ -18,7 +18,9 @@ export default function PublicChrome({
       <Link href="/" aria-label="Minnekart home" className={styles.brand}>
         <Wordmark />
       </Link>
-      <p className={styles.attribution}>{ownerName}&apos;s memories</p>
+      {ownerName && (
+        <p className={styles.attribution}>{ownerName}&apos;s memories</p>
+      )}
       <div className={styles.actions}>
         {viewerLoggedIn ? (
           <Link href="/" className={styles.signUp}>
