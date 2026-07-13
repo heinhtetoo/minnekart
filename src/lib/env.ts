@@ -23,6 +23,8 @@ const envSchema = z.object({
   PADDLE_PRICE_ANNUAL: z.string().optional(),
   PADDLE_PRICE_MONTHLY: z.string().optional(),
   PADDLE_PRICE_LIFETIME: z.string().optional(),
+  LEGAL_ENTITY_NAME: z.string().optional(),
+  LEGAL_ENTITY_ABN: z.string().optional(),
   OPEN_SIGNUP: z.enum(['true', 'false']).default('false'),
   TURNSTILE_SITE_KEY: z.string().optional(),
   TURNSTILE_SECRET_KEY: z.string().optional(),

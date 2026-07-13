@@ -19,6 +19,14 @@ export default defineConfig({
       STORAGE_DRIVER: 'memory',
       PADDLE_WEBHOOK_SECRET: 'pdl_ntfset_test_secret',
       PADDLE_PRICE_LIFETIME: 'pri_lifetime_test',
+      // dotenv loads a developer's .env here, so pin what would otherwise
+      // change behaviour: a real Turnstile secret would send the closed-mode
+      // tests to Cloudflare, OPEN_SIGNUP=true would flip the invite rules,
+      // and real business identity would defeat the placeholder tests.
+      OPEN_SIGNUP: 'false',
+      TURNSTILE_SECRET_KEY: '',
+      LEGAL_ENTITY_NAME: '',
+      LEGAL_ENTITY_ABN: '',
       ...(databaseUrl ? { DATABASE_URL: testDatabaseUrl(databaseUrl) } : {}),
     },
   },
