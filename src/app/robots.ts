@@ -8,8 +8,14 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      // Share links are secret-by-token, and the rest needs a session.
-      disallow: ['/t/', '/api/', '/admin', '/settings', '/trip/'],
+      // `/t/` is deliberately NOT disallowed. Link-preview crawlers (Twitterbot,
+      // facebookexternalhit, Slackbot, WhatsApp) obey robots.txt, so disallowing
+      // it stopped them fetching the page and no share link ever previewed.
+      // Disallow wouldn't keep the URLs out of the index anyway — it only blocks
+      // the fetch. The share page carries `noindex` instead, which actually
+      // prevents indexing while still letting a card render. Secrecy comes from
+      // the unguessable token and revocation, not from this file.
+      disallow: ['/api/', '/admin', '/settings', '/trip/'],
     },
     sitemap: `${base}/sitemap.xml`,
   };

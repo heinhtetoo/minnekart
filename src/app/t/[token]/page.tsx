@@ -35,7 +35,12 @@ export async function generateMetadata({
   if (!resolved) {
     return { title: 'Memory not found · Minnekart' };
   }
-  return publicTripMetadata(resolved.trip);
+  // Keep share links out of search results, but let preview crawlers fetch the
+  // page so the card still renders — robots.txt disallow would block both.
+  return {
+    ...publicTripMetadata(resolved.trip),
+    robots: { index: false, follow: false },
+  };
 }
 
 export default async function SharedTripPage({ params }: SharedTripPageProps) {
