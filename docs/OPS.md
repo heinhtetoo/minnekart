@@ -75,6 +75,7 @@ Full reference for every var:
 | `PADDLE_ENV`            | no          | `sandbox` \| `production`. **Defaults to `sandbox`** — set `production` when going live.                                                                                                                                                                                                               |
 | `PADDLE_WEBHOOK_SECRET` | for billing | Notification destination secret (`pdl_ntfset_…`). Without it the webhook returns 503 and no plan changes apply.                                                                                                                                                                                        |
 | `PADDLE_CLIENT_TOKEN`   | for billing | Client-side token (`live_…`/`test_…`). Public-safe; enables the checkout overlay.                                                                                                                                                                                                                      |
+| `PADDLE_API_KEY`        | for billing | Server-side API key. **Secret — never expose it to the browser.** Powers in-app cancel / resume / update-card; without it those controls stay hidden and the routes return 503. Needs `subscription.read` + `subscription.write`. Sandbox key in Preview, live key in Production — never cross them.   |
 | `PADDLE_PRICE_ANNUAL`   | for billing | Price id (`pri_…`) for $39/yr. Checkout buttons hide without it.                                                                                                                                                                                                                                       |
 | `PADDLE_PRICE_MONTHLY`  | no          | Price id for ~$5/mo. Optional secondary button.                                                                                                                                                                                                                                                        |
 | `PADDLE_PRICE_LIFETIME` | no          | Price id for the $99 founding-member one-off. Set it to show the offer; **unset it to retire the offer** (time-boxed by env, no code change).                                                                                                                                                          |
@@ -210,7 +211,10 @@ below is dashboard/ops work.
    (annual), **$5/month** (monthly), and a **$99 one-time** price for the
    founding-member offer. Copy each `pri_…` id.
 3. Create a client-side token (Developer Tools → Authentication) →
-   `PADDLE_CLIENT_TOKEN`.
+   `PADDLE_CLIENT_TOKEN`. On the same page create an **API key** with
+   `subscription.read` + `subscription.write` → `PADDLE_API_KEY`. That key is a
+   server-side secret and is what powers in-app cancel / resume / update-card;
+   without it those controls stay hidden.
 4. Create a notification destination (Developer Tools → Notifications):
    - URL: `https://minnekart-git-dev-<scope>.vercel.app/api/webhooks/paddle` —
      the **stable `dev` alias**, which is why previews are restricted to that one
@@ -219,7 +223,7 @@ below is dashboard/ops work.
      `transaction.completed`** (unknown events are acked and ignored, so
      over-subscribing is safe).
    - Copy the secret (`pdl_ntfset_…`) → `PADDLE_WEBHOOK_SECRET`.
-5. Set the five `PADDLE_*` vars in Vercel **Preview** (leave `PADDLE_ENV`
+5. Set the six `PADDLE_*` vars in Vercel **Preview** (leave `PADDLE_ENV`
    unset — it defaults to `sandbox`).
 
 ### Sandbox test flow
@@ -231,7 +235,13 @@ below is dashboard/ops work.
    `/settings` and check the badge. Paddle's dashboard (Notifications → logs)
    shows delivery attempts + responses for debugging; events can be replayed
    from there (replays are deduped by `event_id`, so they're safe).
-4. Cancel the subscription in the Paddle dashboard and confirm the user drops
+4. Back on `/settings`, exercise the in-app management: **Update card** (opens
+   the Paddle overlay against a fresh transaction), then **Cancel subscription**
+   → the card should show the end date and a **Resume** button, and Paddle's
+   dashboard should show a scheduled cancellation. Resume, and confirm it
+   clears. Cancellation is always `next_billing_period`, never immediate —
+   `/terms` promises the paid period is honoured.
+5. Cancel the subscription in the Paddle dashboard and confirm the user drops
    back to `free` after the `subscription.canceled` event.
 
 ### Go-live checklist
@@ -247,15 +257,17 @@ below is dashboard/ops work.
 - [ ] Product + three prices recreated in the live account (ids differ from
       sandbox).
 - [ ] Live notification destination pointing at the prod domain; live secret.
-- [ ] Vercel prod: `PADDLE_ENV=production` + live token/secret/price ids.
+- [ ] Vercel prod: `PADDLE_ENV=production` + live token/secret/API key/price ids.
 - [ ] One real $39 checkout end-to-end (refund it from the Paddle dashboard —
       also proves the refund path).
 - [ ] To retire the founding-member offer later: delete `PADDLE_PRICE_LIFETIME`
       from Vercel prod and redeploy.
 
-Cancellations/card updates are handled by Paddle's own emails and checkout for
-now — there is no in-app "manage subscription" yet (needs the Paddle API key;
-logged as a follow-up in `progress.md`).
+Cancelling, resuming and updating a card all happen in-app from `/settings`
+(`/api/account/subscription/*`), which needs `PADDLE_API_KEY`. Paddle's own
+emails still go out alongside. Users with no subscription — founding-member
+buyers and the grandfathered invite cohort — are paid without anything to
+manage, so they see no controls.
 
 ## Backups (Neon → OCI box)
 

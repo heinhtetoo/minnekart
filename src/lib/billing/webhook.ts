@@ -28,6 +28,14 @@ const eventSchema = z.object({
       .object({ userId: z.string().optional() })
       .nullish()
       .catch(null),
+    scheduled_change: z
+      .object({ action: z.string(), effective_at: z.string() })
+      .nullish()
+      .catch(null),
+    current_billing_period: z
+      .object({ ends_at: z.string() })
+      .nullish()
+      .catch(null),
     items: z
       .array(z.object({ price: z.object({ id: z.string() }).optional() }))
       .optional()
@@ -92,6 +100,9 @@ async function updateBilling(
     plan: 'free' | 'paid';
     subscriptionStatus: SubscriptionStatus | null;
     customerId?: string;
+    subscriptionId?: string;
+    renewsAt?: Date | null;
+    endsAt?: Date | null;
   },
 ): Promise<void> {
   await database
@@ -100,8 +111,38 @@ async function updateBilling(
       plan: fields.plan,
       subscriptionStatus: fields.subscriptionStatus,
       ...(fields.customerId ? { paddleCustomerId: fields.customerId } : {}),
+      ...(fields.subscriptionId
+        ? { paddleSubscriptionId: fields.subscriptionId }
+        : {}),
+      ...(fields.renewsAt === undefined
+        ? {}
+        : { subscriptionRenewsAt: fields.renewsAt }),
+      ...(fields.endsAt === undefined
+        ? {}
+        : { subscriptionEndsAt: fields.endsAt }),
     })
     .where(eq(users.id, userId));
+}
+
+// Paddle schedules a cancellation rather than applying it, so the plan stays
+// paid until `effective_at`. Storing both dates keeps `/settings` free of an
+// API call on every render.
+function scheduledCancelAt(event: PaddleEvent): Date | null {
+  const change = event.data.scheduled_change;
+  if (!change || change.action !== 'cancel') {
+    return null;
+  }
+  return parseDate(change.effective_at);
+}
+
+function billingPeriodEnd(event: PaddleEvent): Date | null {
+  const period = event.data.current_billing_period;
+  return period ? parseDate(period.ends_at) : null;
+}
+
+function parseDate(value: string): Date | null {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 export async function applyEvent(
@@ -122,6 +163,9 @@ export async function applyEvent(
       plan: PLAN_BY_STATUS[status],
       subscriptionStatus: status,
       customerId: event.data.customer_id,
+      subscriptionId: event.data.id,
+      renewsAt: billingPeriodEnd(event),
+      endsAt: scheduledCancelAt(event),
     });
     return;
   }

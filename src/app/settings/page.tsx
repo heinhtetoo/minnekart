@@ -1,8 +1,10 @@
 import AppPage from '@/components/layout/AppPage';
 import BillingCard, {
   PaddleCheckoutConfig,
+  SubscriptionView,
 } from '@/components/account/BillingCard';
 import GlobeVisibility from '@/components/account/GlobeVisibility';
+import { SessionUser } from '@/lib/auth/session';
 import { requireVerifiedPageUser } from '@/lib/auth/session-server';
 import { env } from '@/lib/env';
 
@@ -23,6 +25,29 @@ function paddleCheckoutConfig(): PaddleCheckoutConfig | null {
     priceAnnual: PADDLE_PRICE_ANNUAL,
     priceMonthly: PADDLE_PRICE_MONTHLY,
     priceLifetime: PADDLE_PRICE_LIFETIME,
+  };
+}
+
+function formatDate(value: Date | null): string | null {
+  return value
+    ? value.toLocaleDateString('en-AU', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : null;
+}
+
+// Managing a plan needs both a Paddle subscription and an API key to act on it.
+// Lifetime buyers and the grandfathered cohort are paid without a subscription,
+// so they get no controls.
+function subscriptionView(user: SessionUser): SubscriptionView | null {
+  if (!user.paddleSubscriptionId || !env().PADDLE_API_KEY) {
+    return null;
+  }
+  return {
+    renewsOn: formatDate(user.subscriptionRenewsAt),
+    endsOn: formatDate(user.subscriptionEndsAt),
   };
 }
 
@@ -72,6 +97,7 @@ export default async function SettingsPage() {
         userId={user.id}
         email={user.email}
         paddle={paddleCheckoutConfig()}
+        subscription={subscriptionView(user)}
       />
     </AppPage>
   );
