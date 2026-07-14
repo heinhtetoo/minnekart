@@ -343,8 +343,9 @@ list is the execution order.
       shared `ContentPage` shell (chrome + the prose scale the app never had;
       `PublicChrome.ownerName` became optional so it works as marketing
       chrome), linked from a new always-visible footer legal row, plus
-      `sitemap.ts` + `robots.ts` (which also keeps `/t/` share links out of
-      search indexes). Pricing reads the real limits from `limits.ts` and
+      `sitemap.ts` + `robots.ts` (which originally disallowed `/t/` — see 2c,
+      that turned out to be wrong). Pricing reads the real limits from
+      `limits.ts` and
       gates the founding-member tier on `PADDLE_PRICE_LIFETIME`, mirroring
       settings — retiring the offer stays a pure env change. Copy is grounded
       in the code, not boilerplate: EXIF is stripped by the browser-side
@@ -452,6 +453,23 @@ list is the execution order.
       sharing debugger, WhatsApp, iMessage, Slack. Check both a trip link and
       the globe link; confirm images stay live past the old 1h window and
       that Vercel's file tracing bundled the `src/lib/og/fonts` TTFs.
+      Globe link previews correctly on the live domain; the trip link was the
+      one that didn't — root cause in 2c.
+- [x] **2c. Share links never previewed — `robots.txt` was blocking the
+      crawlers.** Found on the live domain: `/u/<user>` produced a rich card but
+      a `/t/<token>` share link produced nothing. `robots.ts` carried
+      `Disallow: /t/`, added in 1b to keep secret share links out of search —
+      but **link-preview crawlers obey robots.txt** (Twitterbot,
+      `facebookexternalhit`, Slackbot, WhatsApp), so they never fetched the page
+      and never saw the OG tags. The OG plumbing was fine all along. `Disallow`
+      was simply the wrong tool: it blocks the _fetch_, and it doesn't even
+      reliably prevent indexing — a disallowed URL can still be listed if it's
+      linked. Fixed by removing `/t/` from the disallow list and putting
+      `robots: { index: false, follow: false }` on the share page's metadata,
+      which actually prevents indexing while still letting a card render. Share
+      links were never protected by robots.txt anyway — secrecy comes from the
+      unguessable token and revocation. Regression test on `robots.ts` asserts
+      `/t/` stays out of the disallow list, with the reason inline.
 - [x] **3. Billing schema & data model.** `users` gained `plan`
       (`user_plan` enum, default `free`), nullable `subscription_status`
       (`active`/`trialing`/`past_due`/`paused`/`canceled` — null for free
