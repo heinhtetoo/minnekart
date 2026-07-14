@@ -11,17 +11,23 @@ import {
 } from '@/lib/email';
 import { Env } from '@/lib/env';
 
+const SUPPORT = 'hello@minnekart.test';
+
+// Mail goes out from the verified sending subdomain but must be answerable at
+// the support address, which is where the forwarded inbox lives.
 const config: SmtpConfig = {
   host: 'smtp.example.com',
   port: 587,
   user: 'relay-user',
   pass: 'relay-pass',
-  from: 'Minnekart <hello@minnekart.app>',
+  from: 'Minnekart <noreply@send.minnekart.test>',
+  replyTo: SUPPORT,
 };
 
 const resendConfig: ResendConfig = {
   apiKey: 're_test_key',
-  from: 'Minnekart <hello@minnekart.com>',
+  from: 'Minnekart <noreply@send.minnekart.test>',
+  replyTo: SUPPORT,
 };
 
 const message: EmailMessage = {
@@ -37,12 +43,13 @@ function envWith(overrides: Partial<Env>): Env {
     NODE_ENV: 'test',
     EMAIL_TRANSPORT: 'smtp',
     STORAGE_DRIVER: 'memory',
+    SUPPORT_EMAIL: SUPPORT,
     ...overrides,
   } as Env;
 }
 
 describe('sendViaSmtp', () => {
-  it('passes the from address and message fields to the transport', async () => {
+  it('passes the from address, reply-to and message fields to the transport', async () => {
     const sendMail = vi.fn().mockResolvedValue(undefined);
     const createTransport = vi.fn().mockResolvedValue({ sendMail });
 
@@ -51,6 +58,7 @@ describe('sendViaSmtp', () => {
     expect(createTransport).toHaveBeenCalledWith(config);
     expect(sendMail).toHaveBeenCalledWith({
       from: config.from,
+      replyTo: SUPPORT,
       to: message.to,
       subject: message.subject,
       text: message.text,
@@ -74,6 +82,7 @@ describe('sendViaResend', () => {
     expect(init.headers.Authorization).toBe('Bearer re_test_key');
     expect(JSON.parse(init.body)).toEqual({
       from: resendConfig.from,
+      reply_to: SUPPORT,
       to: [message.to],
       subject: message.subject,
       text: message.text,

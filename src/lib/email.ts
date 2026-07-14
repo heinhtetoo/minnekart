@@ -12,11 +12,13 @@ export interface SmtpConfig {
   user: string;
   pass: string;
   from: string;
+  replyTo: string;
 }
 
 export interface ResendConfig {
   apiKey: string;
   from: string;
+  replyTo: string;
 }
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
@@ -24,6 +26,7 @@ const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 export interface SmtpTransport {
   sendMail(options: {
     from: string;
+    replyTo: string;
     to: string;
     subject: string;
     text: string;
@@ -57,6 +60,7 @@ export function resolveResendConfig(source: Env): ResendConfig {
   return {
     apiKey: required(source.RESEND_API_KEY, 'RESEND_API_KEY', 'resend'),
     from: required(source.EMAIL_FROM, 'EMAIL_FROM', 'resend'),
+    replyTo: source.SUPPORT_EMAIL,
   };
 }
 
@@ -73,6 +77,7 @@ export async function sendViaResend(
     },
     body: JSON.stringify({
       from: config.from,
+      reply_to: config.replyTo,
       to: [message.to],
       subject: message.subject,
       text: message.text,
@@ -93,6 +98,7 @@ export function resolveSmtpConfig(source: Env): SmtpConfig {
     user: required(source.SMTP_USER, 'SMTP_USER', 'smtp'),
     pass: required(source.SMTP_PASS, 'SMTP_PASS', 'smtp'),
     from: required(source.EMAIL_FROM, 'EMAIL_FROM', 'smtp'),
+    replyTo: source.SUPPORT_EMAIL,
   };
 }
 
@@ -124,6 +130,7 @@ export async function sendViaSmtp(
   const transport = await createTransport(config);
   await transport.sendMail({
     from: config.from,
+    replyTo: config.replyTo,
     to: message.to,
     subject: message.subject,
     text: message.text,

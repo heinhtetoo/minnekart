@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import ContentPage from '@/components/layout/ContentPage';
 import { getServerSessionUser } from '@/lib/auth/session-server';
-import { entityLine, legalEntity, SUPPORT_EMAIL } from '@/lib/legal';
+import { entityLine, legalEntity, supportEmail } from '@/lib/legal';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 export default async function TermsPage() {
   const viewer = await getServerSessionUser();
   const entity = legalEntity();
+  const support = supportEmail();
 
   return (
     <ContentPage
@@ -49,9 +50,8 @@ export default async function TermsPage() {
         You need an account to use Minnekart, and you must give a real email
         address so we can verify it and reach you about your account. Keep your
         password to yourself — you&apos;re responsible for what happens under
-        your account. Tell us at{' '}
-        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> if you think
-        someone else has got into it.
+        your account. Tell us at <a href={`mailto:${support}`}>{support}</a> if
+        you think someone else has got into it.
       </p>
       <p>You must be at least 16 years old to hold an account.</p>
 
@@ -105,11 +105,11 @@ export default async function TermsPage() {
       <h2>Suspension and closing accounts</h2>
       <p>
         You can ask us to delete your account at any time by emailing{' '}
-        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. We may suspend
-        or close an account that breaks these terms, is being used illegally, or
-        is putting the service at risk. If we do that and you&apos;ve paid for
-        time you can&apos;t use, we&apos;ll refund the unused part unless the
-        account was closed for serious misuse.
+        <a href={`mailto:${support}`}>{support}</a>. We may suspend or close an
+        account that breaks these terms, is being used illegally, or is putting
+        the service at risk. If we do that and you&apos;ve paid for time you
+        can&apos;t use, we&apos;ll refund the unused part unless the account was
+        closed for serious misuse.
       </p>
 
       <h2>Availability</h2>
@@ -144,9 +144,8 @@ export default async function TermsPage() {
 
       <h2>Contact</h2>
       <p>
-        {entityLine(entity)} —{' '}
-        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. We answer
-        email.
+        {entityLine(entity)} — <a href={`mailto:${support}`}>{support}</a>. We
+        answer email.
       </p>
     </ContentPage>
   );

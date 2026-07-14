@@ -6,6 +6,9 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
+  // Printed on the policy pages and set as Reply-To on every outbound email,
+  // so mail can be sent from a verified subdomain but answered here.
+  SUPPORT_EMAIL: z.email(),
   EMAIL_TRANSPORT: z
     .enum(['console', 'memory', 'smtp', 'resend'])
     .default('console'),

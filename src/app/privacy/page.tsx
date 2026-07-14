@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import ContentPage from '@/components/layout/ContentPage';
 import { getServerSessionUser } from '@/lib/auth/session-server';
-import { entityLine, legalEntity, SUPPORT_EMAIL } from '@/lib/legal';
+import { entityLine, legalEntity, supportEmail } from '@/lib/legal';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +23,7 @@ export const metadata: Metadata = {
 export default async function PrivacyPage() {
   const viewer = await getServerSessionUser();
   const entity = legalEntity();
+  const support = supportEmail();
 
   return (
     <ContentPage
@@ -146,10 +147,10 @@ export default async function PrivacyPage() {
       <p>
         There is no self-serve delete button yet — that&apos;s an honest gap,
         and it&apos;s on the list. In the meantime, email{' '}
-        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> from your
-        account address and we will delete your account, your memories and your
-        photos within 30 days, then confirm once it is done. Backups roll over
-        within 14 days after that.
+        <a href={`mailto:${support}`}>{support}</a> from your account address
+        and we will delete your account, your memories and your photos within 30
+        days, then confirm once it is done. Backups roll over within 14 days
+        after that.
       </p>
 
       <h2>Changes to this page</h2>
@@ -160,8 +161,7 @@ export default async function PrivacyPage() {
 
       <h2>Contact</h2>
       <p>
-        {entityLine(entity)} —{' '}
-        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+        {entityLine(entity)} — <a href={`mailto:${support}`}>{support}</a>.
       </p>
     </ContentPage>
   );

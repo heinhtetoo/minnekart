@@ -403,8 +403,23 @@ list is the execution order.
       list** — it named Brevo, and that's a published commitment, not a
       comment. Ships dark: until `EMAIL_TRANSPORT=resend` is set in Vercel the
       branch is unreachable. **Ops steps are the user's:** verify the domain in
-      Resend, add MX/SPF/DKIM/DMARC at Porkbun, set the three prod env vars,
-      then drop the Brevo records and the unused `SMTP_*` vars.
+      Resend, add MX/SPF/DKIM/DMARC at Porkbun, set the prod env vars, then drop
+      the Brevo records and the unused `SMTP_*` vars.
+      **Reply-To (found during DNS setup).** Resend wants a verified sending
+      domain, and the safe choice is a subdomain (`send.minnekart.com`) so bulk
+      sending can't damage the root domain's reputation — but that subdomain has
+      no inbox, so a user who simply hits reply to their verification code was
+      writing into a void. Every message now carries
+      `Reply-To: $SUPPORT_EMAIL` (Resend's `reply_to`; nodemailer's `replyTo` on
+      the SMTP fallback too, so falling back doesn't silently break replies).
+      `SUPPORT_EMAIL` was a hardcoded constant in `legal.ts`; it is now a
+      **required** env var (`z.email()`, like `DATABASE_URL` — a default would
+      just be the hardcode relocated) feeding both the seven `mailto:` links on
+      the policy pages and the Reply-To header, so the address the site promises
+      answers at is provably the address replies land in. Being required means a
+      deploy without it **fails the build** (`sitemap.ts`/`robots.ts` parse env
+      at build time) — loud beats a silently missing header, but it must be set
+      in Vercel Production **and** Preview before this merges.
 - [x] **2. Stable OG-image route + public-globe shareability polish.** OG
       previews used the ~1h-signed R2 URL (dead after expiry) and the globe
       page had no preview image at all. Shipped branded 1200×630 cards via the
