@@ -196,19 +196,19 @@ OCI box (Tailscale-only, zero open ports):
 
 ### Stack
 
-| Layer      | Choice                                             |
-| ---------- | -------------------------------------------------- |
-| Framework  | Next.js (App Router) + TypeScript, single codebase |
-| Hosting    | Vercel free tier (auto-deploy from `main`)         |
-| Database   | Neon serverless Postgres (free tier, pooled TLS)   |
-| Data layer | Drizzle ORM + drizzle-kit migrations               |
-| Photos     | Cloudflare R2 free tier (10GB), S3 API, presigned  |
-| Auth       | Hand-rolled: DB sessions, argon2, OTP, invites     |
-| Email      | Abstracted `sendEmail()`; Brevo SMTP in prod       |
-|            | (nodemailer transport), console output in dev      |
-| Geocoding  | Nominatim or Photon (free, rate-limited)           |
-| Globe      | D3 + topojson-client, orthographic SVG projection  |
-| Testing    | Vitest, integration-first                          |
+| Layer      | Choice                                              |
+| ---------- | --------------------------------------------------- |
+| Framework  | Next.js (App Router) + TypeScript, single codebase  |
+| Hosting    | Vercel free tier (auto-deploy from `main`)          |
+| Database   | Neon serverless Postgres (free tier, pooled TLS)    |
+| Data layer | Drizzle ORM + drizzle-kit migrations                |
+| Photos     | Cloudflare R2 free tier (10GB), S3 API, presigned   |
+| Auth       | Hand-rolled: DB sessions, argon2, OTP, invites      |
+| Email      | Abstracted `sendEmail()`; Resend API in prod        |
+|            | (SMTP transport kept as a fallback), console in dev |
+| Geocoding  | Nominatim or Photon (free, rate-limited)            |
+| Globe      | D3 + topojson-client, orthographic SVG projection   |
+| Testing    | Vitest, integration-first                           |
 
 ### Data model (initial)
 
@@ -308,7 +308,7 @@ Watch-items: R2 at ~10GB (pennies beyond), Neon cold starts
 
 ## Deferred / open items
 
-- Custom domain purchase; then DKIM-signed email via Resend/Brevo.
+- Custom domain purchase; then DKIM-signed email via Resend.
 - Open signup + CAPTCHA/quotas; editable per-user bio (About page +
   stats ship; bio body is a "Coming soon" placeholder in prod); journey
   grouping; originals opt-in; map fine-tune pin placement; EXIF GPS

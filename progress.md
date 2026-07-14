@@ -331,7 +331,8 @@ list is the execution order.
       `vercel.app` costs trust at the worst moment, OTP/reset deliverability
       improves, and the SEO clock (domain authority) only starts once it
       exists — ranking on `vercel.app` and migrating later throws away equity.
-      Domain `minnekart.com` bought 13 July 2026; DNS/Brevo DKIM still to do.
+      Domain `minnekart.com` bought 13 July 2026; DNS + Resend domain
+      verification (MX/SPF/DKIM/DMARC) still to do — see 1d.
 - [x] **1b. Public pricing + policy pages.** Paddle reviews the website before
       it approves a live account, and it requires pricing, terms, privacy and
       refund pages — none existed, so this blocked the whole billing
@@ -383,6 +384,27 @@ list is the execution order.
       logs instead of real inboxes. All of it in `docs/OPS.md` § Environments.
       Shipped and verified: both branches green in CI, `dev` migrating its own
       Neon branch while `main`'s run was a no-op against production.
+- [ ] **1d. Move outbound email to Resend.** Email is the one dependency whose
+      failure is invisible and fatal — a signup OTP that never arrives means the
+      user never gets in, and nothing in the app reports it. Brevo was the
+      placeholder while there was no domain; moving now, before any DNS is
+      committed, is the cheapest moment. Resend is transactional-first (its
+      sending reputation isn't shared with newsletter traffic), gives per-send
+      logs, and adds no "Sent with Brevo" footer to a password-reset email.
+      Went via Resend's **HTTP API, not SMTP**: the OTP send sits inside the
+      request blocking a user's signup, and SMTP pays a TLS handshake plus
+      several protocol round trips on every cold serverless invocation. New
+      `EMAIL_TRANSPORT=resend` branch + `RESEND_API_KEY` in `src/lib/email.ts`,
+      with an injectable `fetch` mirroring `captcha.ts`/`paddle-api.ts`; a
+      non-2xx response **throws** rather than resolving quietly, since a
+      swallowed 422 is exactly how you lose a signup. The `smtp` transport
+      stays as the provider-agnostic escape hatch the README advertises, so
+      nothing is locked in. Also updated the **privacy page's sub-processor
+      list** — it named Brevo, and that's a published commitment, not a
+      comment. Ships dark: until `EMAIL_TRANSPORT=resend` is set in Vercel the
+      branch is unreachable. **Ops steps are the user's:** verify the domain in
+      Resend, add MX/SPF/DKIM/DMARC at Porkbun, set the three prod env vars,
+      then drop the Brevo records and the unused `SMTP_*` vars.
 - [x] **2. Stable OG-image route + public-globe shareability polish.** OG
       previews used the ~1h-signed R2 URL (dead after expiry) and the globe
       page had no preview image at all. Shipped branded 1200×630 cards via the

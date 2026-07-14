@@ -115,7 +115,7 @@ export default async function PrivacyPage() {
           that signups are human.
         </li>
         <li>
-          <strong>Brevo</strong> — sends the emails you need (verification
+          <strong>Resend</strong> — sends the emails you need (verification
           codes, password resets, invites).
         </li>
         <li>

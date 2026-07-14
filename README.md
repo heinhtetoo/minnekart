@@ -53,7 +53,7 @@ profile page for anyone who wants to show their globe off.
 | Database  | Neon Postgres via Drizzle ORM, migrations checked into `drizzle/`    |
 | Auth      | Hand-rolled: argon2 passwords, database-backed sessions, invite-only |
 | Storage   | Cloudflare R2 over the S3 API, presigned upload and display URLs     |
-| Email     | Abstracted `sendEmail()`; Brevo SMTP in prod, console output in dev  |
+| Email     | Abstracted `sendEmail()`; Resend API in prod, console output in dev  |
 | Styling   | CSS Modules, co-located per component                                |
 | Testing   | Vitest, integration-first against real Postgres                      |
 | Hosting   | Vercel: `main` deploys production, `dev` deploys the preview         |
