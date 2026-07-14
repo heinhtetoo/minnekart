@@ -331,7 +331,11 @@ list is the execution order.
       `vercel.app` costs trust at the worst moment, OTP/reset deliverability
       improves, and the SEO clock (domain authority) only starts once it
       exists — ranking on `vercel.app` and migrating later throws away equity.
-      Domain `minnekart.com` bought 13 July 2026; DNS/Brevo DKIM still to do.
+      Domain `minnekart.com` bought 13 July 2026. **Email half is done** —
+      domain verified in Resend, MX/SPF/DKIM/DMARC live at Porkbun, sending on
+      the custom domain (see 1d). Remaining: point the apex at Vercel and set
+      `APP_URL=https://minnekart.com`, which is what moves the app itself (and
+      the SEO clock) off `vercel.app`.
 - [x] **1b. Public pricing + policy pages.** Paddle reviews the website before
       it approves a live account, and it requires pricing, terms, privacy and
       refund pages — none existed, so this blocked the whole billing
@@ -383,6 +387,44 @@ list is the execution order.
       logs instead of real inboxes. All of it in `docs/OPS.md` § Environments.
       Shipped and verified: both branches green in CI, `dev` migrating its own
       Neon branch while `main`'s run was a no-op against production.
+- [x] **1d. Move outbound email to Resend.** Email is the one dependency whose
+      failure is invisible and fatal — a signup OTP that never arrives means the
+      user never gets in, and nothing in the app reports it. Brevo was the
+      placeholder while there was no domain; moving now, before any DNS is
+      committed, is the cheapest moment. Resend is transactional-first (its
+      sending reputation isn't shared with newsletter traffic), gives per-send
+      logs, and adds no "Sent with Brevo" footer to a password-reset email.
+      Went via Resend's **HTTP API, not SMTP**: the OTP send sits inside the
+      request blocking a user's signup, and SMTP pays a TLS handshake plus
+      several protocol round trips on every cold serverless invocation. New
+      `EMAIL_TRANSPORT=resend` branch + `RESEND_API_KEY` in `src/lib/email.ts`,
+      with an injectable `fetch` mirroring `captcha.ts`/`paddle-api.ts`; a
+      non-2xx response **throws** rather than resolving quietly, since a
+      swallowed 422 is exactly how you lose a signup. The `smtp` transport
+      stays as the provider-agnostic escape hatch the README advertises, so
+      nothing is locked in. Also updated the **privacy page's sub-processor
+      list** — it named Brevo, and that's a published commitment, not a
+      comment. Shipped dark (the transport is unreachable until
+      `EMAIL_TRANSPORT=resend` is set), then cut over: domain verified in Resend
+      with MX/SPF/DKIM/DMARC at Porkbun, `RESEND_API_KEY` + `EMAIL_FROM` +
+      `SUPPORT_EMAIL` set in Vercel, and Production flipped to `resend`. Live
+      and sending. **Leftovers:** delete the old Brevo DNS records and the now
+      unused `SMTP_*` vars from Vercel — dead config, not a blocker.
+      **Reply-To (found during DNS setup).** Resend wants a verified sending
+      domain, and the safe choice is a subdomain (`send.minnekart.com`) so bulk
+      sending can't damage the root domain's reputation — but that subdomain has
+      no inbox, so a user who simply hits reply to their verification code was
+      writing into a void. Every message now carries
+      `Reply-To: $SUPPORT_EMAIL` (Resend's `reply_to`; nodemailer's `replyTo` on
+      the SMTP fallback too, so falling back doesn't silently break replies).
+      `SUPPORT_EMAIL` was a hardcoded constant in `legal.ts`; it is now a
+      **required** env var (`z.email()`, like `DATABASE_URL` — a default would
+      just be the hardcode relocated) feeding both the seven `mailto:` links on
+      the policy pages and the Reply-To header, so the address the site promises
+      answers at is provably the address replies land in. Being required means a
+      deploy without it **fails the build** (`sitemap.ts`/`robots.ts` parse env
+      at build time) — loud beats a silently missing header, but it must be set
+      in Vercel Production **and** Preview before this merges.
 - [x] **2. Stable OG-image route + public-globe shareability polish.** OG
       previews used the ~1h-signed R2 URL (dead after expiry) and the globe
       page had no preview image at all. Shipped branded 1200×630 cards via the

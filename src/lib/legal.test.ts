@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { entityLine, legalEntity } from './legal';
+import { entityLine, legalEntity, supportEmail } from './legal';
 
 describe('entityLine', () => {
   it('reads as name, registration and country', () => {
@@ -19,5 +19,11 @@ describe('legalEntity', () => {
     expect(entity.name).toBe('HHO');
     expect(entity.abn).toBe('ABN XXXX XXXX XXX');
     expect(entity.country).toBe('Australia');
+  });
+});
+
+describe('supportEmail', () => {
+  it('returns the configured address rather than a hardcoded one', () => {
+    expect(supportEmail()).toBe('support@minnekart.test');
   });
 });

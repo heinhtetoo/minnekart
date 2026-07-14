@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import ContentPage from '@/components/layout/ContentPage';
 import { getServerSessionUser } from '@/lib/auth/session-server';
-import { entityLine, legalEntity, SUPPORT_EMAIL } from '@/lib/legal';
+import { entityLine, legalEntity, supportEmail } from '@/lib/legal';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +24,7 @@ export const metadata: Metadata = {
 export default async function RefundsPage() {
   const viewer = await getServerSessionUser();
   const entity = legalEntity();
+  const support = supportEmail();
 
   return (
     <ContentPage
@@ -56,8 +57,8 @@ export default async function RefundsPage() {
       <ul>
         <li>Reply to the Paddle receipt email you got when you paid, or</li>
         <li>
-          email us at <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>{' '}
-          and we will organise it with Paddle.
+          email us at <a href={`mailto:${support}`}>{support}</a> and we will
+          organise it with Paddle.
         </li>
       </ul>
       <p>
@@ -94,8 +95,7 @@ export default async function RefundsPage() {
 
       <h2>Contact</h2>
       <p>
-        {entityLine(entity)} —{' '}
-        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+        {entityLine(entity)} — <a href={`mailto:${support}`}>{support}</a>.
       </p>
     </ContentPage>
   );

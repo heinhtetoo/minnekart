@@ -6,10 +6,9 @@ export interface LegalEntity {
   country: string;
 }
 
-// Not personal information, so these stay in the repo. The legal name and the
-// ABN come from the environment — see the business identity block in
-// .env.example.
-export const SUPPORT_EMAIL = 'hello@minnekart.com';
+// Not personal information, so this stays in the repo. The legal name, the ABN
+// and the support address all come from the environment — see the business
+// identity block in .env.example.
 const COUNTRY = 'Australia';
 
 const PLACEHOLDER_NAME = 'HHO';
@@ -22,6 +21,10 @@ export function legalEntity(): LegalEntity {
     abn: LEGAL_ENTITY_ABN?.trim() || PLACEHOLDER_ABN,
     country: COUNTRY,
   };
+}
+
+export function supportEmail(): string {
+  return env().SUPPORT_EMAIL;
 }
 
 export function entityLine(entity: LegalEntity): string {

@@ -4,6 +4,7 @@ import { parseEnv } from './env';
 
 const validSource = {
   DATABASE_URL: 'postgresql://postgres:password@localhost:5433/minnekart',
+  SUPPORT_EMAIL: 'hello@minnekart.test',
 };
 
 describe('parseEnv', () => {
@@ -20,8 +21,20 @@ describe('parseEnv', () => {
   });
 
   it('rejects a DATABASE_URL that is not a postgres URL', () => {
-    expect(() => parseEnv({ DATABASE_URL: 'https://example.com' })).toThrow(
-      /DATABASE_URL/,
+    expect(() =>
+      parseEnv({ ...validSource, DATABASE_URL: 'https://example.com' }),
+    ).toThrow(/DATABASE_URL/);
+  });
+
+  it('rejects a missing SUPPORT_EMAIL — the policy pages and Reply-To need it', () => {
+    expect(() => parseEnv({ DATABASE_URL: validSource.DATABASE_URL })).toThrow(
+      /SUPPORT_EMAIL/,
     );
+  });
+
+  it('rejects a SUPPORT_EMAIL that is not an email address', () => {
+    expect(() =>
+      parseEnv({ ...validSource, SUPPORT_EMAIL: 'not-an-email' }),
+    ).toThrow(/SUPPORT_EMAIL/);
   });
 });

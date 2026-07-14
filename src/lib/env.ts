@@ -6,7 +6,13 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
-  EMAIL_TRANSPORT: z.enum(['console', 'memory', 'smtp']).default('console'),
+  // Printed on the policy pages and set as Reply-To on every outbound email,
+  // so mail can be sent from a verified subdomain but answered here.
+  SUPPORT_EMAIL: z.email(),
+  EMAIL_TRANSPORT: z
+    .enum(['console', 'memory', 'smtp', 'resend'])
+    .default('console'),
+  RESEND_API_KEY: z.string().optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().optional(),
   SMTP_USER: z.string().optional(),

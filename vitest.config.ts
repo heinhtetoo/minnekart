@@ -27,6 +27,7 @@ export default defineConfig({
       TURNSTILE_SECRET_KEY: '',
       LEGAL_ENTITY_NAME: '',
       LEGAL_ENTITY_ABN: '',
+      SUPPORT_EMAIL: 'support@minnekart.test',
       ...(databaseUrl ? { DATABASE_URL: testDatabaseUrl(databaseUrl) } : {}),
     },
   },
