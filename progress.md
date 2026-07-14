@@ -326,16 +326,18 @@ list is the execution order.
 
 ### Tier 1 — the revenue engine (launch-blocking, in dependency order)
 
-- [ ] **1. Custom domain + DKIM email** _(BACKLOG; deferred →
+- [x] **1. Custom domain + DKIM email** _(BACKLOG; deferred →
       launch-blocking)_. First even though it's mostly ops: checkout under
       `vercel.app` costs trust at the worst moment, OTP/reset deliverability
       improves, and the SEO clock (domain authority) only starts once it
       exists — ranking on `vercel.app` and migrating later throws away equity.
-      Domain `minnekart.com` bought 13 July 2026. **Email half is done** —
-      domain verified in Resend, MX/SPF/DKIM/DMARC live at Porkbun, sending on
-      the custom domain (see 1d). Remaining: point the apex at Vercel and set
-      `APP_URL=https://minnekart.com`, which is what moves the app itself (and
-      the SEO clock) off `vercel.app`.
+      Domain `minnekart.com` bought 13 July 2026, live 14 July. Apex is the
+      **primary** domain in Vercel and `www` 308-redirects to it, with
+      `APP_URL=https://minnekart.com` matching — a first pass had www primary
+      while `APP_URL` named the apex, so every sitemap entry, share link and OG
+      URL the app emitted took a redirect hop to reach itself, and the site was
+      telling Google the apex was canonical while serving from www. Email is
+      DKIM-signed off the same domain via Resend (1d).
 - [x] **1b. Public pricing + policy pages.** Paddle reviews the website before
       it approves a live account, and it requires pricing, terms, privacy and
       refund pages — none existed, so this blocked the whole billing
@@ -448,13 +450,19 @@ list is the execution order.
       what frees globe on content-heavy cards); desktop untouched. Verified:
       direct card renders + all routes E2E (statuses, meta tags, 1200×630),
       prod-mode build serves the route with fonts, 187 tests green.
-- [ ] **2b. Post-deploy link-preview QA.** After the next deploy, validate
-      the live previews once per platform: X card validator, Facebook/Meta
-      sharing debugger, WhatsApp, iMessage, Slack. Check both a trip link and
-      the globe link; confirm images stay live past the old 1h window and
-      that Vercel's file tracing bundled the `src/lib/og/fonts` TTFs.
-      Globe link previews correctly on the live domain; the trip link was the
-      one that didn't — root cause in 2c.
+- [ ] **2b. Post-deploy link-preview QA.** Validate the live previews once per
+      platform: X card validator, Facebook/Meta sharing debugger, WhatsApp,
+      iMessage, Slack — both a trip link and the globe link; confirm images stay
+      live past the old 1h window and that Vercel's file tracing bundled the
+      `src/lib/og/fonts` TTFs.
+      **Confirmed on `minnekart.com`:** the globe card (name + stats) and, after
+      the 2c fix, the trip card in iMessage/SMS. That proves the whole path —
+      crawler fetch, OG tags, `ImageResponse` render, bundled fonts — so the
+      remaining platforms are near-certain. Still worth running the **X card
+      validator** and the **Meta sharing debugger** once each, because those two
+      surface their own errors (image dimensions, missing tags) that a working
+      SMS card wouldn't reveal. Note previews are cached hard per URL: use a
+      fresh share token, or Meta's "Scrape Again".
 - [x] **2c. Share links never previewed — `robots.txt` was blocking the
       crawlers.** Found on the live domain: `/u/<user>` produced a rich card but
       a `/t/<token>` share link produced nothing. `robots.ts` carried
