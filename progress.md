@@ -331,8 +331,11 @@ list is the execution order.
       `vercel.app` costs trust at the worst moment, OTP/reset deliverability
       improves, and the SEO clock (domain authority) only starts once it
       exists — ranking on `vercel.app` and migrating later throws away equity.
-      Domain `minnekart.com` bought 13 July 2026; DNS + Resend domain
-      verification (MX/SPF/DKIM/DMARC) still to do — see 1d.
+      Domain `minnekart.com` bought 13 July 2026. **Email half is done** —
+      domain verified in Resend, MX/SPF/DKIM/DMARC live at Porkbun, sending on
+      the custom domain (see 1d). Remaining: point the apex at Vercel and set
+      `APP_URL=https://minnekart.com`, which is what moves the app itself (and
+      the SEO clock) off `vercel.app`.
 - [x] **1b. Public pricing + policy pages.** Paddle reviews the website before
       it approves a live account, and it requires pricing, terms, privacy and
       refund pages — none existed, so this blocked the whole billing
@@ -384,7 +387,7 @@ list is the execution order.
       logs instead of real inboxes. All of it in `docs/OPS.md` § Environments.
       Shipped and verified: both branches green in CI, `dev` migrating its own
       Neon branch while `main`'s run was a no-op against production.
-- [ ] **1d. Move outbound email to Resend.** Email is the one dependency whose
+- [x] **1d. Move outbound email to Resend.** Email is the one dependency whose
       failure is invisible and fatal — a signup OTP that never arrives means the
       user never gets in, and nothing in the app reports it. Brevo was the
       placeholder while there was no domain; moving now, before any DNS is
@@ -401,10 +404,12 @@ list is the execution order.
       stays as the provider-agnostic escape hatch the README advertises, so
       nothing is locked in. Also updated the **privacy page's sub-processor
       list** — it named Brevo, and that's a published commitment, not a
-      comment. Ships dark: until `EMAIL_TRANSPORT=resend` is set in Vercel the
-      branch is unreachable. **Ops steps are the user's:** verify the domain in
-      Resend, add MX/SPF/DKIM/DMARC at Porkbun, set the prod env vars, then drop
-      the Brevo records and the unused `SMTP_*` vars.
+      comment. Shipped dark (the transport is unreachable until
+      `EMAIL_TRANSPORT=resend` is set), then cut over: domain verified in Resend
+      with MX/SPF/DKIM/DMARC at Porkbun, `RESEND_API_KEY` + `EMAIL_FROM` +
+      `SUPPORT_EMAIL` set in Vercel, and Production flipped to `resend`. Live
+      and sending. **Leftovers:** delete the old Brevo DNS records and the now
+      unused `SMTP_*` vars from Vercel — dead config, not a blocker.
       **Reply-To (found during DNS setup).** Resend wants a verified sending
       domain, and the safe choice is a subdomain (`send.minnekart.com`) so bulk
       sending can't damage the root domain's reputation — but that subdomain has
