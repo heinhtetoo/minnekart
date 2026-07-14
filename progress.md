@@ -566,8 +566,17 @@ list is the execution order.
       BACKLOG.md item removed (along with the stale OG-image entry that
       shipped in task 2). Tests: 6 captcha units + 6 open-mode route tests
       (`vi.mock`ing the new `signup-mode` gate) + a closed-mode
-      missing-invite test; existing signup tests unchanged. Live Turnstile
-      widget render needs real keys — part of the combined manual test.
+      missing-invite test; existing signup tests unchanged.
+      **Verified end-to-end on the `dev` preview (14 July 2026):** the live
+      Turnstile widget renders against real keys and an open-mode signup
+      completes. Note the CAPTCHA gate keys off `TURNSTILE_SECRET_KEY`, **not**
+      `OPEN_SIGNUP`, and runs before the invite lookup — so once the Turnstile
+      vars are set, invite signups go through Turnstile too, and a half-set pair
+      of keys fails every signup closed (a valid invite still returns
+      `captcha_failed`). Both keys plus the `minnekart.com` hostname are set in
+      Production.
+      **Production is still `OPEN_SIGNUP=false` — invite-only.** Everything is
+      proven on the real code path; public launch is now a single env var.
 
 ### Tier 2 — conversion & trust (post-milestone, pre-launch-post)
 
