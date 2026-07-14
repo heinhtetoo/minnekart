@@ -19,6 +19,7 @@ const envSchema = z.object({
   R2_BUCKET: z.string().optional(),
   PADDLE_ENV: z.enum(['sandbox', 'production']).default('sandbox'),
   PADDLE_WEBHOOK_SECRET: z.string().optional(),
+  PADDLE_API_KEY: z.string().optional(),
   PADDLE_CLIENT_TOKEN: z.string().optional(),
   PADDLE_PRICE_ANNUAL: z.string().optional(),
   PADDLE_PRICE_MONTHLY: z.string().optional(),

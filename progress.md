@@ -360,7 +360,7 @@ list is the execution order.
       test env, which is why 4 signup tests could fail locally but pass in
       CI), and JSX text that follows an inline element loses its leading space
       when the text contains an HTML entity — worked around, worth knowing.
-- [ ] **1c. Prod/preview environment split.** Everything ran as one
+- [x] **1c. Prod/preview environment split.** Everything ran as one
       environment: `main` deployed to production and CI migrated the
       production database on every push, so there was nowhere to try a schema
       change or a half-finished feature against real infrastructure. Now
@@ -380,9 +380,9 @@ list is the execution order.
       migrations to it — hence the expanded audit checklist in `docs/OPS.md`.
       Preview gets its own Neon branch, its own R2 bucket (`minnekart-dev`),
       sandbox Paddle, and `EMAIL_TRANSPORT=console` so OTPs land in the Vercel
-      logs instead of real inboxes. **Ops steps are the user's:** Neon branch,
-      dev bucket + CORS, `DATABASE_URL_DEV` secret, and the Preview env scoping
-      — all in `docs/OPS.md` § Environments.
+      logs instead of real inboxes. All of it in `docs/OPS.md` § Environments.
+      Shipped and verified: both branches green in CI, `dev` migrating its own
+      Neon branch while `main`'s run was a no-op against production.
 - [x] **2. Stable OG-image route + public-globe shareability polish.** OG
       previews used the ~1h-signed R2 URL (dead after expiry) and the globe
       page had no preview image at all. Shipped branded 1200×630 cards via the
@@ -443,10 +443,31 @@ list is the execution order.
       screenshot-checked with and without Paddle config; 208 tests green.
       Real sandbox checkout → webhook round-trip is an ops step
       (needs the Paddle sandbox account — see OPS.md).
-- [ ] **4b. In-app subscription management.** "Cancel / update card" from
-      the settings Billing card via Paddle's customer portal links (needs
-      `PADDLE_API_KEY`). Until then Paddle's own receipt emails carry the
-      management links, so this is polish, not launch-blocking.
+- [x] **4b. In-app subscription management.** Cancel, resume and update-card
+      from the settings Billing card, so a paid user never has to go hunting
+      through a receipt email — and cancelling is as easy as subscribing.
+      Three routes under `/api/account/subscription/` on a new
+      `src/lib/billing/paddle-api.ts` (injectable `fetch`, mirroring
+      `captcha.ts`, so it unit-tests without network); new secret
+      `PADDLE_API_KEY` gates the whole feature — unset, the controls hide and
+      the routes 503, exactly as the checkout buttons already hide without
+      `PADDLE_PRICE_ANNUAL`. **Security model:** the subscription id is read
+      from the logged-in user's row, never from the request body (tested — a
+      body-supplied id is ignored). Cancellation is always
+      `next_billing_period`, never immediate: `/terms` promises the paid period
+      is honoured, so the API had no free choice here. Rejected Paddle's hosted
+      `management_urls` — their tokens are temporary, absent from webhook
+      payloads, and would cost an API round-trip on every `/settings` render.
+      Schema gained `paddle_subscription_id` (the webhook already received it
+      and threw it away), plus `subscription_renews_at` and
+      `subscription_ends_at`, both fed by the webhook from
+      `current_billing_period` and `scheduled_change` — so the card can say
+      "Renews on 9 January" and "Ends on 3 August" with **no API call on
+      render**. Dates are formatted server-side (`en-AU`) to keep locale out of
+      hydration. **The two states that must show no controls** — founding-member
+      buyers and the grandfathered invite cohort, both paid with no subscription
+      — are gated on a null subscription id and explicitly tested. 26 new tests
+      (10 API client, 5 webhook, 11 route).
 - [x] **5. Free-tier enforcement.** Server-side caps in the API routes,
       driven by `guard.user.plan` and shared constants in
       `src/lib/billing/limits.ts`: trip creation blocked at 15 for free
