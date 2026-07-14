@@ -22,6 +22,13 @@
       "when": 1783682341966,
       "tag": "0002_perpetual_loa",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784012698308,
+      "tag": "0003_luxuriant_blacklash",
+      "breakpoints": true
     }
   ]
 }

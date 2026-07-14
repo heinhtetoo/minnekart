@@ -42,6 +42,7 @@ export async function createMember(
     password?: string;
     verified?: boolean;
     plan?: 'free' | 'paid';
+    subscriptionId?: string;
   } = {},
 ) {
   const {
@@ -50,6 +51,7 @@ export async function createMember(
     password = DEFAULT_PASSWORD,
     verified = false,
     plan = 'free',
+    subscriptionId,
   } = overrides;
   const [user] = await db
     .insert(users)
@@ -60,6 +62,7 @@ export async function createMember(
       passwordHash: await hashPassword(password),
       emailVerifiedAt: verified ? new Date() : null,
       plan,
+      paddleSubscriptionId: subscriptionId ?? null,
     })
     .returning();
   return { user, password };

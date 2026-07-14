@@ -35,6 +35,13 @@ export const users = pgTable('users', {
   plan: userPlan('plan').notNull().default('free'),
   subscriptionStatus: subscriptionStatus('subscription_status'),
   paddleCustomerId: text('paddle_customer_id').unique(),
+  paddleSubscriptionId: text('paddle_subscription_id').unique(),
+  subscriptionRenewsAt: timestamp('subscription_renews_at', {
+    withTimezone: true,
+  }),
+  subscriptionEndsAt: timestamp('subscription_ends_at', {
+    withTimezone: true,
+  }),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),

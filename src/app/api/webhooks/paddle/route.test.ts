@@ -17,6 +17,8 @@ function subscriptionEvent(overrides: {
   status?: string;
   customerId?: string;
   userId?: string;
+  scheduledChange?: { action: string; effective_at: string } | null;
+  renewsAt?: string;
 }) {
   return {
     event_id: overrides.eventId ?? 'evt_sub_1',
@@ -25,6 +27,12 @@ function subscriptionEvent(overrides: {
       id: 'sub_1',
       status: overrides.status ?? 'active',
       customer_id: overrides.customerId ?? 'ctm_1',
+      current_billing_period: {
+        ends_at: overrides.renewsAt ?? '2027-07-14T00:00:00Z',
+      },
+      ...('scheduledChange' in overrides
+        ? { scheduled_change: overrides.scheduledChange }
+        : {}),
       ...(overrides.userId
         ? { custom_data: { userId: overrides.userId } }
         : {}),
@@ -81,6 +89,104 @@ describe('POST /api/webhooks/paddle', () => {
     const events = await db.select().from(webhookEvents);
     expect(events).toHaveLength(1);
     expect(events[0].eventId).toBe('evt_sub_1');
+  });
+
+  it('stores the subscription id so the plan can be managed in-app', async () => {
+    const { user } = await createMember();
+    await POST(paddleWebhookRequest(subscriptionEvent({ userId: user.id })));
+    const updated = await userById(user.id);
+    expect(updated.paddleSubscriptionId).toBe('sub_1');
+    expect(updated.subscriptionEndsAt).toBeNull();
+  });
+
+  it('records the renewal date, so cancelling can name the paid-until day', async () => {
+    const { user } = await createMember();
+    await POST(
+      paddleWebhookRequest(
+        subscriptionEvent({
+          userId: user.id,
+          renewsAt: '2027-01-09T00:00:00Z',
+        }),
+      ),
+    );
+    expect((await userById(user.id)).subscriptionRenewsAt).toEqual(
+      new Date('2027-01-09T00:00:00Z'),
+    );
+  });
+
+  it('records the end date when a cancellation is scheduled', async () => {
+    const { user } = await createMember();
+    await POST(paddleWebhookRequest(subscriptionEvent({ userId: user.id })));
+
+    const response = await POST(
+      paddleWebhookRequest(
+        subscriptionEvent({
+          eventId: 'evt_sub_2',
+          eventType: 'subscription.updated',
+          scheduledChange: {
+            action: 'cancel',
+            effective_at: '2026-08-03T00:00:00Z',
+          },
+        }),
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    const updated = await userById(user.id);
+    expect(updated.subscriptionEndsAt).toEqual(
+      new Date('2026-08-03T00:00:00Z'),
+    );
+    expect(updated.plan).toBe('paid');
+    expect(updated.subscriptionStatus).toBe('active');
+  });
+
+  it('clears the end date when the cancellation is called off', async () => {
+    const { user } = await createMember();
+    await POST(paddleWebhookRequest(subscriptionEvent({ userId: user.id })));
+    await POST(
+      paddleWebhookRequest(
+        subscriptionEvent({
+          eventId: 'evt_sub_2',
+          eventType: 'subscription.updated',
+          scheduledChange: {
+            action: 'cancel',
+            effective_at: '2026-08-03T00:00:00Z',
+          },
+        }),
+      ),
+    );
+
+    await POST(
+      paddleWebhookRequest(
+        subscriptionEvent({
+          eventId: 'evt_sub_3',
+          eventType: 'subscription.updated',
+          scheduledChange: null,
+        }),
+      ),
+    );
+
+    expect((await userById(user.id)).subscriptionEndsAt).toBeNull();
+  });
+
+  it('ignores a scheduled pause when setting the end date', async () => {
+    const { user } = await createMember();
+    await POST(paddleWebhookRequest(subscriptionEvent({ userId: user.id })));
+
+    await POST(
+      paddleWebhookRequest(
+        subscriptionEvent({
+          eventId: 'evt_sub_2',
+          eventType: 'subscription.updated',
+          scheduledChange: {
+            action: 'pause',
+            effective_at: '2026-08-03T00:00:00Z',
+          },
+        }),
+      ),
+    );
+
+    expect((await userById(user.id)).subscriptionEndsAt).toBeNull();
   });
 
   it('ignores a duplicate event_id without reapplying it', async () => {
