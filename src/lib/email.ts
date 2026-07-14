@@ -14,6 +14,13 @@ export interface SmtpConfig {
   from: string;
 }
 
+export interface ResendConfig {
+  apiKey: string;
+  from: string;
+}
+
+const RESEND_ENDPOINT = 'https://api.resend.com/emails';
+
 export interface SmtpTransport {
   sendMail(options: {
     from: string;
@@ -33,6 +40,10 @@ export async function sendEmail(message: EmailMessage): Promise<void> {
     memoryInbox.push(message);
     return;
   }
+  if (transport === 'resend') {
+    await sendViaResend(message, resolveResendConfig(env()));
+    return;
+  }
   if (transport === 'smtp') {
     await sendViaSmtp(message, resolveSmtpConfig(env()));
     return;
@@ -42,19 +53,58 @@ export async function sendEmail(message: EmailMessage): Promise<void> {
   );
 }
 
-export function resolveSmtpConfig(source: Env): SmtpConfig {
+export function resolveResendConfig(source: Env): ResendConfig {
   return {
-    host: required(source.SMTP_HOST, 'SMTP_HOST'),
-    port: requiredPort(source.SMTP_PORT),
-    user: required(source.SMTP_USER, 'SMTP_USER'),
-    pass: required(source.SMTP_PASS, 'SMTP_PASS'),
-    from: required(source.EMAIL_FROM, 'EMAIL_FROM'),
+    apiKey: required(source.RESEND_API_KEY, 'RESEND_API_KEY', 'resend'),
+    from: required(source.EMAIL_FROM, 'EMAIL_FROM', 'resend'),
   };
 }
 
-function required(value: string | undefined, name: string): string {
+export async function sendViaResend(
+  message: EmailMessage,
+  config: ResendConfig,
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(RESEND_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${config.apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: config.from,
+      to: [message.to],
+      subject: message.subject,
+      text: message.text,
+    }),
+  });
+
+  // A dropped OTP is invisible to the user and fatal to the signup, so a
+  // rejection has to surface rather than resolve quietly.
+  if (!response.ok) {
+    throw new Error(`Resend rejected the message (${response.status})`);
+  }
+}
+
+export function resolveSmtpConfig(source: Env): SmtpConfig {
+  return {
+    host: required(source.SMTP_HOST, 'SMTP_HOST', 'smtp'),
+    port: requiredPort(source.SMTP_PORT),
+    user: required(source.SMTP_USER, 'SMTP_USER', 'smtp'),
+    pass: required(source.SMTP_PASS, 'SMTP_PASS', 'smtp'),
+    from: required(source.EMAIL_FROM, 'EMAIL_FROM', 'smtp'),
+  };
+}
+
+function required(
+  value: string | undefined,
+  name: string,
+  transport: string,
+): string {
   if (!value) {
-    throw new Error(`Missing ${name} (required when EMAIL_TRANSPORT=smtp)`);
+    throw new Error(
+      `Missing ${name} (required when EMAIL_TRANSPORT=${transport})`,
+    );
   }
   return value;
 }
