@@ -43,7 +43,8 @@ profile page for anyone who wants to show their globe off.
   client-side. Storage sits behind an `ObjectStorage` interface
   (`src/lib/storage/types.ts`) with `r2` and `memory` drivers.
 - **Roughly $0/month.** Vercel, Neon and R2 free tiers, with backups taken by
-  `pg_dump` on a Tailscale-only box that never sits in the request path.
+  `pg_dump` (database) and an `rclone` mirror (photos) on a Tailscale-only box
+  that never sits in the request path.
 
 ## Stack
 

@@ -4,6 +4,7 @@ import BillingCard, {
   SubscriptionView,
 } from '@/components/account/BillingCard';
 import GlobeVisibility from '@/components/account/GlobeVisibility';
+import ProfileCard from '@/components/account/ProfileCard';
 import { SessionUser } from '@/lib/auth/session';
 import { requireVerifiedPageUser } from '@/lib/auth/session-server';
 import { env } from '@/lib/env';
@@ -87,6 +88,12 @@ export default async function SettingsPage() {
       >
         Settings
       </h1>
+      <ProfileCard
+        initialName={user.name}
+        initialTagline={user.tagline ?? ''}
+        initialHeadline={user.headline ?? ''}
+        initialBio={user.bio ?? ''}
+      />
       <GlobeVisibility
         initialPublic={user.globePublic}
         username={user.username}

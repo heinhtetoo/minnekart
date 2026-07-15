@@ -326,16 +326,18 @@ list is the execution order.
 
 ### Tier 1 — the revenue engine (launch-blocking, in dependency order)
 
-- [ ] **1. Custom domain + DKIM email** _(BACKLOG; deferred →
+- [x] **1. Custom domain + DKIM email** _(BACKLOG; deferred →
       launch-blocking)_. First even though it's mostly ops: checkout under
       `vercel.app` costs trust at the worst moment, OTP/reset deliverability
       improves, and the SEO clock (domain authority) only starts once it
       exists — ranking on `vercel.app` and migrating later throws away equity.
-      Domain `minnekart.com` bought 13 July 2026. **Email half is done** —
-      domain verified in Resend, MX/SPF/DKIM/DMARC live at Porkbun, sending on
-      the custom domain (see 1d). Remaining: point the apex at Vercel and set
-      `APP_URL=https://minnekart.com`, which is what moves the app itself (and
-      the SEO clock) off `vercel.app`.
+      Domain `minnekart.com` bought 13 July 2026, live 14 July. Apex is the
+      **primary** domain in Vercel and `www` 308-redirects to it, with
+      `APP_URL=https://minnekart.com` matching — a first pass had www primary
+      while `APP_URL` named the apex, so every sitemap entry, share link and OG
+      URL the app emitted took a redirect hop to reach itself, and the site was
+      telling Google the apex was canonical while serving from www. Email is
+      DKIM-signed off the same domain via Resend (1d).
 - [x] **1b. Public pricing + policy pages.** Paddle reviews the website before
       it approves a live account, and it requires pricing, terms, privacy and
       refund pages — none existed, so this blocked the whole billing
@@ -448,13 +450,18 @@ list is the execution order.
       what frees globe on content-heavy cards); desktop untouched. Verified:
       direct card renders + all routes E2E (statuses, meta tags, 1200×630),
       prod-mode build serves the route with fonts, 187 tests green.
-- [ ] **2b. Post-deploy link-preview QA.** After the next deploy, validate
-      the live previews once per platform: X card validator, Facebook/Meta
-      sharing debugger, WhatsApp, iMessage, Slack. Check both a trip link and
-      the globe link; confirm images stay live past the old 1h window and
-      that Vercel's file tracing bundled the `src/lib/og/fonts` TTFs.
-      Globe link previews correctly on the live domain; the trip link was the
-      one that didn't — root cause in 2c.
+- [x] **2b. Post-deploy link-preview QA.** Validate the live previews once per
+      platform: X card validator, Facebook/Meta sharing debugger, WhatsApp,
+      iMessage, Slack — both a trip link and the globe link; confirm images stay
+      live past the old 1h window and that Vercel's file tracing bundled the
+      `src/lib/og/fonts` TTFs.
+      **Confirmed on `minnekart.com`:** the globe card (name + stats) and, after
+      the 2c fix, the trip card in iMessage/SMS. That proves the whole path —
+      crawler fetch, OG tags, `ImageResponse` render, bundled fonts. The **X card
+      validator** and the **Meta sharing debugger** were then run via third-party
+      preview checkers (to avoid signing up for X/Meta developer accounts) and
+      both rendered the 1200×630 card cleanly — no missing-tag or dimension
+      errors. Link previews are verified across the paths that matter.
 - [x] **2c. Share links never previewed — `robots.txt` was blocking the
       crawlers.** Found on the live domain: `/u/<user>` produced a rich card but
       a `/t/<token>` share link produced nothing. `robots.ts` carried
@@ -558,23 +565,75 @@ list is the execution order.
       BACKLOG.md item removed (along with the stale OG-image entry that
       shipped in task 2). Tests: 6 captcha units + 6 open-mode route tests
       (`vi.mock`ing the new `signup-mode` gate) + a closed-mode
-      missing-invite test; existing signup tests unchanged. Live Turnstile
-      widget render needs real keys — part of the combined manual test.
+      missing-invite test; existing signup tests unchanged.
+      **Verified end-to-end on the `dev` preview (14 July 2026):** the live
+      Turnstile widget renders against real keys and an open-mode signup
+      completes. Note the CAPTCHA gate keys off `TURNSTILE_SECRET_KEY`, **not**
+      `OPEN_SIGNUP`, and runs before the invite lookup — so once the Turnstile
+      vars are set, invite signups go through Turnstile too, and a half-set pair
+      of keys fails every signup closed (a valid invite still returns
+      `captcha_failed`). Both keys plus the `minnekart.com` hostname are set in
+      Production.
+      **Production is still `OPEN_SIGNUP=false` — invite-only.** Everything is
+      proven on the real code path; public launch is now a single env var.
+
+### Tier 1 status — code complete (15 July 2026)
+
+Every Tier 1 engineering task is shipped, merged to `main`, and verified on the
+real code path. All `PADDLE_*` production vars are now set in Vercel
+(Production scope). Link previews are validated. What stands between here and
+taking money is **not code** — it is three owner/ops gates, none of them
+blocking Tier 2 work:
+
+1. **Paddle live-account approval.** Vars are set, but Paddle reviews the live
+   site before it enables live transactions. Until that approval lands, live
+   checkout won't process. Confirm the live account shows _approved_, then run
+   one real end-to-end checkout against production before announcing.
+2. **Flip `OPEN_SIGNUP=true`** in Vercel Production — the single env var that
+   opens public signup. Do this only when ready to launch.
+3. **Dead-config cleanup (non-blocking):** delete the old Brevo DNS records and
+   the unused `SMTP_*` vars from Vercel. Housekeeping, not a gate.
 
 ### Tier 2 — conversion & trust (post-milestone, pre-launch-post)
 
-- [ ] **7. Editable profile.** Owner edits their About name, tagline, and bio
-      (stored per user); then drop the `NODE_ENV` "Coming soon" gate and
-      render the stored bio with "Coming soon" as the empty-state fallback.
-      Matters here because visitors arriving via shared globes currently hit
-      a "Coming soon" About page — weak first impression for exactly the
-      traffic Pillar 1 generates. Touches `users` schema (bio/tagline +
-      migration), a settings/profile editor, `src/app/about/page.tsx`.
-- [ ] **8. R2 photo backup job** _(BACKLOG, elevated)_. `rclone` sync R2 →
-      the OCI box beside the Neon `pg_dump` cron. Elevated above its backlog
-      slot: charging for "your entire travel history, safely kept" while
-      photos are single-copy contradicts the value proposition. Cheap
-      relative to the liability.
+- [x] **7. Editable profile.** Each user edits their About `name`, `tagline`,
+      `headline`, and `bio` from a new `ProfileCard` in `/settings`; the
+      `NODE_ENV` "Coming soon" gate is gone, replaced by a content-driven empty
+      state (shown only when both headline and bio are blank). Kept the current
+      visual — a distinct serif headline above the bio paragraphs — so
+      `headline` is its own field, not folded into `bio` (user-confirmed). Bio
+      renders as paragraphs split on blank lines. Fields are stored **per user**
+      (three nullable columns, migration `0004_tough_adam_destine.sql`), which
+      is coherent with the About page's existing `viewer-or-owner` subject
+      logic: a logged-out visitor sees the owner's profile, a logged-in user
+      sees and edits their own. New `PATCH /api/account/profile` cloned from the
+      globe toggle — `requireVerifiedUser`, id from the session never the body,
+      zod length caps, blank optionals normalised to `null`. `name` still flows
+      live to nav, `/u/<username>`, and the OG cards. Public globe tagline/bio
+      deliberately out of scope. 6 route tests; verified live against the local
+      DB (filled → renders all fields, cleared → "Coming soon"). 279 tests
+      green.
+- [x] **8. R2 photo backup job** _(BACKLOG, elevated)_. `rclone` sync R2 →
+      the OCI box beside the Neon `pg_dump` cron. Gives photos the second copy
+      the database has had since Phase 11 — charging for "safely kept" while
+      photos were single-copy contradicted the value proposition. New
+      `scripts/backup-r2.sh` mirrors `backup-neon.sh`'s style (bash,
+      `set -euo pipefail`, env-var config, echo logging) and reuses the app's
+      own `R2_*` var names, building the rclone remote from `RCLONE_CONFIG_*`
+      env vars so no secret hits a config file or the process list.
+      **Backup model: mirror + dated archive** — `rclone sync` keeps `current/`
+      an exact mirror of R2, `--backup-dir archive/<ts>/` preserves anything a
+      sync would delete or replace, pruned after `RETENTION_DAYS` (default 14)
+      with the same `find -mtime` idiom as the Neon script; `current/` is never
+      pruned. Protects against R2 loss **and** gives a deletion-recovery window,
+      bounded on disk. No CORS change (server-side credentialed S3, not a
+      browser upload). Verified with `rclone`/`shellcheck` installed locally:
+      shellcheck clean; against a local S3 server the env-var remote resolved
+      and `rclone check` was 0 differences; the full sync → delete → archive →
+      prune cycle behaved; both fail-fast guards (rclone missing, `R2_*` unset)
+      fire. Runbook (invocation, staggered 03:30 cron, verify drill) in
+      `docs/OPS.md`; `BACKLOG.md` item removed. The live run on the OCI box is a
+      user/ops step, like the Neon backup.
 - [ ] **9. Marketing + SEO base layer.** Privacy as a marketed feature (a
       line on the logged-out home/marketing page). Two evergreen SEO pages to
       start: "how to keep a private record of every place you've travelled"

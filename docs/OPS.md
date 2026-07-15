@@ -326,6 +326,57 @@ gunzip -c /var/backups/minnekart/minnekart-YYYY-MM-DD-HHMM.sql.gz \
 dropdb minnekart_restore_test
 ```
 
+## Backups (R2 photos → OCI box)
+
+`scripts/backup-r2.sh` runs on the same OCI box, beside the Neon dump, and gives
+the photos the second copy the database already has. It `rclone sync`s the R2
+photo bucket to local disk: `current/` mirrors R2 exactly, and anything a sync
+would delete or replace is moved into a timestamped `archive/<ts>/` first (kept
+`RETENTION_DAYS`), so a photo deleted from R2 is still recoverable for a window.
+`current/` is never pruned. R2 egress is free, so the pull costs nothing. Needs
+`rclone` installed on the box; a **read-only** R2 API token is sufficient and
+recommended. The remote is built from the `R2_*` env vars (same names as Vercel)
+via `RCLONE_CONFIG_*`, so no secret touches a config file or the process list.
+
+```sh
+R2_ACCOUNT_ID=… R2_ACCESS_KEY_ID=… R2_SECRET_ACCESS_KEY=… R2_BUCKET=… \
+  BACKUP_DIR=/var/backups/minnekart-photos RETENTION_DAYS=14 \
+  /path/to/minnekart/scripts/backup-r2.sh
+```
+
+Cron (daily 03:30 — staggered after the Neon dump at 03:15):
+
+```cron
+30 3 * * * R2_ACCOUNT_ID=… R2_ACCESS_KEY_ID=… R2_SECRET_ACCESS_KEY=… R2_BUCKET=… BACKUP_DIR=/var/backups/minnekart-photos RETENTION_DAYS=14 /path/to/minnekart/scripts/backup-r2.sh >> /var/log/minnekart-r2-backup.log 2>&1
+```
+
+The bucket CORS policy governs browser uploads only — a credentialed server-side
+S3 client like this needs no CORS change.
+
+### Verify drill (do once)
+
+Dry-run first to confirm the remote resolves and see what would transfer, then
+run for real, then confirm the mirror matches. Never sync **to** R2 — this is a
+one-way pull.
+
+```sh
+# same env as above, then:
+BACKUP_DIR=/var/backups/minnekart-photos /path/to/scripts/backup-r2.sh   # first real run
+# confirm current/ mirrors R2 (0 differences), using the same R2_* env:
+RCLONE_CONFIG_R2_TYPE=s3 RCLONE_CONFIG_R2_PROVIDER=Cloudflare \
+  RCLONE_CONFIG_R2_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID" \
+  RCLONE_CONFIG_R2_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY" \
+  RCLONE_CONFIG_R2_ENDPOINT="https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com" \
+  RCLONE_CONFIG_R2_REGION=auto \
+  rclone check "R2:$R2_BUCKET/photos" /var/backups/minnekart-photos/current
+```
+
+To restore a lost object back into R2, copy it up by key (the reverse
+direction). `current/` holds the contents of the `photos/` prefix, so a key
+looks like `<userId>/<tripId>/<uuid>.webp`:
+`rclone copyto /var/backups/minnekart-photos/current/<userId>/<tripId>/<uuid>.webp
+"R2:$R2_BUCKET/photos/<userId>/<tripId>/<uuid>.webp"`.
+
 ## Open signup (Turnstile)
 
 Signup is invite-only until `OPEN_SIGNUP=true` is set — deploying the code
