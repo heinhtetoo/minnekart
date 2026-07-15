@@ -613,11 +613,27 @@ blocking Tier 2 work:
       deliberately out of scope. 6 route tests; verified live against the local
       DB (filled → renders all fields, cleared → "Coming soon"). 279 tests
       green.
-- [ ] **8. R2 photo backup job** _(BACKLOG, elevated)_. `rclone` sync R2 →
-      the OCI box beside the Neon `pg_dump` cron. Elevated above its backlog
-      slot: charging for "your entire travel history, safely kept" while
-      photos are single-copy contradicts the value proposition. Cheap
-      relative to the liability.
+- [x] **8. R2 photo backup job** _(BACKLOG, elevated)_. `rclone` sync R2 →
+      the OCI box beside the Neon `pg_dump` cron. Gives photos the second copy
+      the database has had since Phase 11 — charging for "safely kept" while
+      photos were single-copy contradicted the value proposition. New
+      `scripts/backup-r2.sh` mirrors `backup-neon.sh`'s style (bash,
+      `set -euo pipefail`, env-var config, echo logging) and reuses the app's
+      own `R2_*` var names, building the rclone remote from `RCLONE_CONFIG_*`
+      env vars so no secret hits a config file or the process list.
+      **Backup model: mirror + dated archive** — `rclone sync` keeps `current/`
+      an exact mirror of R2, `--backup-dir archive/<ts>/` preserves anything a
+      sync would delete or replace, pruned after `RETENTION_DAYS` (default 14)
+      with the same `find -mtime` idiom as the Neon script; `current/` is never
+      pruned. Protects against R2 loss **and** gives a deletion-recovery window,
+      bounded on disk. No CORS change (server-side credentialed S3, not a
+      browser upload). Verified with `rclone`/`shellcheck` installed locally:
+      shellcheck clean; against a local S3 server the env-var remote resolved
+      and `rclone check` was 0 differences; the full sync → delete → archive →
+      prune cycle behaved; both fail-fast guards (rclone missing, `R2_*` unset)
+      fire. Runbook (invocation, staggered 03:30 cron, verify drill) in
+      `docs/OPS.md`; `BACKLOG.md` item removed. The live run on the OCI box is a
+      user/ops step, like the Neon backup.
 - [ ] **9. Marketing + SEO base layer.** Privacy as a marketed feature (a
       line on the logged-out home/marketing page). Two evergreen SEO pages to
       start: "how to keep a private record of every place you've travelled"

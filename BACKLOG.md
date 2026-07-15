@@ -9,8 +9,6 @@ the build. Roughly ordered by likely value.
 - **Custom domain + DKIM-signed email.** Buy a domain, move off
   `minnekart.vercel.app`, and verify it in Resend so mail is DKIM-signed (all
   URLs already come from `APP_URL`, email from one abstraction — drop-in).
-- **R2 photo backup job.** `rclone` sync R2 → the OCI box, alongside the Neon
-  `pg_dump` cron. DB backups ship in Phase 11; photos are still single-copy.
 
 ## Product
 
