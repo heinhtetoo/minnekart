@@ -596,13 +596,23 @@ blocking Tier 2 work:
 
 ### Tier 2 — conversion & trust (post-milestone, pre-launch-post)
 
-- [ ] **7. Editable profile.** Owner edits their About name, tagline, and bio
-      (stored per user); then drop the `NODE_ENV` "Coming soon" gate and
-      render the stored bio with "Coming soon" as the empty-state fallback.
-      Matters here because visitors arriving via shared globes currently hit
-      a "Coming soon" About page — weak first impression for exactly the
-      traffic Pillar 1 generates. Touches `users` schema (bio/tagline +
-      migration), a settings/profile editor, `src/app/about/page.tsx`.
+- [x] **7. Editable profile.** Each user edits their About `name`, `tagline`,
+      `headline`, and `bio` from a new `ProfileCard` in `/settings`; the
+      `NODE_ENV` "Coming soon" gate is gone, replaced by a content-driven empty
+      state (shown only when both headline and bio are blank). Kept the current
+      visual — a distinct serif headline above the bio paragraphs — so
+      `headline` is its own field, not folded into `bio` (user-confirmed). Bio
+      renders as paragraphs split on blank lines. Fields are stored **per user**
+      (three nullable columns, migration `0004_tough_adam_destine.sql`), which
+      is coherent with the About page's existing `viewer-or-owner` subject
+      logic: a logged-out visitor sees the owner's profile, a logged-in user
+      sees and edits their own. New `PATCH /api/account/profile` cloned from the
+      globe toggle — `requireVerifiedUser`, id from the session never the body,
+      zod length caps, blank optionals normalised to `null`. `name` still flows
+      live to nav, `/u/<username>`, and the OG cards. Public globe tagline/bio
+      deliberately out of scope. 6 route tests; verified live against the local
+      DB (filled → renders all fields, cleared → "Coming soon"). 279 tests
+      green.
 - [ ] **8. R2 photo backup job** _(BACKLOG, elevated)_. `rclone` sync R2 →
       the OCI box beside the Neon `pg_dump` cron. Elevated above its backlog
       slot: charging for "your entire travel history, safely kept" while
