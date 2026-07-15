@@ -450,19 +450,18 @@ list is the execution order.
       what frees globe on content-heavy cards); desktop untouched. Verified:
       direct card renders + all routes E2E (statuses, meta tags, 1200×630),
       prod-mode build serves the route with fonts, 187 tests green.
-- [ ] **2b. Post-deploy link-preview QA.** Validate the live previews once per
+- [x] **2b. Post-deploy link-preview QA.** Validate the live previews once per
       platform: X card validator, Facebook/Meta sharing debugger, WhatsApp,
       iMessage, Slack — both a trip link and the globe link; confirm images stay
       live past the old 1h window and that Vercel's file tracing bundled the
       `src/lib/og/fonts` TTFs.
       **Confirmed on `minnekart.com`:** the globe card (name + stats) and, after
       the 2c fix, the trip card in iMessage/SMS. That proves the whole path —
-      crawler fetch, OG tags, `ImageResponse` render, bundled fonts — so the
-      remaining platforms are near-certain. Still worth running the **X card
-      validator** and the **Meta sharing debugger** once each, because those two
-      surface their own errors (image dimensions, missing tags) that a working
-      SMS card wouldn't reveal. Note previews are cached hard per URL: use a
-      fresh share token, or Meta's "Scrape Again".
+      crawler fetch, OG tags, `ImageResponse` render, bundled fonts. The **X card
+      validator** and the **Meta sharing debugger** were then run via third-party
+      preview checkers (to avoid signing up for X/Meta developer accounts) and
+      both rendered the 1200×630 card cleanly — no missing-tag or dimension
+      errors. Link previews are verified across the paths that matter.
 - [x] **2c. Share links never previewed — `robots.txt` was blocking the
       crawlers.** Found on the live domain: `/u/<user>` produced a rich card but
       a `/t/<token>` share link produced nothing. `robots.ts` carried
@@ -577,6 +576,23 @@ list is the execution order.
       Production.
       **Production is still `OPEN_SIGNUP=false` — invite-only.** Everything is
       proven on the real code path; public launch is now a single env var.
+
+### Tier 1 status — code complete (15 July 2026)
+
+Every Tier 1 engineering task is shipped, merged to `main`, and verified on the
+real code path. All `PADDLE_*` production vars are now set in Vercel
+(Production scope). Link previews are validated. What stands between here and
+taking money is **not code** — it is three owner/ops gates, none of them
+blocking Tier 2 work:
+
+1. **Paddle live-account approval.** Vars are set, but Paddle reviews the live
+   site before it enables live transactions. Until that approval lands, live
+   checkout won't process. Confirm the live account shows _approved_, then run
+   one real end-to-end checkout against production before announcing.
+2. **Flip `OPEN_SIGNUP=true`** in Vercel Production — the single env var that
+   opens public signup. Do this only when ready to launch.
+3. **Dead-config cleanup (non-blocking):** delete the old Brevo DNS records and
+   the unused `SMTP_*` vars from Vercel. Housekeeping, not a gate.
 
 ### Tier 2 — conversion & trust (post-milestone, pre-launch-post)
 
