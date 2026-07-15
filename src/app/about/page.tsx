@@ -16,12 +16,17 @@ import styles from './about.module.css';
 
 export const dynamic = 'force-dynamic';
 
-const TAGLINE = 'Cartographer of small moments';
-
 export const metadata: Metadata = {
   title: 'About · Minnekart',
-  description: `${TAGLINE} — the story behind this globe of memories.`,
+  description: 'The story behind this globe of memories.',
 };
+
+function paragraphs(bio: string): string[] {
+  return bio
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter((block) => block.length > 0);
+}
 
 async function loadOwner() {
   const [owner] = await db()
@@ -53,11 +58,13 @@ export default async function AboutPage() {
     notFound();
   }
   const stats = await loadStatsFor(subject.id);
-  const showComingSoon = process.env.NODE_ENV === 'production';
   const initial = (subject.name || subject.username || '?')
     .trim()
     .charAt(0)
     .toUpperCase();
+  const headline = subject.headline?.trim() ?? '';
+  const bioParagraphs = subject.bio ? paragraphs(subject.bio) : [];
+  const hasStory = headline.length > 0 || bioParagraphs.length > 0;
 
   return (
     <>
@@ -76,31 +83,34 @@ export default async function AboutPage() {
             <div>
               <div className={styles.avatar}>{initial}</div>
               <div className={styles.cardName}>{subject.name}</div>
-              <div className={styles.cardTagline}>{TAGLINE}</div>
+              {subject.tagline && (
+                <div className={styles.cardTagline}>{subject.tagline}</div>
+              )}
             </div>
           </div>
 
           <div>
             <p className={styles.eyebrow}>About</p>
-            {showComingSoon ? (
-              <h1 className={`serif ${styles.title}`}>Coming soon</h1>
-            ) : (
+            {hasStory ? (
               <>
-                <h1 className={`serif ${styles.title}`}>
-                  I collect places the way others collect stamps.
-                </h1>
-                <p className={styles.body}>
-                  Minnekart started as a shoebox of ticket stubs and a habit of
-                  never writing anything down. Now it&apos;s a living globe —
-                  every pin a place I&apos;ve stood, every photo a moment
-                  I&apos;d rather not forget.
-                </p>
-                <p className={`${styles.body} ${styles.bodyLast}`}>
-                  I travel slowly and photograph badly, but that&apos;s rather
-                  the point. This is less a highlight reel and more a memory
-                  palace you can spin with your thumb.
-                </p>
+                {headline && (
+                  <h1 className={`serif ${styles.title}`}>{headline}</h1>
+                )}
+                {bioParagraphs.map((paragraph, index) => (
+                  <p
+                    key={index}
+                    className={`${styles.body}${
+                      index === bioParagraphs.length - 1
+                        ? ` ${styles.bodyLast}`
+                        : ''
+                    }`}
+                  >
+                    {paragraph}
+                  </p>
+                ))}
               </>
+            ) : (
+              <h1 className={`serif ${styles.title}`}>Coming soon</h1>
             )}
             <div className={styles.stats}>
               <div>
