@@ -10,6 +10,8 @@ interface FooterProps {
 }
 
 const legalItems = [
+  { href: '/about', label: 'About' },
+  { href: '/guides', label: 'Guides' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/terms', label: 'Terms' },
   { href: '/privacy', label: 'Privacy' },

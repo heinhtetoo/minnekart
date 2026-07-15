@@ -5,6 +5,9 @@ import { env } from '@/lib/env';
 const PUBLIC_ROUTES = [
   '/',
   '/about',
+  '/guides',
+  '/guides/private-travel-map',
+  '/guides/polarsteps-alternative',
   '/pricing',
   '/terms',
   '/privacy',

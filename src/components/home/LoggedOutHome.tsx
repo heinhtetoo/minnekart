@@ -229,7 +229,7 @@ export default function LoggedOutHome({
           <HowCard
             icon={<LockIcon />}
             title="Yours, kept close"
-            body="Your whole Minnekart is private and always with you — a memory palace you can spin with your thumb."
+            body="Private by default — no ad trackers, no analytics, and it never follows your live location. Just your places, kept close."
           />
         </div>
         <div style={{ textAlign: 'center', marginTop: 36 }}>
