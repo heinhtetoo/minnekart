@@ -12,6 +12,22 @@ import LoggedInHome, { HomeTrip } from '@/components/home/LoggedInHome';
 import LoggedOutHome from '@/components/home/LoggedOutHome';
 import VerifyScreen from '@/components/auth/VerifyScreen';
 
+import type { Metadata } from 'next';
+
+const DESCRIPTION =
+  'A private globe of everywhere you have been. Pin each place, keep every ' +
+  'photograph — no trackers, no live location. Your journeys, mapped.';
+
+export const metadata: Metadata = {
+  title: 'Minnekart — your journeys, mapped',
+  description: DESCRIPTION,
+  openGraph: {
+    title: 'Minnekart — your journeys, mapped',
+    description: DESCRIPTION,
+    type: 'website',
+  },
+};
+
 interface HomeProps {
   searchParams: Promise<{ invite?: string; signup?: string }>;
 }

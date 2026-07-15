@@ -170,6 +170,67 @@ function stat(value: number, label: string): ReactElement {
   );
 }
 
+interface BrandCardProps {
+  eyebrow?: string;
+  title: string;
+  subtitle: string;
+}
+
+export function brandCard({
+  eyebrow,
+  title,
+  subtitle,
+}: BrandCardProps): ReactElement {
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        background: PARCHMENT,
+        fontFamily: 'DM Sans',
+        padding: '0 96px',
+        gap: 28,
+      }}
+    >
+      {wordmark(30)}
+      {eyebrow ? (
+        <div
+          style={{
+            fontSize: 22,
+            fontWeight: 500,
+            letterSpacing: 6,
+            textTransform: 'uppercase',
+            color: ACCENT,
+          }}
+        >
+          {eyebrow}
+        </div>
+      ) : null}
+      <div
+        style={{
+          fontFamily: 'Playfair Display',
+          fontSize: 76,
+          fontWeight: 700,
+          color: INK,
+          lineHeight: 1.05,
+          letterSpacing: -2,
+          maxWidth: 900,
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{ fontSize: 32, color: MUTED, lineHeight: 1.4, maxWidth: 820 }}
+      >
+        {subtitle}
+      </div>
+    </div>
+  );
+}
+
 export function globeCard({
   ownerName,
   countries,

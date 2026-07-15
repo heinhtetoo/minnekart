@@ -634,10 +634,25 @@ blocking Tier 2 work:
       fire. Runbook (invocation, staggered 03:30 cron, verify drill) in
       `docs/OPS.md`; `BACKLOG.md` item removed. The live run on the OCI box is a
       user/ops step, like the Neon backup.
-- [ ] **9. Marketing + SEO base layer.** Privacy as a marketed feature (a
-      line on the logged-out home/marketing page). Two evergreen SEO pages to
-      start: "how to keep a private record of every place you've travelled"
-      and "Polarsteps alternatives that don't track your live location."
+- [x] **9. Marketing + SEO base layer.** Privacy is now a marketed feature — a
+      sharpened line on the logged-out home's "Yours, kept close" card ("no ad
+      trackers, no analytics, and it never follows your live location"). Shipped
+      a `/guides` hub-and-spoke: an index page plus two evergreen articles,
+      `/guides/private-travel-map` ("how to keep a private record of everywhere
+      you've travelled") and `/guides/polarsteps-alternative` ("a Polarsteps
+      alternative that doesn't track your live location"), all on the existing
+      `ContentPage` shell with claims kept consistent with `/privacy` and
+      `/terms`. Branded 1200×630 OG cards via the `opengraph-image.tsx`
+      convention: a new `brandCard` in `src/lib/og/card.tsx` reusing the
+      wordmark/palette/fonts, wired as a **site-wide default**
+      (`src/app/opengraph-image.tsx` — also upgrades pricing/terms/privacy/
+      refunds/about/guides from text-only) with per-article overrides. The home
+      finally has its own `metadata` export (it inherited the bare root layout
+      before); footer gained Guides + About links; sitemap lists the three new
+      URLs. No schema/migration — static build only. Verified live: build clean,
+      all three OG routes 200 `image/png` 1200×630, all three pages 200 with
+      correct title/description/og:image/prose/cross-links, sitemap and home
+      privacy line confirmed; 279 tests green. Confirmed on the `dev` preview.
       Requires 1 (domain). Slow channel (6–12 months to rank) — ship early,
       leave to compound.
 
