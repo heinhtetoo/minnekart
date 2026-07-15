@@ -296,85 +296,117 @@ emails still go out alongside. Users with no subscription — founding-member
 buyers and the grandfathered invite cohort — are paid without anything to
 manage, so they see no controls.
 
-## Backups (Neon → OCI box)
+## Backups (OCI box)
 
-`scripts/backup-neon.sh` runs on the OCI box (Tailscale-only, no inbound ports).
-It `pg_dump`s over TLS, gzips, and prunes old dumps. Needs the postgres client
-(`pg_dump`) installed on the box.
+Both backups run on the OCI box (Tailscale-only, no inbound ports; never in the
+request path) on a nightly user cron. The box clones the repo and runs the two
+scripts from it. On-box layout:
+
+```
+~/minnekart/
+├── repo/            # git clone — scripts live in repo/scripts/ (`git pull` to update)
+├── backup.env       # secrets, chmod 600, sourced by cron
+├── backups/db/      # Neon dumps
+├── backups/photos/  # rclone mirror: current/ + archive/
+└── logs/
+```
+
+`~/minnekart/backup.env` (chmod 600) holds the shared secrets and is sourced by
+both cron lines, so nothing sensitive sits in the crontab itself:
 
 ```sh
-DATABASE_URL="postgres://…neon…" BACKUP_DIR=/var/backups/minnekart \
-  RETENTION_DAYS=14 /path/to/minnekart/scripts/backup-neon.sh
+export DATABASE_URL="postgres://…@…neon.tech/minnekart?sslmode=require"  # DIRECT (non-pooler)
+export R2_ACCOUNT_ID="…"
+export R2_ACCESS_KEY_ID="…"        # read-only R2 token
+export R2_SECRET_ACCESS_KEY="…"
+export R2_BUCKET="…"               # prod bucket
+export RETENTION_DAYS=14
+```
+
+Replace `/home/ubuntu` in the cron lines below with your real home, and
+`1000:1000` with your `id -u`:`id -g` (cron won't expand `$(id -u)`).
+
+### Database (Neon → OCI, via Docker)
+
+`scripts/backup-neon.sh` `pg_dump`s over TLS, gzips, and prunes old dumps. Run it
+**inside the official `postgres` image** so `pg_dump` matches Neon's major
+version without installing a client on the box — a newer `pg_dump` dumps any
+equal-or-older server, so `postgres:18` is safe whichever version Neon runs. Use
+the **direct (non-pooler)** Neon URL: `pg_dump` needs a session connection.
+`--user` makes the dumps owned by you, not root; your user must be able to run
+Docker without `sudo` (add it to the `docker` group once), or the cron fails.
+
+```sh
+source ~/minnekart/backup.env
+docker run --rm --user "$(id -u):$(id -g)" \
+  -v ~/minnekart/repo:/repo:ro -v ~/minnekart/backups/db:/backups \
+  -e DATABASE_URL -e BACKUP_DIR=/backups -e RETENTION_DAYS \
+  postgres:18 bash /repo/scripts/backup-neon.sh
 ```
 
 Cron (daily 03:15):
 
 ```cron
-15 3 * * * DATABASE_URL="postgres://…neon…" BACKUP_DIR=/var/backups/minnekart RETENTION_DAYS=14 /path/to/minnekart/scripts/backup-neon.sh >> /var/log/minnekart-backup.log 2>&1
+15 3 * * * . /home/ubuntu/minnekart/backup.env; docker run --rm --user 1000:1000 -v /home/ubuntu/minnekart/repo:/repo:ro -v /home/ubuntu/minnekart/backups/db:/backups -e DATABASE_URL -e BACKUP_DIR=/backups -e RETENTION_DAYS postgres:18 bash /repo/scripts/backup-neon.sh >> /home/ubuntu/minnekart/logs/backup.log 2>&1
 ```
 
-### Restore drill (do once)
-
-Restore the latest dump into a scratch database and sanity-check it — never
-restore over prod:
+Quick integrity check: `gunzip -t ~/minnekart/backups/db/minnekart-*.sql.gz`.
+Fuller restore drill (do once) — restore the latest dump into a throwaway
+container and spot-check; never restore over prod:
 
 ```sh
-createdb minnekart_restore_test
-gunzip -c /var/backups/minnekart/minnekart-YYYY-MM-DD-HHMM.sql.gz \
-  | psql "postgres://…/minnekart_restore_test"
-# spot-check row counts, then drop it
-dropdb minnekart_restore_test
+docker run -d --rm --name pg-restore-test -e POSTGRES_PASSWORD=x postgres:18
+sleep 5
+gunzip -c ~/minnekart/backups/db/minnekart-*.sql.gz \
+  | docker exec -i pg-restore-test psql -U postgres
+# spot-check row counts, then:
+docker rm -f pg-restore-test
 ```
 
-## Backups (R2 photos → OCI box)
+### Photos (R2 → OCI, native rclone)
 
-`scripts/backup-r2.sh` runs on the same OCI box, beside the Neon dump, and gives
-the photos the second copy the database already has. It `rclone sync`s the R2
-photo bucket to local disk: `current/` mirrors R2 exactly, and anything a sync
-would delete or replace is moved into a timestamped `archive/<ts>/` first (kept
-`RETENTION_DAYS`), so a photo deleted from R2 is still recoverable for a window.
-`current/` is never pruned. R2 egress is free, so the pull costs nothing. Needs
-`rclone` installed on the box; a **read-only** R2 API token is sufficient and
-recommended. The remote is built from the `R2_*` env vars (same names as Vercel)
-via `RCLONE_CONFIG_*`, so no secret touches a config file or the process list.
+Keep this **native** — rclone installs in one line
+(`curl https://rclone.org/install.sh | sudo bash`) and has no version-matching
+problem, so Docker buys nothing here. `scripts/backup-r2.sh` `rclone sync`s the
+R2 photo bucket: `current/` mirrors R2 exactly, and anything a sync would delete
+or replace is moved into a timestamped `archive/<ts>/` first (kept
+`RETENTION_DAYS`), so a photo deleted from R2 stays recoverable for a window.
+`current/` is never pruned. R2 egress is free, so the pull costs nothing. A
+**read-only** R2 token suffices. The remote is built from the `R2_*` env vars
+(same names as Vercel) via `RCLONE_CONFIG_*`, so no secret touches a config file
+or the process list.
 
 ```sh
-R2_ACCOUNT_ID=… R2_ACCESS_KEY_ID=… R2_SECRET_ACCESS_KEY=… R2_BUCKET=… \
-  BACKUP_DIR=/var/backups/minnekart-photos RETENTION_DAYS=14 \
-  /path/to/minnekart/scripts/backup-r2.sh
+source ~/minnekart/backup.env
+BACKUP_DIR=~/minnekart/backups/photos bash ~/minnekart/repo/scripts/backup-r2.sh
 ```
 
-Cron (daily 03:30 — staggered after the Neon dump at 03:15):
+Cron (daily 03:30 — staggered after the dump):
 
 ```cron
-30 3 * * * R2_ACCOUNT_ID=… R2_ACCESS_KEY_ID=… R2_SECRET_ACCESS_KEY=… R2_BUCKET=… BACKUP_DIR=/var/backups/minnekart-photos RETENTION_DAYS=14 /path/to/minnekart/scripts/backup-r2.sh >> /var/log/minnekart-r2-backup.log 2>&1
+30 3 * * * . /home/ubuntu/minnekart/backup.env; BACKUP_DIR=/home/ubuntu/minnekart/backups/photos /home/ubuntu/minnekart/repo/scripts/backup-r2.sh >> /home/ubuntu/minnekart/logs/r2-backup.log 2>&1
 ```
 
 The bucket CORS policy governs browser uploads only — a credentialed server-side
 S3 client like this needs no CORS change.
 
-### Verify drill (do once)
-
-Dry-run first to confirm the remote resolves and see what would transfer, then
-run for real, then confirm the mirror matches. Never sync **to** R2 — this is a
-one-way pull.
+Verify the mirror matches R2 (expect "0 differences"). Never sync **to** R2 —
+this is a one-way pull:
 
 ```sh
-# same env as above, then:
-BACKUP_DIR=/var/backups/minnekart-photos /path/to/scripts/backup-r2.sh   # first real run
-# confirm current/ mirrors R2 (0 differences), using the same R2_* env:
+source ~/minnekart/backup.env
 RCLONE_CONFIG_R2_TYPE=s3 RCLONE_CONFIG_R2_PROVIDER=Cloudflare \
   RCLONE_CONFIG_R2_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID" \
   RCLONE_CONFIG_R2_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY" \
   RCLONE_CONFIG_R2_ENDPOINT="https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com" \
   RCLONE_CONFIG_R2_REGION=auto \
-  rclone check "R2:$R2_BUCKET/photos" /var/backups/minnekart-photos/current
+  rclone check "R2:$R2_BUCKET/photos" ~/minnekart/backups/photos/current
 ```
 
-To restore a lost object back into R2, copy it up by key (the reverse
-direction). `current/` holds the contents of the `photos/` prefix, so a key
-looks like `<userId>/<tripId>/<uuid>.webp`:
-`rclone copyto /var/backups/minnekart-photos/current/<userId>/<tripId>/<uuid>.webp
+To restore a lost object back into R2 (the reverse direction): `current/` holds
+the contents of the `photos/` prefix, so a key looks like
+`<userId>/<tripId>/<uuid>.webp`:
+`rclone copyto ~/minnekart/backups/photos/current/<userId>/<tripId>/<uuid>.webp
 "R2:$R2_BUCKET/photos/<userId>/<tripId>/<uuid>.webp"`.
 
 ## Open signup (Turnstile)
