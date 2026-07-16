@@ -17,13 +17,16 @@ export function paddleApiConfigured(deps: PaddleApiDeps = {}): boolean {
   return Boolean(resolveApiKey(deps));
 }
 
+type CancelEffectiveFrom = 'next_billing_period' | 'immediately';
+
 export async function cancelSubscription(
   subscriptionId: string,
   deps: PaddleApiDeps = {},
+  effectiveFrom: CancelEffectiveFrom = 'next_billing_period',
 ): Promise<void> {
   await request(`/subscriptions/${subscriptionId}/cancel`, deps, {
     method: 'POST',
-    body: { effective_from: 'next_billing_period' },
+    body: { effective_from: effectiveFrom },
   });
 }
 

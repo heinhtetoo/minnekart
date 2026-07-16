@@ -3,6 +3,7 @@ import BillingCard, {
   PaddleCheckoutConfig,
   SubscriptionView,
 } from '@/components/account/BillingCard';
+import DeleteAccountCard from '@/components/account/DeleteAccountCard';
 import GlobeVisibility from '@/components/account/GlobeVisibility';
 import ProfileCard from '@/components/account/ProfileCard';
 import { SessionUser } from '@/lib/auth/session';
@@ -106,6 +107,7 @@ export default async function SettingsPage() {
         paddle={paddleCheckoutConfig()}
         subscription={subscriptionView(user)}
       />
+      {user.role !== 'owner' && <DeleteAccountCard username={user.username} />}
     </AppPage>
   );
 }

@@ -94,7 +94,7 @@ export const invites = pgTable('invites', {
     .references(() => users.id),
   note: text('note'),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  usedBy: uuid('used_by').references(() => users.id),
+  usedBy: uuid('used_by').references(() => users.id, { onDelete: 'set null' }),
   usedAt: timestamp('used_at', { withTimezone: true }),
   revokedAt: timestamp('revoked_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true })
