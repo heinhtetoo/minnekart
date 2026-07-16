@@ -25,10 +25,10 @@ export default async function NewTripPage() {
       <h1
         className="serif"
         style={{
-          fontSize: 'clamp(28px,5vw,40px)',
+          fontSize: 'clamp(34px,5vw,50px)',
           fontWeight: 700,
           color: 'var(--foreground)',
-          letterSpacing: '-1px',
+          letterSpacing: '-1.2px',
           margin: '14px 0 24px',
         }}
       >

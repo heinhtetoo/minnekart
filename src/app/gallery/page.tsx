@@ -12,8 +12,13 @@ import { storage } from '@/lib/storage';
 
 import styles from './gallery.module.css';
 
-export default async function GalleryPage() {
+interface GalleryPageProps {
+  searchParams: Promise<{ country?: string }>;
+}
+
+export default async function GalleryPage({ searchParams }: GalleryPageProps) {
   const user = await requireVerifiedPageUser();
+  const { country } = await searchParams;
 
   const rows = await db()
     .select({
@@ -58,7 +63,7 @@ export default async function GalleryPage() {
           and upload some.
         </p>
       ) : (
-        <GalleryView photos={photos} />
+        <GalleryView photos={photos} initialCountry={country ?? null} />
       )}
     </AppPage>
   );

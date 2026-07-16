@@ -91,6 +91,12 @@
   margin: -6px 0 0;
 }
 
+.coordsPrompt {
+  font-size: 12px;
+  color: var(--muted);
+  margin: -6px 0 0;
+}
+
 .actions {
   display: flex;
   align-items: center;

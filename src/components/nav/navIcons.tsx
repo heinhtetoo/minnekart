@@ -1,6 +1,6 @@
 import { ReactElement } from 'react';
 
-export type NavIconName = 'globe' | 'timeline' | 'gallery' | 'about' | 'plus';
+export type NavIconName = 'globe' | 'timeline' | 'gallery' | 'profile' | 'plus';
 
 const shared = {
   fill: 'none',
@@ -34,7 +34,7 @@ const paths: Record<NavIconName, ReactElement> = {
       <path d="M4 18l5-5 4 4 3-3 4 4" {...shared} />
     </>
   ),
-  about: (
+  profile: (
     <>
       <circle cx="12" cy="8" r="3.4" {...shared} />
       <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" {...shared} />

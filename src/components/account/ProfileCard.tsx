@@ -55,7 +55,7 @@ export default function ProfileCard({
   return (
     <form className={styles.card} onSubmit={save}>
       <div className={styles.head}>
-        <p className={styles.title}>Your About page</p>
+        <h2 className={styles.title}>Your About page</h2>
         <p className={styles.hint}>
           This is what visitors see on your public About page.
         </p>

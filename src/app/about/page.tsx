@@ -1,142 +1,83 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { asc, count, eq } from 'drizzle-orm';
+import Link from 'next/link';
 
-import { db } from '@/db';
-import Footer from '@/components/layout/Footer';
-import BottomNav from '@/components/nav/BottomNav';
-import TopNav from '@/components/nav/TopNav';
-import PublicChrome from '@/components/public/PublicChrome';
-import { photos, trips, users } from '@/db/schema';
-import { isVerified } from '@/lib/auth/current-user';
+import ContentPage from '@/components/layout/ContentPage';
 import { getServerSessionUser } from '@/lib/auth/session-server';
-import { computeStats } from '@/lib/trips/stats';
-
-import styles from './about.module.css';
+import { entityLine, legalEntity, supportEmail } from '@/lib/legal';
 
 export const dynamic = 'force-dynamic';
 
+const DESCRIPTION =
+  'Minnekart is a private globe of your travel memories — made for after ' +
+  'the trip, funded by the people who use it, with no trackers anywhere.';
+
 export const metadata: Metadata = {
   title: 'About · Minnekart',
-  description: 'The story behind this globe of memories.',
+  description: DESCRIPTION,
+  openGraph: {
+    title: 'About · Minnekart',
+    description: DESCRIPTION,
+    type: 'website',
+  },
 };
-
-function paragraphs(bio: string): string[] {
-  return bio
-    .split(/\n\s*\n/)
-    .map((block) => block.trim())
-    .filter((block) => block.length > 0);
-}
-
-async function loadOwner() {
-  const [owner] = await db()
-    .select()
-    .from(users)
-    .where(eq(users.role, 'owner'))
-    .orderBy(asc(users.createdAt))
-    .limit(1);
-  return owner ?? null;
-}
-
-async function loadStatsFor(userId: string) {
-  const database = db();
-  const [owned, photoCountRows] = await Promise.all([
-    database.select().from(trips).where(eq(trips.userId, userId)),
-    database
-      .select({ value: count() })
-      .from(photos)
-      .where(eq(photos.userId, userId)),
-  ]);
-  return computeStats(owned, photoCountRows[0]?.value ?? 0);
-}
 
 export default async function AboutPage() {
   const viewer = await getServerSessionUser();
-  const loggedIn = viewer !== null && isVerified(viewer);
-  const subject = loggedIn ? viewer : await loadOwner();
-  if (!subject) {
-    notFound();
-  }
-  const stats = await loadStatsFor(subject.id);
-  const initial = (subject.name || subject.username || '?')
-    .trim()
-    .charAt(0)
-    .toUpperCase();
-  const headline = subject.headline?.trim() ?? '';
-  const bioParagraphs = subject.bio ? paragraphs(subject.bio) : [];
-  const hasStory = headline.length > 0 || bioParagraphs.length > 0;
+  const entity = legalEntity();
+  const support = supportEmail();
 
   return (
-    <>
-      {viewer && isVerified(viewer) ? (
-        <TopNav
-          name={viewer.name}
-          email={viewer.email}
-          isOwner={viewer.role === 'owner'}
-        />
-      ) : (
-        <PublicChrome ownerName={subject.name} viewerLoggedIn={false} />
-      )}
-      <main className="fade">
-        <section className={styles.grid}>
-          <div className={styles.card}>
-            <div>
-              <div className={styles.avatar}>{initial}</div>
-              <div className={styles.cardName}>{subject.name}</div>
-              {subject.tagline && (
-                <div className={styles.cardTagline}>{subject.tagline}</div>
-              )}
-            </div>
-          </div>
+    <ContentPage viewer={viewer} eyebrow="About" title="About Minnekart">
+      <p>
+        Minnekart is a private globe of your travel memories. You pin the places
+        you&apos;ve been, keep the photographs and the stories, and spin a world
+        that slowly fills with your own life. It&apos;s made for after the trip
+        — a quiet record you return to, not a feed that broadcasts where you are
+        right now.
+      </p>
 
-          <div>
-            <p className={styles.eyebrow}>About</p>
-            {hasStory ? (
-              <>
-                {headline && (
-                  <h1 className={`serif ${styles.title}`}>{headline}</h1>
-                )}
-                {bioParagraphs.map((paragraph, index) => (
-                  <p
-                    key={index}
-                    className={`${styles.body}${
-                      index === bioParagraphs.length - 1
-                        ? ` ${styles.bodyLast}`
-                        : ''
-                    }`}
-                  >
-                    {paragraph}
-                  </p>
-                ))}
-              </>
-            ) : (
-              <h1 className={`serif ${styles.title}`}>Coming soon</h1>
-            )}
-            <div className={styles.stats}>
-              <div>
-                <div className={styles.statValue}>{stats.countries}</div>
-                <div className={styles.statLabel}>Countries</div>
-              </div>
-              <div>
-                <div className={styles.statValue}>{stats.photos}</div>
-                <div className={styles.statLabel}>Photos</div>
-              </div>
-              <div>
-                <div className={styles.statValue}>{stats.years}</div>
-                <div className={styles.statLabel}>Years</div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-      <div
-        className={`${styles.footerHolder}${
-          loggedIn ? ` ${styles.footerHolderApp}` : ''
-        }`}
-      >
-        <Footer loggedIn={loggedIn} />
-      </div>
-      {loggedIn && <BottomNav />}
-    </>
+      <h2>Why it exists</h2>
+      <p>
+        Most travel apps are built around sharing: live location, public
+        profiles, engagement. The memories end up shaped for an audience. We
+        wanted the opposite — somewhere the record is <strong>for you</strong>,
+        private by default, where sharing is a deliberate choice you make one
+        memory at a time and can take back at any time.
+      </p>
+
+      <h2>The privacy stance</h2>
+      <p>
+        Privacy isn&apos;t a feature we added — it&apos;s the reason the product
+        is shaped the way it is. There are no ad trackers and no analytics
+        anywhere. Minnekart never asks for your device location, and we have
+        committed to never building live GPS tracking. Photos are re-encoded in
+        your browser before upload, which strips the embedded camera metadata.
+        The full detail — what we collect, what we never collect, and who
+        touches your data — is on the <Link href="/privacy">privacy page</Link>,
+        and it&apos;s written as a commitment, not boilerplate.
+      </p>
+
+      <h2>How it&apos;s funded</h2>
+      <p>
+        You pay for Minnekart, so you&apos;re not the product. There&apos;s a
+        free tier to start your globe and a paid plan when it grows — see{' '}
+        <Link href="/pricing">pricing</Link>. No ads, no selling data, no
+        investors pushing for engagement. The incentives stay pointed at one
+        thing: keeping your memories safe and yours.
+      </p>
+
+      <h2>Start somewhere</h2>
+      <p>
+        If you&apos;re weighing up how to keep your own travel record, the{' '}
+        <Link href="/guides">guides</Link> are a short, practical place to begin
+        — or just <Link href="/">start your globe</Link> with the first place
+        that comes to mind.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        {entityLine(entity)} — <a href={`mailto:${support}`}>{support}</a>.
+      </p>
+    </ContentPage>
   );
 }

@@ -3,6 +3,7 @@ import BillingCard, {
   PaddleCheckoutConfig,
   SubscriptionView,
 } from '@/components/account/BillingCard';
+import DeleteAccountCard from '@/components/account/DeleteAccountCard';
 import GlobeVisibility from '@/components/account/GlobeVisibility';
 import ProfileCard from '@/components/account/ProfileCard';
 import { SessionUser } from '@/lib/auth/session';
@@ -79,10 +80,10 @@ export default async function SettingsPage() {
       <h1
         className="serif"
         style={{
-          fontSize: 'clamp(28px,5vw,40px)',
+          fontSize: 'clamp(34px,5vw,50px)',
           fontWeight: 700,
           color: 'var(--foreground)',
-          letterSpacing: '-1px',
+          letterSpacing: '-1.2px',
           margin: '0 0 24px',
         }}
       >
@@ -106,6 +107,7 @@ export default async function SettingsPage() {
         paddle={paddleCheckoutConfig()}
         subscription={subscriptionView(user)}
       />
+      {user.role !== 'owner' && <DeleteAccountCard username={user.username} />}
     </AppPage>
   );
 }

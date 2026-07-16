@@ -666,11 +666,48 @@ blocking Tier 2 work:
       currently set only at upload time. Paid-user quality of life.
 - [ ] **12. Muted-text contrast → WCAG AA** _(BACKLOG)_. ~3.4:1 by design;
       bump if strict AA is wanted. Small, do opportunistically.
-- [ ] **12b. Self-serve account deletion.** The privacy page promises deletion
-      within 30 days of an email to `hello@minnekart.com` — honest, but manual,
-      and it becomes a real support cost the moment signup opens. Needs a
-      settings flow (confirm → delete user, trips, photos in R2, sessions) plus
-      the same job reachable by an admin.
+- [x] **12b. Self-serve account deletion.** A "Danger zone" card in `/settings`
+      (hidden for the owner) lets a member delete their account after typing
+      their username **and** re-entering their password; on success the client
+      lands back on `/` with the session cookie cleared. The deletion logic is a
+      single shared service `src/lib/account/delete.ts` —
+      `deleteAccount(db, storage, user)` — so the self-serve route
+      (`DELETE /api/account`) and the owner-only admin route
+      (`DELETE /api/admin/users/[id]`, for honouring email requests) can't drift.
+      The service captures the user's R2 keys **before** the DB delete, then a
+      single `DELETE FROM users` cascades sessions/authTokens/trips/photos and
+      `deletePhotoObjects` purges the objects. An active Paddle subscription is
+      cancelled **immediately** (new `effectiveFrom` arg on `cancelSubscription`)
+      so billing stops the moment the account is gone; a Paddle failure is logged
+      but never strands a user (local data still deletes). Both routes refuse to
+      delete an **owner** (the About subject / invite creator must persist).
+      One migration (`0005_safe_mattie_franklin`) flips `invites.usedBy` to
+      `ON DELETE SET NULL` — the only FK that blocked deleting a member who had
+      used an invite; safe because invite "used" status keys off `usedAt`, not
+      `usedBy`. Privacy page's "no self-serve delete yet" paragraph rewritten to
+      match. Decided **hard delete, not soft-delete/deactivate** (user-confirmed):
+      indefinite retention would contradict the privacy brand + the published
+      promise + APP/GDPR erasure, so friction (type-username + password) is the
+      accident guard instead. 17 new tests (route matrix incl. owner-block, wrong
+      password, invite-null, immediate Paddle cancel; admin matrix; service unit
+      test); 296 tests green; build clean.
+
+- [ ] **15. About/Profile split + columned footer** _(design update,
+      16 July 2026)_. The current `/about` is really a profile page wearing an
+      "About" label — the updated design's footer (Company column) exposed the
+      collision. Split: `/about` becomes a company About page on the
+      `ContentPage` shell (product story + privacy stance, env-based identity
+      only), the profile page moves to `/profile` (logged-in-only, nav label
+      "Profile"), and the footer is restructured to the design's brand block +
+      Explore/Company link columns.
+- [ ] **16. Design sync: gallery deep-link + trip sidebar + polish** _(design
+      update, 16 July 2026)_. Trip detail sidebar per design: "View full
+      gallery" as the solid primary (deep-linking `/gallery?country=…`,
+      validated against the user's own countries), "Edit this memory" demoted
+      to an accent text link. Gallery accepts the `?country=` param (owner-only
+      surface; no data exposure — filter runs client-side over the viewer's own
+      photos). Cosmetic pass: app H1s to `clamp(34px,5vw,50px)`, card headings
+      to real `<h2>`s, 18px card radius, TripForm pin line, Save `flex:1`.
 
 ### Tier 4 — hygiene / post-PMF
 

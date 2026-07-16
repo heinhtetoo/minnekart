@@ -145,12 +145,14 @@ export default async function PrivacyPage() {
 
       <h2>Deleting your account</h2>
       <p>
-        There is no self-serve delete button yet — that&apos;s an honest gap,
-        and it&apos;s on the list. In the meantime, email{' '}
+        You can delete your account yourself at any time, from{' '}
+        <strong>Settings → Delete account</strong>. It removes your account,
+        your memories and your photos straight away — there is no waiting period
+        and no way to undo it. Backups roll over within 14 days after that. If
+        you would rather we did it for you, email{' '}
         <a href={`mailto:${support}`}>{support}</a> from your account address
-        and we will delete your account, your memories and your photos within 30
-        days, then confirm once it is done. Backups roll over within 14 days
-        after that.
+        and we will delete everything within 30 days, then confirm once it is
+        done.
       </p>
 
       <h2>Changes to this page</h2>

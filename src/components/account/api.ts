@@ -15,4 +15,9 @@ export const accountApi = {
     ),
   updateProfile: (input: ProfileInput) =>
     apiRequest<ProfileInput>('/api/account/profile', jsonBody('PATCH', input)),
+  deleteAccount: (password: string) =>
+    apiRequest<{ ok: boolean }>(
+      '/api/account',
+      jsonBody('DELETE', { password }),
+    ),
 };

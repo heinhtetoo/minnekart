@@ -133,7 +133,7 @@
   text-align: right;
 }
 
-.editButton {
+.galleryButton {
   display: block;
   margin-top: 8px;
   text-align: center;
@@ -146,8 +146,22 @@
   transition: background 0.15s;
 }
 
-.editButton:hover {
+.galleryButton:hover {
   background: #24403a;
+}
+
+.editLink {
+  display: block;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.editLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .photos {
