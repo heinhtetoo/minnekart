@@ -30,3 +30,9 @@ the build. Roughly ordered by likely value.
   upload order. Needs a reorder endpoint + UI (progress.md Phase 5/7).
 - **Muted-text contrast → WCAG AA.** Muted text sits ~3.4:1 by design; bump to
   meet strict AA if wanted (progress.md Phase 10).
+- **Signup validation gives no field-level feedback.** A too-short username (min
+  3 chars, `usernameSchema` in `src/lib/auth/validation.ts`) or any other schema
+  miss collapses into a generic `invalid_request` 400, and the signup form lets
+  it through to the server without inline validation — a 2-char username just
+  fails opaquely. Add client-side field validation and/or return which field
+  failed (e.g. `username_too_short`) so the form can show a useful message.
