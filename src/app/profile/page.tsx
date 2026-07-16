@@ -1,24 +1,21 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { asc, count, eq } from 'drizzle-orm';
+import { count, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
 import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/nav/BottomNav';
 import TopNav from '@/components/nav/TopNav';
-import PublicChrome from '@/components/public/PublicChrome';
-import { photos, trips, users } from '@/db/schema';
-import { isVerified } from '@/lib/auth/current-user';
-import { getServerSessionUser } from '@/lib/auth/session-server';
+import { photos, trips } from '@/db/schema';
+import { requireVerifiedPageUser } from '@/lib/auth/session-server';
 import { computeStats } from '@/lib/trips/stats';
 
-import styles from './about.module.css';
+import styles from './profile.module.css';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'About · Minnekart',
-  description: 'The story behind this globe of memories.',
+  title: 'Profile · Minnekart',
+  description: 'The story behind your globe of memories.',
 };
 
 function paragraphs(bio: string): string[] {
@@ -26,16 +23,6 @@ function paragraphs(bio: string): string[] {
     .split(/\n\s*\n/)
     .map((block) => block.trim())
     .filter((block) => block.length > 0);
-}
-
-async function loadOwner() {
-  const [owner] = await db()
-    .select()
-    .from(users)
-    .where(eq(users.role, 'owner'))
-    .orderBy(asc(users.createdAt))
-    .limit(1);
-  return owner ?? null;
 }
 
 async function loadStatsFor(userId: string) {
@@ -50,47 +37,38 @@ async function loadStatsFor(userId: string) {
   return computeStats(owned, photoCountRows[0]?.value ?? 0);
 }
 
-export default async function AboutPage() {
-  const viewer = await getServerSessionUser();
-  const loggedIn = viewer !== null && isVerified(viewer);
-  const subject = loggedIn ? viewer : await loadOwner();
-  if (!subject) {
-    notFound();
-  }
-  const stats = await loadStatsFor(subject.id);
-  const initial = (subject.name || subject.username || '?')
+export default async function ProfilePage() {
+  const user = await requireVerifiedPageUser();
+  const stats = await loadStatsFor(user.id);
+  const initial = (user.name || user.username || '?')
     .trim()
     .charAt(0)
     .toUpperCase();
-  const headline = subject.headline?.trim() ?? '';
-  const bioParagraphs = subject.bio ? paragraphs(subject.bio) : [];
+  const headline = user.headline?.trim() ?? '';
+  const bioParagraphs = user.bio ? paragraphs(user.bio) : [];
   const hasStory = headline.length > 0 || bioParagraphs.length > 0;
 
   return (
     <>
-      {viewer && isVerified(viewer) ? (
-        <TopNav
-          name={viewer.name}
-          email={viewer.email}
-          isOwner={viewer.role === 'owner'}
-        />
-      ) : (
-        <PublicChrome ownerName={subject.name} viewerLoggedIn={false} />
-      )}
+      <TopNav
+        name={user.name}
+        email={user.email}
+        isOwner={user.role === 'owner'}
+      />
       <main className="fade">
         <section className={styles.grid}>
           <div className={styles.card}>
             <div>
               <div className={styles.avatar}>{initial}</div>
-              <div className={styles.cardName}>{subject.name}</div>
-              {subject.tagline && (
-                <div className={styles.cardTagline}>{subject.tagline}</div>
+              <div className={styles.cardName}>{user.name}</div>
+              {user.tagline && (
+                <div className={styles.cardTagline}>{user.tagline}</div>
               )}
             </div>
           </div>
 
           <div>
-            <p className={styles.eyebrow}>About</p>
+            <p className={styles.eyebrow}>Profile</p>
             {hasStory ? (
               <>
                 {headline && (
@@ -129,14 +107,10 @@ export default async function AboutPage() {
           </div>
         </section>
       </main>
-      <div
-        className={`${styles.footerHolder}${
-          loggedIn ? ` ${styles.footerHolderApp}` : ''
-        }`}
-      >
-        <Footer loggedIn={loggedIn} />
+      <div className={`${styles.footerHolder} ${styles.footerHolderApp}`}>
+        <Footer loggedIn />
       </div>
-      {loggedIn && <BottomNav />}
+      <BottomNav />
     </>
   );
 }

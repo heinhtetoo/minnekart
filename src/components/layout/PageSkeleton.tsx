@@ -3,7 +3,7 @@ import { CSSProperties } from 'react';
 import styles from './PageSkeleton.module.css';
 
 export type SkeletonVariant =
-  'home' | 'gallery' | 'timeline' | 'trip' | 'about' | 'form' | 'default';
+  'home' | 'gallery' | 'timeline' | 'trip' | 'profile' | 'form' | 'default';
 
 interface PageSkeletonProps {
   variant?: SkeletonVariant;
@@ -29,7 +29,7 @@ function renderVariant(variant: SkeletonVariant) {
   if (variant === 'gallery') return <GallerySkeleton />;
   if (variant === 'timeline') return <TimelineSkeleton />;
   if (variant === 'trip') return <TripSkeleton />;
-  if (variant === 'about') return <AboutSkeleton />;
+  if (variant === 'profile') return <ProfileSkeleton />;
   if (variant === 'form') return <FormSkeleton />;
   return <DefaultSkeleton />;
 }
@@ -159,10 +159,10 @@ function TripSkeleton() {
   );
 }
 
-function AboutSkeleton() {
+function ProfileSkeleton() {
   return (
     <main className={styles.main} aria-busy="true" aria-label="Loading">
-      <div className={styles.aboutGrid}>
+      <div className={styles.profileGrid}>
         <div className={styles.portrait}>
           <Bar w={56} h={56} round />
           <Bar w={140} h={22} />

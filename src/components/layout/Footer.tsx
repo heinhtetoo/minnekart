@@ -9,7 +9,7 @@ interface FooterProps {
   loggedIn: boolean;
 }
 
-const legalItems = [
+const companyItems = [
   { href: '/about', label: 'About' },
   { href: '/guides', label: 'Guides' },
   { href: '/pricing', label: 'Pricing' },
@@ -24,29 +24,36 @@ export default function Footer({ loggedIn }: FooterProps) {
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
-        <Link href="/" aria-label="Minnekart home" className={styles.brand}>
-          <Wordmark base="#f4efe6" accent="#9ec2b2" stroke="#9ec2b2" />
-        </Link>
+        <div className={styles.brand}>
+          <Link href="/" aria-label="Minnekart home" className={styles.mark}>
+            <Wordmark base="#f4efe6" accent="#9ec2b2" stroke="#9ec2b2" />
+          </Link>
+          <p className={styles.copy}>© {year} · A memory palace you can spin</p>
+        </div>
 
-        {loggedIn && (
-          <nav className={styles.links} aria-label="Footer">
-            {navItems.map((item) => (
+        <div className={styles.columns}>
+          {loggedIn && (
+            <nav
+              className={`${styles.column} ${styles.explore}`}
+              aria-label="Explore"
+            >
+              <p className={styles.heading}>Explore</p>
+              {navItems.map((item) => (
+                <Link key={item.href} href={item.href} className={styles.link}>
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          )}
+          <nav className={styles.column} aria-label="Company">
+            <p className={styles.heading}>Company</p>
+            {companyItems.map((item) => (
               <Link key={item.href} href={item.href} className={styles.link}>
                 {item.label}
               </Link>
             ))}
           </nav>
-        )}
-
-        <nav className={styles.legal} aria-label="Legal">
-          {legalItems.map((item) => (
-            <Link key={item.href} href={item.href} className={styles.link}>
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        <p className={styles.copy}>© {year} · A memory palace you can spin</p>
+        </div>
       </div>
     </footer>
   );

@@ -692,6 +692,23 @@ blocking Tier 2 work:
       password, invite-null, immediate Paddle cancel; admin matrix; service unit
       test); 296 tests green; build clean.
 
+- [ ] **15. About/Profile split + columned footer** _(design update,
+      16 July 2026)_. The current `/about` is really a profile page wearing an
+      "About" label — the updated design's footer (Company column) exposed the
+      collision. Split: `/about` becomes a company About page on the
+      `ContentPage` shell (product story + privacy stance, env-based identity
+      only), the profile page moves to `/profile` (logged-in-only, nav label
+      "Profile"), and the footer is restructured to the design's brand block +
+      Explore/Company link columns.
+- [ ] **16. Design sync: gallery deep-link + trip sidebar + polish** _(design
+      update, 16 July 2026)_. Trip detail sidebar per design: "View full
+      gallery" as the solid primary (deep-linking `/gallery?country=…`,
+      validated against the user's own countries), "Edit this memory" demoted
+      to an accent text link. Gallery accepts the `?country=` param (owner-only
+      surface; no data exposure — filter runs client-side over the viewer's own
+      photos). Cosmetic pass: app H1s to `clamp(34px,5vw,50px)`, card headings
+      to real `<h2>`s, 18px card radius, TripForm pin line, Save `flex:1`.
+
 ### Tier 4 — hygiene / post-PMF
 
 - [ ] **13. Re-encode the legacy PNG-as-webp objects in R2.** Photos uploaded
