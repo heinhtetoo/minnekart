@@ -692,22 +692,35 @@ blocking Tier 2 work:
       password, invite-null, immediate Paddle cancel; admin matrix; service unit
       test); 296 tests green; build clean.
 
-- [ ] **15. About/Profile split + columned footer** _(design update,
-      16 July 2026)_. The current `/about` is really a profile page wearing an
+- [x] **15. About/Profile split + columned footer** _(design update,
+      16 July 2026)_. The old `/about` was really a profile page wearing an
       "About" label — the updated design's footer (Company column) exposed the
-      collision. Split: `/about` becomes a company About page on the
-      `ContentPage` shell (product story + privacy stance, env-based identity
-      only), the profile page moves to `/profile` (logged-in-only, nav label
-      "Profile"), and the footer is restructured to the design's brand block +
-      Explore/Company link columns.
-- [ ] **16. Design sync: gallery deep-link + trip sidebar + polish** _(design
+      collision. Split shipped: `/about` is now a company About page on the
+      `ContentPage` shell (product story, privacy stance, funding, env-based
+      identity via `legalEntity()`); the profile page moved to `/profile`
+      (logged-in-only via `requireVerifiedPageUser`, nav label "Profile", the
+      old person glyph kept; skeleton variant renamed `about` → `profile`).
+      Footer restructured to the design's brand block (© line stacked under the
+      wordmark) + Explore/Company link columns — Explore is logged-in and
+      desktop-only (bottom nav covers it on mobile, a deliberate deviation).
+      Sitemap keeps `/about`, doesn't list `/profile`. Done pre-launch on
+      purpose: URL semantics churn is free while `OPEN_SIGNUP` is off.
+      Verified live and on preview; merged via PR #6.
+- [x] **16. Design sync: gallery deep-link + trip sidebar + polish** _(design
       update, 16 July 2026)_. Trip detail sidebar per design: "View full
-      gallery" as the solid primary (deep-linking `/gallery?country=…`,
-      validated against the user's own countries), "Edit this memory" demoted
-      to an accent text link. Gallery accepts the `?country=` param (owner-only
-      surface; no data exposure — filter runs client-side over the viewer's own
-      photos). Cosmetic pass: app H1s to `clamp(34px,5vw,50px)`, card headings
-      to real `<h2>`s, 18px card radius, TripForm pin line, Save `flex:1`.
+      gallery" as the solid primary, deep-linking
+      `/gallery?country=<trip country>`; "Edit this memory" demoted to an
+      accent text link — both hrefs passed only by the owner page, so public
+      `/t/`/`/u/` views can't render them. Gallery accepts `?country=`,
+      validated against the user's real country list (unknown → All; value
+      renders only as React text; security dig found no exposure — the filter
+      runs client-side over the viewer's own photos and referrer policy keeps
+      the query string off third parties). Polish: the four app H1s to
+      `clamp(34px,5vw,50px)`/-1.2px, card headings to real `<h2>`s at 16px,
+      18px card radius + the design's horizontal padding clamp (vertical
+      rhythm per card preserved), TripForm no-pin prompt ("Search above to
+      drop a pin…"). The design's pin line and Save `flex:1` turned out to
+      already match. Verified live and on preview; merged via PR #6.
 
 ### Tier 4 — hygiene / post-PMF
 
