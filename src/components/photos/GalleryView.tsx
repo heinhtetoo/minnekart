@@ -25,9 +25,21 @@ function toTile(photo: GalleryPhoto): PhotoTile {
   };
 }
 
-export default function GalleryView({ photos }: { photos: GalleryPhoto[] }) {
-  const [country, setCountry] = useState<string | null>(null);
+interface GalleryViewProps {
+  photos: GalleryPhoto[];
+  initialCountry?: string | null;
+}
+
+export default function GalleryView({
+  photos,
+  initialCountry = null,
+}: GalleryViewProps) {
   const countries = useMemo(() => distinctCountries(photos), [photos]);
+  const [country, setCountry] = useState<string | null>(
+    initialCountry && countries.includes(initialCountry)
+      ? initialCountry
+      : null,
+  );
 
   const filtered = country
     ? photos.filter((photo) => photo.country === country)

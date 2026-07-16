@@ -23,6 +23,7 @@ interface TripDetailBodyProps {
   backHref: string;
   backLabel: string;
   editHref?: string;
+  galleryHref?: string;
   neighbours?: { prev: Neighbour; next: Neighbour } | null;
 }
 
@@ -38,6 +39,7 @@ export default function TripDetailBody({
   backHref,
   backLabel,
   editHref,
+  galleryHref,
   neighbours,
 }: TripDetailBodyProps) {
   const paragraphs = (story ?? '')
@@ -85,9 +87,14 @@ export default function TripDetailBody({
           <DetailRow label="Country" value={country} />
           <DetailRow label="When" value={formatTripDates(dateStart, dateEnd)} />
           <DetailRow label="Photos" value={String(tiles.length)} accent />
+          {galleryHref && (
+            <Link href={galleryHref} className={styles.galleryButton}>
+              View full gallery
+            </Link>
+          )}
           {editHref && (
-            <Link href={editHref} className={styles.editButton}>
-              Edit memory
+            <Link href={editHref} className={styles.editLink}>
+              Edit this memory
             </Link>
           )}
         </aside>

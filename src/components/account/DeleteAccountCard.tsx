@@ -41,7 +41,7 @@ export default function DeleteAccountCard({
 
   return (
     <section className={styles.card}>
-      <p className={styles.title}>Delete account</p>
+      <h2 className={styles.title}>Delete account</h2>
       <p className={styles.hint}>
         Permanently delete your account, every memory and every photo. This
         cannot be undone.

@@ -164,7 +164,7 @@ export default function BillingCard({
     <section className={styles.card}>
       <div className={styles.row}>
         <div>
-          <p className={styles.rowTitle}>Plan</p>
+          <h2 className={styles.rowTitle}>Plan</h2>
           <p className={styles.rowHint}>
             {plan === 'paid'
               ? 'Paid — unlimited memories and photos.'

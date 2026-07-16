@@ -1,14 +1,14 @@
 .card {
   background: #fff;
-  border-radius: 16px;
-  padding: 20px 24px;
+  border-radius: 18px;
+  padding: 20px clamp(20px, 3vw, 30px);
   border: 1px solid rgba(192, 57, 43, 0.25);
   box-shadow: 0 2px 12px rgba(28, 25, 23, 0.05);
   margin-top: 20px;
 }
 
 .title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--danger);
   margin: 0;

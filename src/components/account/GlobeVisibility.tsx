@@ -48,7 +48,7 @@ export default function GlobeVisibility({
     <section className={styles.card}>
       <div className={styles.row}>
         <div>
-          <p className={styles.rowTitle}>Make my globe public</p>
+          <h2 className={styles.rowTitle}>Make my globe public</h2>
           <p className={styles.rowHint}>
             Anyone with your link can see the memories you mark public. Private
             memories stay hidden.

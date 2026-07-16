@@ -133,9 +133,13 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
         </Field>
       </div>
 
-      {coords && (
+      {coords ? (
         <p className={styles.coords}>
           Pin set · {coords.lat.toFixed(3)}, {coords.lng.toFixed(3)}
+        </p>
+      ) : (
+        <p className={styles.coordsPrompt}>
+          Search above to drop a pin on the globe.
         </p>
       )}
 

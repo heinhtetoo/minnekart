@@ -46,6 +46,7 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
         backHref="/"
         backLabel="← Back to globe"
         editHref={`/trip/${id}/edit`}
+        galleryHref={`/gallery?country=${encodeURIComponent(trip.country)}`}
         neighbours={neighbours}
       />
       <BottomNav />
