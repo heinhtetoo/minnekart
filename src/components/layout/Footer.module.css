@@ -26,7 +26,7 @@
 
 .columns {
   display: flex;
-  gap: clamp(40px, 8vw, 88px);
+  gap: clamp(36px, 6vw, 72px);
   flex-wrap: wrap;
 }
 
