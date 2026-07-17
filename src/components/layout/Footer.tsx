@@ -9,10 +9,13 @@ interface FooterProps {
   loggedIn: boolean;
 }
 
-const companyItems = [
+const productItems = [
   { href: '/about', label: 'About' },
   { href: '/guides', label: 'Guides' },
   { href: '/pricing', label: 'Pricing' },
+];
+
+const legalItems = [
   { href: '/terms', label: 'Terms' },
   { href: '/privacy', label: 'Privacy' },
   { href: '/refunds', label: 'Refunds' },
@@ -45,9 +48,17 @@ export default function Footer({ loggedIn }: FooterProps) {
               ))}
             </nav>
           )}
-          <nav className={styles.column} aria-label="Company">
-            <p className={styles.heading}>Company</p>
-            {companyItems.map((item) => (
+          <nav className={styles.column} aria-label="Product">
+            <p className={styles.heading}>Product</p>
+            {productItems.map((item) => (
+              <Link key={item.href} href={item.href} className={styles.link}>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <nav className={styles.column} aria-label="Legal">
+            <p className={styles.heading}>Legal</p>
+            {legalItems.map((item) => (
               <Link key={item.href} href={item.href} className={styles.link}>
                 {item.label}
               </Link>
