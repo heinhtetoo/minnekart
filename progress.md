@@ -662,8 +662,19 @@ blocking Tier 2 work:
       photo GPS on upload. Sleeper pick: the ICP's first session is
       backfilling years of trips, and GPS prefill shortens both time-to-aha
       and time-to-hitting-the-15-pin cap.
-- [ ] **11. Photo reorder** _(BACKLOG)_. Reorder endpoint + UI; `position` is
-      currently set only at upload time. Paid-user quality of life.
+- [x] **11. Photo reorder** — drag-and-drop in the trip edit page, free for
+      all plans (the paywall stays capacity-based by decision). Server:
+      `PATCH /api/trips/[id]/photos` takes the full ordered photo-ID list,
+      rejects anything that isn't exactly the trip's photo set
+      (`invalid_order`), and writes positions in a transaction
+      (`src/lib/photos/ordering.ts`); photo DELETE now re-packs positions,
+      which also fixes a latent bug where a deletion gap let the next upload
+      land on a duplicate position. Client: `@dnd-kit` (verified clean with
+      React 19.2/Next 16) in new `SortablePhotoGrid.tsx` — 5px mouse
+      activation so × clicks never drag, 250ms long-press on touch so grid
+      scroll survives, keyboard reorder via Space + arrows; optimistic save
+      with banner + refetch on failure. 10 new route tests (TDD, red-first);
+      306 total green. Verified on Mac Safari and Android Chrome.
 - [ ] **12. Muted-text contrast → WCAG AA** _(BACKLOG)_. ~3.4:1 by design;
       bump if strict AA is wanted. Small, do opportunistically.
 - [x] **12b. Self-serve account deletion.** A "Danger zone" card in `/settings`

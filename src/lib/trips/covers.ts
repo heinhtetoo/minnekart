@@ -2,9 +2,8 @@ import { asc, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
 import { photos } from '@/db/schema';
+import { cachedPresignGet } from '@/lib/photos/sign';
 import { storage } from '@/lib/storage';
-
-const READ_EXPIRY_SECONDS = 60 * 60;
 
 export interface TripCover {
   thumbUrl: string | null;
@@ -36,9 +35,7 @@ export async function tripCovers(
   const covers = new Map<string, TripCover>();
   for (const [tripId, count] of counts) {
     const key = firstKey.get(tripId);
-    const thumbUrl = key
-      ? await store.presignGet(key, READ_EXPIRY_SECONDS)
-      : null;
+    const thumbUrl = key ? await cachedPresignGet(store, key) : null;
     covers.set(tripId, { thumbUrl, count });
   }
   return covers;

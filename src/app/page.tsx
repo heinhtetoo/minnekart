@@ -1,11 +1,12 @@
-import { count, desc, eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
-import { photos, trips } from '@/db/schema';
+import { trips } from '@/db/schema';
 import { isVerified } from '@/lib/auth/current-user';
 import { getServerSessionUser } from '@/lib/auth/session-server';
 import { openSignupEnabled } from '@/lib/auth/signup-mode';
 import { env } from '@/lib/env';
+import { tripCovers } from '@/lib/trips/covers';
 import { toTripDTO } from '@/lib/trips/dto';
 import { computeStats } from '@/lib/trips/stats';
 import LoggedInHome, { HomeTrip } from '@/components/home/LoggedInHome';
@@ -52,27 +53,24 @@ export default async function Home({ searchParams }: HomeProps) {
   }
 
   const database = db();
-  const [owned, photoCounts] = await Promise.all([
+  const [owned, covers] = await Promise.all([
     database
       .select()
       .from(trips)
       .where(eq(trips.userId, user.id))
       .orderBy(desc(trips.dateStart), desc(trips.createdAt)),
-    database
-      .select({ tripId: photos.tripId, value: count() })
-      .from(photos)
-      .where(eq(photos.userId, user.id))
-      .groupBy(photos.tripId),
+    tripCovers(user.id),
   ]);
 
-  const photosByTrip = new Map(
-    photoCounts.map((row) => [row.tripId, row.value]),
-  );
-  const totalPhotos = photoCounts.reduce((sum, row) => sum + row.value, 0);
+  let totalPhotos = 0;
+  for (const cover of covers.values()) {
+    totalPhotos += cover.count;
+  }
 
   const toHomeTrip = (row: (typeof owned)[number]): HomeTrip => ({
     ...toTripDTO(row),
-    photoCount: photosByTrip.get(row.id) ?? 0,
+    photoCount: covers.get(row.id)?.count ?? 0,
+    thumbUrl: covers.get(row.id)?.thumbUrl ?? null,
   });
 
   const stats = computeStats(owned, totalPhotos);

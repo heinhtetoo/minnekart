@@ -17,6 +17,13 @@ import StatCell from './StatCell';
 
 export interface HomeTrip extends TripDTO {
   photoCount: number;
+  thumbUrl: string | null;
+}
+
+function coverStyle(trip: HomeTrip) {
+  return trip.thumbUrl
+    ? { backgroundImage: `url(${trip.thumbUrl})` }
+    : { background: coverGradient(trip.id) };
 }
 
 interface LoggedInHomeProps {
@@ -172,10 +179,7 @@ function PinsList({
                 aria-current={selected === index}
                 data-active={selected === index}
               >
-                <span
-                  className={styles.pinSwatch}
-                  style={{ background: coverGradient(trip.id) }}
-                />
+                <span className={styles.pinSwatch} style={coverStyle(trip)} />
                 <span className={styles.pinInfo}>
                   <span className={styles.pinName}>{trip.placeName}</span>
                   <span className={styles.pinMeta}>
@@ -228,10 +232,7 @@ function DetailCard({
         </button>
       </div>
       <div className={styles.detailBody}>
-        <span
-          className={styles.detailThumb}
-          style={{ background: coverGradient(trip.id) }}
-        />
+        <span className={styles.detailThumb} style={coverStyle(trip)} />
         <div className={styles.detailMain}>
           <div className={`serif ${styles.detailName}`}>{trip.placeName}</div>
           {trip.highlight && (
@@ -267,10 +268,7 @@ function FeaturedSection({ featured }: { featured: HomeTrip[] }) {
             href={`/trip/${trip.id}`}
             className={styles.featuredCard}
           >
-            <div
-              className={styles.featuredBanner}
-              style={{ background: coverGradient(trip.id) }}
-            >
+            <div className={styles.featuredBanner} style={coverStyle(trip)}>
               <span className={styles.countryPill}>{trip.country}</span>
             </div>
             <div className={styles.featuredBody}>
