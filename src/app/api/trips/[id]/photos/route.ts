@@ -11,7 +11,7 @@ import {
 import { isPhotoContentType } from '@/lib/photos/content-type';
 import { isKeyUnderPrefix, photoPrefix } from '@/lib/photos/keys';
 import { writePositions } from '@/lib/photos/ordering';
-import { signPhotos } from '@/lib/photos/sign';
+import { signPhoto, signPhotos } from '@/lib/photos/sign';
 import {
   createPhotoSchema,
   reorderPhotosSchema,
@@ -102,7 +102,7 @@ export async function POST(
     })
     .returning();
 
-  return jsonResponse({ photo }, 201);
+  return jsonResponse({ photo: await signPhoto(store, photo) }, 201);
 }
 
 export async function GET(
