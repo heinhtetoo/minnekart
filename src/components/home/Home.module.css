@@ -239,6 +239,8 @@
   height: 38px;
   border-radius: 9px;
   flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
 }
 
 .pinInfo {
@@ -342,6 +344,8 @@
   width: 74px;
   height: 56px;
   border-radius: 9px;
+  background-size: cover;
+  background-position: center;
 }
 
 .detailMain {
@@ -454,6 +458,8 @@
   height: 180px;
   position: relative;
   overflow: hidden;
+  background-size: cover;
+  background-position: center;
 }
 
 .countryPill {

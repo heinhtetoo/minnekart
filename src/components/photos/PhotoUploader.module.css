@@ -110,6 +110,14 @@
   border-radius: 10px;
   overflow: hidden;
   background: #ece5d8;
+  touch-action: manipulation;
+  cursor: grab;
+}
+
+.tileDragging {
+  opacity: 0.6;
+  z-index: 1;
+  cursor: grabbing;
 }
 
 .tile img {

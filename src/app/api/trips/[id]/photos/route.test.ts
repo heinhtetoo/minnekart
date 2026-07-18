@@ -85,6 +85,11 @@ describe('POST /api/trips/[id]/photos', () => {
     );
 
     expect(response.status).toBe(201);
+    const { photo } = await response.json();
+    expect(photo.thumbUrl).toEqual(expect.any(String));
+    expect(photo.thumbUrl).not.toBe('');
+    expect(photo.displayUrl).toEqual(expect.any(String));
+    expect(photo.displayUrl).not.toBe('');
     const stored = await db.select().from(photos);
     expect(stored).toHaveLength(1);
     expect(stored[0].displayKey).toBe(keys.displayKey);

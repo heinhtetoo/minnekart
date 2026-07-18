@@ -5,6 +5,7 @@ import { photos } from '@/db/schema';
 import { requireVerifiedUser } from '@/lib/auth/current-user';
 import { jsonResponse } from '@/lib/auth/http';
 import { deletePhotoObjects } from '@/lib/photos/cleanup';
+import { packPhotoPositions } from '@/lib/photos/ordering';
 import { storage } from '@/lib/storage';
 
 type Context = { params: Promise<{ id: string; photoId: string }> };
@@ -35,6 +36,7 @@ export async function DELETE(
   }
 
   await database.delete(photos).where(eq(photos.id, photo.id));
+  await packPhotoPositions(database, id);
   await deletePhotoObjects(storage(), [photo]);
 
   return jsonResponse({ ok: true }, 200);
