@@ -7,6 +7,7 @@ import { SignedPhoto } from '@/lib/photos/dto';
 import { processImage } from '@/lib/photos/process';
 
 import { photosApi, putBlob } from './api';
+import SortablePhotoGrid from './SortablePhotoGrid';
 import styles from './PhotoUploader.module.css';
 
 const MAX_DISPLAY_BYTES = 8 * 1024 * 1024;
@@ -156,6 +157,21 @@ export default function PhotoUploader({ tripId, plan }: PhotoUploaderProps) {
     await runPool(pairs, 2, ([job, file]) => uploadOne(job, file));
   }
 
+  async function handleReorder(next: SignedPhoto[]) {
+    const previous = photos;
+    setPhotos(next.map((photo, index) => ({ ...photo, position: index })));
+    const result = await photosApi.reorder(
+      tripId,
+      next.map((photo) => photo.id),
+    );
+    if (result.ok) {
+      return;
+    }
+    setBanner('Could not save the new photo order.');
+    const fresh = await photosApi.list(tripId);
+    setPhotos(fresh.data?.photos ?? previous);
+  }
+
   async function remove(photoId: string) {
     const result = await photosApi.remove(tripId, photoId);
     if (result.ok) {
@@ -213,22 +229,11 @@ export default function PhotoUploader({ tripId, plan }: PhotoUploaderProps) {
       ) : count === 0 ? (
         <p className={styles.loading}>No photos yet.</p>
       ) : (
-        <div className={styles.grid}>
-          {photos.map((photo) => (
-            <div key={photo.id} className={styles.tile}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo.thumbUrl} alt="" loading="lazy" />
-              <button
-                type="button"
-                className={styles.remove}
-                onClick={() => remove(photo.id)}
-                aria-label="Remove photo"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
+        <SortablePhotoGrid
+          photos={photos}
+          onReorder={handleReorder}
+          onRemove={remove}
+        />
       )}
     </section>
   );

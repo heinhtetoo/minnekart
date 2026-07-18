@@ -1,3 +1,4 @@
+import { asc } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { photos, trips } from '@/db/schema';
@@ -31,7 +32,7 @@ async function insertTripFor(userId: string) {
   return trip;
 }
 
-async function insertPhoto(userId: string, tripId: string) {
+async function insertPhoto(userId: string, tripId: string, position = 0) {
   const keys = newPhotoKeys(userId, tripId);
   const store = getMemoryStorage();
   await store.presignPut(keys.displayKey, 'image/webp');
@@ -45,6 +46,7 @@ async function insertPhoto(userId: string, tripId: string) {
       thumbKey: keys.thumbKey,
       width: 100,
       height: 100,
+      position,
     })
     .returning();
   return { photo, keys };
@@ -86,6 +88,36 @@ describe('DELETE /api/trips/[id]/photos/[photoId]', () => {
     const store = getMemoryStorage();
     expect(await store.stat(keys.displayKey)).toBeNull();
     expect(await store.stat(keys.thumbKey)).toBeNull();
+  });
+
+  it('re-packs remaining positions after deleting the middle photo', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+    const { photo: first } = await insertPhoto(user.id, trip.id, 0);
+    const { photo: middle } = await insertPhoto(user.id, trip.id, 1);
+    const { photo: last } = await insertPhoto(user.id, trip.id, 2);
+
+    const response = await DELETE(
+      jsonRequest(
+        'DELETE',
+        urlFor(trip.id, middle.id),
+        undefined,
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id, middle.id),
+    );
+
+    expect(response.status).toBe(200);
+    const remaining = await db
+      .select({ id: photos.id, position: photos.position })
+      .from(photos)
+      .orderBy(asc(photos.position));
+    expect(remaining).toEqual([
+      { id: first.id, position: 0 },
+      { id: last.id, position: 1 },
+    ]);
   });
 
   it('returns 404 for another users photo', async () => {

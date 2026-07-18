@@ -34,6 +34,11 @@ export const photosApi = {
     apiRequest<{ ok: true }>(`/api/trips/${tripId}/photos/${photoId}`, {
       method: 'DELETE',
     }),
+  reorder: (tripId: string, order: string[]) =>
+    apiRequest<{ ok: true }>(
+      `/api/trips/${tripId}/photos`,
+      jsonBody('PATCH', { order }),
+    ),
 };
 
 export async function putBlob(url: string, blob: Blob): Promise<boolean> {

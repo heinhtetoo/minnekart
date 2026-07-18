@@ -10,8 +10,12 @@ import {
 } from '@/lib/billing/limits';
 import { isPhotoContentType } from '@/lib/photos/content-type';
 import { isKeyUnderPrefix, photoPrefix } from '@/lib/photos/keys';
+import { writePositions } from '@/lib/photos/ordering';
 import { signPhotos } from '@/lib/photos/sign';
-import { createPhotoSchema } from '@/lib/photos/validation';
+import {
+  createPhotoSchema,
+  reorderPhotosSchema,
+} from '@/lib/photos/validation';
 import { storage } from '@/lib/storage';
 import { StoredObject } from '@/lib/storage/types';
 import { getOwnedTrip } from '@/lib/trips/access';
@@ -125,6 +129,56 @@ export async function GET(
 
   const signed = await signPhotos(storage(), owned);
   return jsonResponse({ photos: signed }, 200);
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: Context,
+): Promise<Response> {
+  const database = db();
+  const guard = await requireVerifiedUser(database, request);
+  if (guard.response) {
+    return guard.response;
+  }
+  const { id } = await params;
+
+  const trip = await getOwnedTrip(database, id, guard.user.id);
+  if (!trip) {
+    return jsonResponse({ error: 'not_found' }, 404);
+  }
+
+  const parsed = reorderPhotosSchema.safeParse(await readJsonBody(request));
+  if (!parsed.success) {
+    return jsonResponse({ error: 'invalid_request' }, 400);
+  }
+  const { order } = parsed.data;
+
+  const existing = await database
+    .select({ id: photos.id })
+    .from(photos)
+    .where(eq(photos.tripId, trip.id));
+  if (
+    !isSamePhotoSet(
+      order,
+      existing.map((row) => row.id),
+    )
+  ) {
+    return jsonResponse({ error: 'invalid_order' }, 400);
+  }
+
+  await writePositions(database, trip.id, order);
+  return jsonResponse({ ok: true }, 200);
+}
+
+function isSamePhotoSet(order: string[], existingIds: string[]): boolean {
+  if (order.length !== existingIds.length) {
+    return false;
+  }
+  const unique = new Set(order);
+  if (unique.size !== order.length) {
+    return false;
+  }
+  return existingIds.every((id) => unique.has(id));
 }
 
 function isAcceptable(object: StoredObject | null, maxBytes: number): boolean {
