@@ -16,10 +16,6 @@ the build. Roughly ordered by likely value.
   layer over trips (no schema pain expected).
 - **Original-resolution photo archival.** Web-optimised only today; `original_key`
   is reserved in the schema for a future opt-in.
-- **Editable per-user bio.** The `/about` page, portrait card, and real stats
-  already ship; in production the bio body is a "Coming soon" placeholder. What
-  remains is letting the owner edit their own name/tagline/bio (stored per user,
-  then drop the `NODE_ENV` gate). Tracked in progress.md.
 - **Map fine-tune pin placement** — let users nudge a pin off the geocoded point.
 - **EXIF GPS pin suggestions** — prefill coordinates from photo GPS on upload.
 - Social features (comments, likes, follows), mobile apps, i18n — long tail.

@@ -76,6 +76,21 @@
   margin-bottom: 28px;
 }
 
+.storyPrompt {
+  font-size: 16px;
+  color: #4a4540;
+  line-height: 1.75;
+  margin: 0 0 20px;
+}
+
+.storyLink {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 28px;
+}
+
 .stats {
   display: flex;
   gap: 32px;

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { count, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -88,7 +89,18 @@ export default async function ProfilePage() {
                 ))}
               </>
             ) : (
-              <h1 className={`serif ${styles.title}`}>Coming soon</h1>
+              <>
+                <h1 className={`serif ${styles.title}`}>
+                  Your story, in your words
+                </h1>
+                <p className={styles.storyPrompt}>
+                  Add a headline and a few lines about your travels —
+                  they&apos;ll live here, beside your globe.
+                </p>
+                <Link href="/settings" className={styles.storyLink}>
+                  Write your story →
+                </Link>
+              </>
             )}
             <div className={styles.stats}>
               <div>

@@ -677,6 +677,17 @@ blocking Tier 2 work:
       306 total green. Verified on Mac Safari and Android Chrome.
 - [ ] **12. Muted-text contrast → WCAG AA** _(BACKLOG)_. ~3.4:1 by design;
       bump if strict AA is wanted. Small, do opportunistically.
+- [x] **17. Profile empty-state copy.** Replaced the `/profile` "Coming soon"
+      placeholder (shown when the user hasn't written a headline/bio) with an
+      inviting empty state that points to the editor: a `serif` heading "Your
+      story, in your words", a muted line ("Add a headline and a few lines
+      about your travels — they'll live here, beside your globe."), and a
+      "Write your story →" accent link to `/settings`. "Coming soon" read as
+      unfinished product, but the editable-bio feature already ships — the
+      user simply hadn't filled it in. Own-profile view only
+      (`requireVerifiedPageUser`); public `/u/[username]` unaffected. Two CSS
+      classes mirror existing patterns (`.body`, `.featuredSeeAll`); no new
+      tokens. 309 tests green, build clean.
 - [x] **12b. Self-serve account deletion.** A "Danger zone" card in `/settings`
       (hidden for the owner) lets a member delete their account after typing
       their username **and** re-entering their password; on success the client
