@@ -88,7 +88,8 @@ describe('inviteStatus', () => {
     tokenHash: 'h',
     createdBy: 'u',
     note: null,
-    expiresAt: new Date(Date.now() + 1000),
+    // Far enough ahead that slow test runs can't expire it mid-suite.
+    expiresAt: new Date(Date.now() + 60 * 60 * 1000),
     usedBy: null,
     usedAt: null,
     revokedAt: null,
