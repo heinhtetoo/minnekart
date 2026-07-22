@@ -688,6 +688,39 @@ blocking Tier 2 work:
       (`requireVerifiedPageUser`); public `/u/[username]` unaffected. Two CSS
       classes mirror existing patterns (`.body`, `.featuredSeeAll`); no new
       tokens. 309 tests green, build clean.
+- [ ] **18. Profile card photo from the user's library** _(studied 21 July
+      2026, not started)_. Let the user pick one of their already-uploaded
+      photos as the `/profile` portrait card image, falling back to today's
+      forest gradient when none is chosen. Decisions taken: the picker lives
+      in `/settings` beside the existing profile editor (`/profile` stays a
+      read view); the card keeps the photo behind a bottom scrim with the
+      existing avatar/name/tagline block on top; free on all plans (the
+      paywall stays capacity-based, per the reorder decision). Schema:
+      `users.profile_photo_id` → `photos.id` with **`on delete set null`**
+      (precedent: `invites.usedBy`, migration `0005`), so deleting the photo
+      reverts the card to the gradient instead of blocking the delete — one
+      drizzle-kit migration. API: extend `profileSchema` in
+      `src/app/api/account/profile/route.ts` with `profilePhotoId` (uuid,
+      nullable), saved by the existing "Save profile" submit, no new
+      endpoint — but the handler **must verify the photo belongs to the
+      caller** (reject `400 invalid_photo`), otherwise a user could point at
+      a stranger's photo id and be handed a signed URL to it. Library query:
+      `src/app/gallery/page.tsx` already runs exactly the needed join
+      (`photos` × `trips` for the user, signed via `signPhoto` +
+      `toSignedPhotoDTO`) — extract it to a shared
+      `src/lib/photos/library.ts` `userLibrary(userId)` used by both gallery
+      and settings rather than duplicating. Render: use **`displayUrl`, not
+      `thumbUrl`** — thumbs cap at 400px (`THUMB_MAX`) while the card renders
+      ~350–400px wide at 4/5, so a thumb looks soft on retina (picker tiles
+      still use `thumbUrl`); CSS keeps `.card`'s gradient as fallback and
+      adds `background-size: cover` plus a bottom scrim so `.cardName`/
+      `.cardTagline` stay readable (`.card` is already
+      `align-items: flex-end`, so no layout change). Tests (TDD): extend the
+      existing `src/app/api/account/profile/route.test.ts` — owned photo
+      saves, another user's photo rejected, `null` clears, photo delete nulls
+      the column — and re-run the account-deletion suite to confirm the new
+      FK doesn't block `DELETE FROM users`. Public `/u/[username]` has no
+      such card, so it's unaffected. Effort: moderate.
 - [x] **12b. Self-serve account deletion.** A "Danger zone" card in `/settings`
       (hidden for the owner) lets a member delete their account after typing
       their username **and** re-entering their password; on success the client
