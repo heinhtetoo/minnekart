@@ -1,17 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
-import { SignedPhoto } from '@/lib/photos/dto';
-import { distinctCountries } from '@/lib/photos/gallery';
+import { LibraryPhoto } from '@/lib/photos/library';
 
+import { photosApi } from './api';
 import PhotoGrid, { PhotoTile } from './PhotoGrid';
 import styles from './GalleryView.module.css';
 
-export interface GalleryPhoto extends SignedPhoto {
-  country: string;
-  placeName: string;
-}
+export type GalleryPhoto = LibraryPhoto;
 
 function toTile(photo: GalleryPhoto): PhotoTile {
   return {
@@ -25,25 +22,64 @@ function toTile(photo: GalleryPhoto): PhotoTile {
   };
 }
 
+// Guards the one real race: a photo added in another tab shifts the offset,
+// which would otherwise repeat a photo on the next page.
+function appendUnique(
+  current: GalleryPhoto[],
+  incoming: GalleryPhoto[],
+): GalleryPhoto[] {
+  const seen = new Set(current.map((photo) => photo.id));
+  return [...current, ...incoming.filter((photo) => !seen.has(photo.id))];
+}
+
 interface GalleryViewProps {
-  photos: GalleryPhoto[];
+  initialPhotos: GalleryPhoto[];
+  initialHasMore: boolean;
+  countries: string[];
   initialCountry?: string | null;
 }
 
 export default function GalleryView({
-  photos,
+  initialPhotos,
+  initialHasMore,
+  countries,
   initialCountry = null,
 }: GalleryViewProps) {
-  const countries = useMemo(() => distinctCountries(photos), [photos]);
-  const [country, setCountry] = useState<string | null>(
-    initialCountry && countries.includes(initialCountry)
-      ? initialCountry
-      : null,
-  );
+  const [photos, setPhotos] = useState(initialPhotos);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [country, setCountry] = useState<string | null>(initialCountry);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const filtered = country
-    ? photos.filter((photo) => photo.country === country)
-    : photos;
+  async function selectCountry(next: string | null) {
+    if (next === country) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const result = await photosApi.listMine(0, next);
+    setBusy(false);
+    if (!result.ok || !result.data) {
+      setError('Could not load those photos.');
+      return;
+    }
+    setCountry(next);
+    setPhotos(result.data.photos);
+    setHasMore(result.data.hasMore);
+  }
+
+  async function loadMore() {
+    setBusy(true);
+    setError(null);
+    const result = await photosApi.listMine(photos.length, country);
+    setBusy(false);
+    if (!result.ok || !result.data) {
+      setError('Could not load more photos.');
+      return;
+    }
+    setPhotos(appendUnique(photos, result.data.photos));
+    setHasMore(result.data.hasMore);
+  }
 
   return (
     <>
@@ -52,19 +88,32 @@ export default function GalleryView({
           <Chip
             label="All"
             active={country === null}
-            onClick={() => setCountry(null)}
+            onClick={() => selectCountry(null)}
           />
           {countries.map((name) => (
             <Chip
               key={name}
               label={name}
               active={country === name}
-              onClick={() => setCountry(name)}
+              onClick={() => selectCountry(name)}
             />
           ))}
         </div>
       )}
-      <PhotoGrid photos={filtered.map(toTile)} variant="masonry" />
+      <PhotoGrid photos={photos.map(toTile)} variant="masonry" />
+      {error && <p className={styles.error}>{error}</p>}
+      {hasMore && (
+        <div className={styles.more}>
+          <button
+            type="button"
+            className={styles.moreButton}
+            onClick={loadMore}
+            disabled={busy}
+          >
+            {busy ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
+      )}
     </>
   );
 }
