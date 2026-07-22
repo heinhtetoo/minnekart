@@ -709,9 +709,16 @@ blocking Tier 2 work:
       unchanged). `?country=` is still validated against the real list before
       querying, preserving task 16's behaviour. Offset paging with an
       append-time de-dupe by id covers the one real race (an upload in
-      another tab shifting the offset). Lightbox spans loaded photos only —
-      expected with paging. 8 new route tests (paging, offset, country
-      filter, never-another-user's-photos, 401/403); 323 green.
+      another tab shifting the offset). The lightbox pages too: stepping past
+      the last loaded photo fetches the next 25 and continues, instead of
+      silently wrapping to the first (`(index + 1) % count`), which would
+      have made a paged gallery look like it ended at 25. It only advances
+      once the fetch actually grew the list, and the rendered index is
+      clamped, since the photo list and the index live in different
+      components. `hasMore`/`onLoadMore` are optional on `PhotoGrid`, so the
+      trip and public grids keep the plain wrap behaviour. 8 new route tests
+      (paging, offset, country filter, never-another-user's-photos,
+      401/403); 323 green.
 - [x] **18. Profile card photo from the user's library** _(21 July 2026)_.
       Let the user pick one of their already-uploaded
       photos as the `/profile` portrait card image, falling back to today's

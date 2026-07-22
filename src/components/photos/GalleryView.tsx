@@ -68,17 +68,19 @@ export default function GalleryView({
     setHasMore(result.data.hasMore);
   }
 
-  async function loadMore() {
+  async function loadMore(): Promise<boolean> {
     setBusy(true);
     setError(null);
     const result = await photosApi.listMine(photos.length, country);
     setBusy(false);
     if (!result.ok || !result.data) {
       setError('Could not load more photos.');
-      return;
+      return false;
     }
-    setPhotos(appendUnique(photos, result.data.photos));
+    const next = appendUnique(photos, result.data.photos);
+    setPhotos(next);
     setHasMore(result.data.hasMore);
+    return next.length > photos.length;
   }
 
   return (
@@ -100,7 +102,12 @@ export default function GalleryView({
           ))}
         </div>
       )}
-      <PhotoGrid photos={photos.map(toTile)} variant="masonry" />
+      <PhotoGrid
+        photos={photos.map(toTile)}
+        variant="masonry"
+        hasMore={hasMore}
+        onLoadMore={loadMore}
+      />
       {error && <p className={styles.error}>{error}</p>}
       {hasMore && (
         <div className={styles.more}>

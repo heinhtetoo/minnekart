@@ -34,8 +34,13 @@
 
 .close:hover,
 .prev:hover,
-.next:hover {
+.next:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.24);
+}
+
+.next:disabled {
+  cursor: default;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .close {
