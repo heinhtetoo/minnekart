@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { photos, trips, users } from '@/db/schema';
@@ -62,6 +63,21 @@ describe('deleteAccount', () => {
     const store = getMemoryStorage();
     expect(await store.stat(keys.displayKey)).toBeNull();
     expect(await store.stat(keys.thumbKey)).toBeNull();
+  });
+
+  it('deletes an account whose profile card photo is one of its own photos', async () => {
+    const { user } = await createMember({ verified: true });
+    await seedTripWithPhoto(user.id);
+    const [photo] = await db.select().from(photos);
+    await db
+      .update(users)
+      .set({ profilePhotoId: photo.id })
+      .where(eq(users.id, user.id));
+
+    await deleteAccount(db, storage(), user);
+
+    expect(await db.select().from(users)).toHaveLength(0);
+    expect(await db.select().from(photos)).toHaveLength(0);
   });
 
   it('cancels a Paddle subscription immediately before deleting', async () => {

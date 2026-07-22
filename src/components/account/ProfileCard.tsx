@@ -5,12 +5,15 @@ import { useRouter } from 'next/navigation';
 
 import { accountApi } from './api';
 import styles from './ProfileCard.module.css';
+import ProfilePhotoPicker from './ProfilePhotoPicker';
 
 interface ProfileCardProps {
   initialName: string;
   initialTagline: string;
   initialHeadline: string;
   initialBio: string;
+  initialProfilePhotoId: string | null;
+  profilePhotoThumbUrl: string | null;
 }
 
 export default function ProfileCard({
@@ -18,12 +21,15 @@ export default function ProfileCard({
   initialTagline,
   initialHeadline,
   initialBio,
+  initialProfilePhotoId,
+  profilePhotoThumbUrl,
 }: ProfileCardProps) {
   const router = useRouter();
   const [name, setName] = useState(initialName);
   const [tagline, setTagline] = useState(initialTagline);
   const [headline, setHeadline] = useState(initialHeadline);
   const [bio, setBio] = useState(initialBio);
+  const [profilePhotoId, setProfilePhotoId] = useState(initialProfilePhotoId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -42,6 +48,7 @@ export default function ProfileCard({
       tagline,
       headline,
       bio,
+      profilePhotoId,
     });
     setBusy(false);
     if (!result.ok) {
@@ -101,6 +108,19 @@ export default function ProfileCard({
           style={{ resize: 'vertical', lineHeight: 1.6 }}
         />
       </Field>
+
+      <div className={styles.fieldWrap}>
+        <span className={styles.fieldHead}>
+          <span className="label" style={{ margin: 0 }}>
+            Card photo
+          </span>
+        </span>
+        <ProfilePhotoPicker
+          selectedId={profilePhotoId}
+          fallbackThumbUrl={profilePhotoThumbUrl}
+          onSelect={setProfilePhotoId}
+        />
+      </div>
 
       <div className={styles.actions}>
         <button className="button" type="submit" disabled={busy}>

@@ -8,6 +8,7 @@ import BottomNav from '@/components/nav/BottomNav';
 import TopNav from '@/components/nav/TopNav';
 import { photos, trips } from '@/db/schema';
 import { requireVerifiedPageUser } from '@/lib/auth/session-server';
+import { signedPhotoFor } from '@/lib/photos/library';
 import { computeStats } from '@/lib/trips/stats';
 
 import styles from './profile.module.css';
@@ -40,7 +41,12 @@ async function loadStatsFor(userId: string) {
 
 export default async function ProfilePage() {
   const user = await requireVerifiedPageUser();
-  const stats = await loadStatsFor(user.id);
+  const [stats, cardPhoto] = await Promise.all([
+    loadStatsFor(user.id),
+    user.profilePhotoId
+      ? signedPhotoFor(user.id, user.profilePhotoId)
+      : Promise.resolve(null),
+  ]);
   const initial = (user.name || user.username || '?')
     .trim()
     .charAt(0)
@@ -58,8 +64,16 @@ export default async function ProfilePage() {
       />
       <main className="fade">
         <section className={styles.grid}>
-          <div className={styles.card}>
-            <div>
+          <div
+            className={styles.card}
+            data-photo={cardPhoto !== null}
+            style={
+              cardPhoto
+                ? { backgroundImage: `url(${cardPhoto.displayUrl})` }
+                : undefined
+            }
+          >
+            <div className={styles.cardInner}>
               <div className={styles.avatar}>{initial}</div>
               <div className={styles.cardName}>{user.name}</div>
               {user.tagline && (

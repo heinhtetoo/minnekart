@@ -688,8 +688,32 @@ blocking Tier 2 work:
       (`requireVerifiedPageUser`); public `/u/[username]` unaffected. Two CSS
       classes mirror existing patterns (`.body`, `.featuredSeeAll`); no new
       tokens. 309 tests green, build clean.
-- [ ] **18. Profile card photo from the user's library** _(studied 21 July
-      2026, not started)_. Let the user pick one of their already-uploaded
+- [x] **19. Paged photo loading (picker + gallery)** _(21 July 2026, folded
+      into 18 before its first commit)_. The task-18 picker first loaded a
+      fixed slice of the newest photos, which silently hid older ones — a
+      free account tops out at 90 photos (15 trips × 6) and paid at 5000, so
+      even modest libraries had unreachable photos. Both surfaces now page at
+      **25 per page** (`PHOTO_PAGE_SIZE`). New `GET /api/account/photos`
+      (`offset`, optional `country`) returns `{ photos, hasMore }` and is
+      scoped to the caller by construction — it only ever passes
+      `guard.user.id` — with `hasMore` derived by fetching one extra row
+      instead of a count query. The client sends no limit, so no caller can
+      request an unbounded page. Picker: the settings page no longer loads
+      the library at all (most visits never open it) and now costs one signed
+      URL for the current pick; page 1 is fetched when "Choose from library"
+      is clicked, with "Load more" appending. Gallery: the unbounded load is
+      gone; the country filter is now **server-side**, so the chips can no
+      longer be derived from loaded photos and come from a new
+      `userPhotoCountries` distinct query (piped through the existing
+      `distinctCountries` so blank-trimming and `localeCompare` ordering are
+      unchanged). `?country=` is still validated against the real list before
+      querying, preserving task 16's behaviour. Offset paging with an
+      append-time de-dupe by id covers the one real race (an upload in
+      another tab shifting the offset). Lightbox spans loaded photos only —
+      expected with paging. 8 new route tests (paging, offset, country
+      filter, never-another-user's-photos, 401/403); 323 green.
+- [x] **18. Profile card photo from the user's library** _(21 July 2026)_.
+      Let the user pick one of their already-uploaded
       photos as the `/profile` portrait card image, falling back to today's
       forest gradient when none is chosen. Decisions taken: the picker lives
       in `/settings` beside the existing profile editor (`/profile` stays a
@@ -715,12 +739,23 @@ blocking Tier 2 work:
       still use `thumbUrl`); CSS keeps `.card`'s gradient as fallback and
       adds `background-size: cover` plus a bottom scrim so `.cardName`/
       `.cardTagline` stay readable (`.card` is already
-      `align-items: flex-end`, so no layout change). Tests (TDD): extend the
-      existing `src/app/api/account/profile/route.test.ts` — owned photo
-      saves, another user's photo rejected, `null` clears, photo delete nulls
-      the column — and re-run the account-deletion suite to confirm the new
-      FK doesn't block `DELETE FROM users`. Public `/u/[username]` has no
-      such card, so it's unaffected. Effort: moderate.
+      `align-items: flex-end`, so no layout change). Tests (TDD): 5 added to
+      `src/app/api/account/profile/route.test.ts` — owned photo saves,
+      another user's photo rejected, unknown id rejected, `null` clears,
+      photo delete nulls the column. The ownership check was **verified by
+      mutation**: with it removed, the foreign-photo test returns 200 (the FK
+      gives no protection, since the other user's photo genuinely exists) and
+      the unknown-id case crashes with a raw Postgres FK violation instead of
+      a clean 400. Both rejection paths return the same `invalid_photo`, so
+      the endpoint is no id-enumeration oracle. Also added an
+      account-deletion test for a user whose card photo is their own photo —
+      that delete has to cascade the photo **and** set-null a reference on the
+      very row being deleted; it works, but it was worth pinning rather than
+      assuming, since failure would have blocked account deletion (a
+      compliance surface) for exactly the users who had set a photo. Public
+      `/u/[username]` has no such card, so it's unaffected. Migration
+      `0006_stormy_rage.sql`; the circular `users ↔ photos` reference needs an
+      `AnyPgColumn` annotation to typecheck.
 - [x] **12b. Self-serve account deletion.** A "Danger zone" card in `/settings`
       (hidden for the owner) lets a member delete their account after typing
       their username **and** re-entering their password; on success the client

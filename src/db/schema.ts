@@ -1,4 +1,5 @@
 import {
+  AnyPgColumn,
   boolean,
   date,
   doublePrecision,
@@ -45,6 +46,10 @@ export const users = pgTable('users', {
   subscriptionEndsAt: timestamp('subscription_ends_at', {
     withTimezone: true,
   }),
+  profilePhotoId: uuid('profile_photo_id').references(
+    (): AnyPgColumn => photos.id,
+    { onDelete: 'set null' },
+  ),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),

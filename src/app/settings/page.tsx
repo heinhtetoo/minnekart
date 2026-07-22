@@ -9,6 +9,7 @@ import ProfileCard from '@/components/account/ProfileCard';
 import { SessionUser } from '@/lib/auth/session';
 import { requireVerifiedPageUser } from '@/lib/auth/session-server';
 import { env } from '@/lib/env';
+import { signedPhotoFor } from '@/lib/photos/library';
 
 function paddleCheckoutConfig(): PaddleCheckoutConfig | null {
   const {
@@ -55,6 +56,11 @@ function subscriptionView(user: SessionUser): SubscriptionView | null {
 
 export default async function SettingsPage() {
   const user = await requireVerifiedPageUser();
+  // The picker fetches its own pages on demand, so a visit that never opens
+  // it costs only the currently-chosen photo.
+  const profilePhoto = user.profilePhotoId
+    ? await signedPhotoFor(user.id, user.profilePhotoId)
+    : null;
 
   return (
     <AppPage
@@ -94,6 +100,8 @@ export default async function SettingsPage() {
         initialTagline={user.tagline ?? ''}
         initialHeadline={user.headline ?? ''}
         initialBio={user.bio ?? ''}
+        initialProfilePhotoId={user.profilePhotoId}
+        profilePhotoThumbUrl={profilePhoto?.thumbUrl ?? null}
       />
       <GlobeVisibility
         initialPublic={user.globePublic}
