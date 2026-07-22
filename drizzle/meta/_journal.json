@@ -43,6 +43,13 @@
       "when": 1784154221743,
       "tag": "0005_safe_mattie_franklin",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784697512630,
+      "tag": "0006_stormy_rage",
+      "breakpoints": true
     }
   ]
 }

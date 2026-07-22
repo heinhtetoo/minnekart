@@ -5,6 +5,7 @@ export interface ProfileInput {
   tagline: string;
   headline: string;
   bio: string;
+  profilePhotoId: string | null;
 }
 
 export const accountApi = {

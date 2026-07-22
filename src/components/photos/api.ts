@@ -1,6 +1,7 @@
 import { apiRequest, jsonBody } from '@/lib/http/client';
 import { PhotoContentType } from '@/lib/photos/content-type';
 import { SignedPhoto } from '@/lib/photos/dto';
+import { LibraryPage } from '@/lib/photos/library';
 
 export interface PresignResult {
   displayKey: string;
@@ -20,6 +21,13 @@ export interface CreatePhotoInput {
 export const photosApi = {
   list: (tripId: string) =>
     apiRequest<{ photos: SignedPhoto[] }>(`/api/trips/${tripId}/photos`),
+  listMine: (offset: number, country: string | null) => {
+    const params = new URLSearchParams({ offset: String(offset) });
+    if (country) {
+      params.set('country', country);
+    }
+    return apiRequest<LibraryPage>(`/api/account/photos?${params}`);
+  },
   presign: (tripId: string, contentType: PhotoContentType) =>
     apiRequest<PresignResult>(
       `/api/trips/${tripId}/photos/presign`,

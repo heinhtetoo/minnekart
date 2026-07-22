@@ -18,11 +18,15 @@ export interface PhotoTile {
 interface PhotoGridProps {
   photos: PhotoTile[];
   variant?: 'masonry' | 'grid3';
+  hasMore?: boolean;
+  onLoadMore?: () => Promise<boolean>;
 }
 
 export default function PhotoGrid({
   photos,
   variant = 'grid3',
+  hasMore,
+  onLoadMore,
 }: PhotoGridProps) {
   const [index, setIndex] = useState<number | null>(null);
 
@@ -68,6 +72,8 @@ export default function PhotoGrid({
           index={index}
           onClose={() => setIndex(null)}
           onNavigate={setIndex}
+          hasMore={hasMore}
+          onLoadMore={onLoadMore}
         />
       )}
     </>

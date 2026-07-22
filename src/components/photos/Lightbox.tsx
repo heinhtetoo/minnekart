@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import styles from './Lightbox.module.css';
 
@@ -9,6 +9,8 @@ interface LightboxProps {
   index: number;
   onClose: () => void;
   onNavigate: (index: number) => void;
+  hasMore?: boolean;
+  onLoadMore?: () => Promise<boolean>;
 }
 
 export default function Lightbox({
@@ -16,17 +18,35 @@ export default function Lightbox({
   index,
   onClose,
   onNavigate,
+  hasMore = false,
+  onLoadMore,
 }: LightboxProps) {
   const count = photos.length;
+  const [loading, setLoading] = useState(false);
 
   const prev = useCallback(
     () => onNavigate((index - 1 + count) % count),
     [index, count, onNavigate],
   );
-  const next = useCallback(
-    () => onNavigate((index + 1) % count),
-    [index, count, onNavigate],
-  );
+
+  // Past the last loaded photo, pull the next page in rather than wrapping
+  // back to the start — otherwise a paged gallery looks like it ends at 25.
+  const next = useCallback(async () => {
+    if (index < count - 1) {
+      onNavigate(index + 1);
+      return;
+    }
+    if (hasMore && onLoadMore && !loading) {
+      setLoading(true);
+      const loaded = await onLoadMore();
+      setLoading(false);
+      if (loaded) {
+        onNavigate(index + 1);
+      }
+      return;
+    }
+    onNavigate(0);
+  }, [index, count, onNavigate, hasMore, onLoadMore, loading]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -38,7 +58,9 @@ export default function Lightbox({
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose, prev, next]);
 
-  const photo = photos[index];
+  // The photos list and the index update from different components, so clamp
+  // rather than risk a frame where the index outruns the list.
+  const photo = photos[Math.min(index, count - 1)];
 
   return (
     <div
@@ -75,7 +97,7 @@ export default function Lightbox({
         alt={photo.caption ?? ''}
         onClick={(event) => event.stopPropagation()}
       />
-      {count > 1 && (
+      {(count > 1 || hasMore) && (
         <button
           type="button"
           className={styles.next}
@@ -83,9 +105,10 @@ export default function Lightbox({
             event.stopPropagation();
             next();
           }}
+          disabled={loading}
           aria-label="Next photo"
         >
-          ›
+          {loading ? '…' : '›'}
         </button>
       )}
     </div>
