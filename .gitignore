@@ -45,3 +45,6 @@ sample_*.md
 # claude local settings
 .claude/settings.local.json
 CLAUDE.local.md
+
+# personal codebase walkthrough, not part of the product
+/book/
