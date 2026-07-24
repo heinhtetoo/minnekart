@@ -827,13 +827,35 @@ blocking Tier 2 work:
       thumbs). They display fine (browsers sniff the real format) but waste
       storage/bandwidth. One-off script (e.g. sharp server-side); low
       urgency.
-- [ ] **14. Investigate `prettier --write` not persisting locally.** During
-      the mobile-polish commit, `prettier --write progress.md` reported
-      success but `prettier --check` kept failing on the same file. The
-      workaround was to redirect prettier's stdout to a temp file and move it
-      back over the original. So `--write` may not be writing atomically in
-      this dev environment. Check the prettier version and whether it
-      reproduces on other files before relying on `npm run format` locally.
+- [x] **14. Investigate `prettier --write` not persisting locally**
+      _(24 July 2026 — could not reproduce; no defect)_. The original report:
+      during the mobile-polish commit `prettier --write progress.md` reported
+      success but `prettier --check` kept failing on the same file, and the
+      workaround was to redirect stdout to a temp file and move it back.
+      Re-tested end to end and none of it reproduces. `--write` persists (the
+      file's md5 changes); the exact reported cycle works (perturb →
+      `format:check` flags `progress.md` → `format` → `format:check` clean);
+      and prettier is idempotent on `progress.md`, on its content as of the
+      mobile-polish commit `b63e824`, and on adversarial markdown (deeply
+      nested lists, mixed 2/4/6/8-space continuations, loose ordered items, a
+      pipe table with backticked pipes). Crucially the version is not a
+      factor: `b63e824` locked prettier `3.9.4`, the same version running
+      now — so no since-fixed upgrade explains it. Nothing intercepts writes
+      either: no git hooks, no husky/lint-staged, no Claude hooks. The likely
+      cause was environmental — a dirty VS Code buffer for `progress.md`
+      re-saved over the CLI's write — which no code change can prevent.
+      **`npm run format` is trustworthy locally; the workaround is retired.**
+      Two findings came out of it. (a) The VS Code Prettier extension
+      (`esbenp.prettier-vscode` v12.4.0) bundles prettier `3.7.4` while the
+      repo locks `3.9.4`. Output is byte-identical today, but format-on-save
+      drifting from `format:check` is exactly this bug's shape, so
+      `.vscode/settings.json` now pins `prettier.prettierPath` to
+      `./node_modules/prettier`. (b) Prettier 3 reads `.gitignore` as a
+      default ignore path, not just `.prettierignore` — verified by probe.
+      So the `book/` line in `.prettierignore` is **not** redundant with
+      `/book/` in `.gitignore`: the extension's `prettier.ignorePath`
+      defaults to `.prettierignore` alone, making that line the only thing
+      stopping format-on-save reflowing the book chapters. Don't delete it.
 - Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
   opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
   real usage data exists.
