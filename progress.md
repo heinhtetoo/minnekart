@@ -675,8 +675,25 @@ blocking Tier 2 work:
       scroll survives, keyboard reorder via Space + arrows; optimistic save
       with banner + refetch on failure. 10 new route tests (TDD, red-first);
       306 total green. Verified on Mac Safari and Android Chrome.
-- [ ] **12. Muted-text contrast → WCAG AA** _(BACKLOG)_. ~3.4:1 by design;
-      bump if strict AA is wanted. Small, do opportunistically.
+- [x] **12. Muted-text contrast → WCAG AA** _(24 July 2026)_. An audit of
+      every text colour found 112 usages below the 4.5:1 AA bar, not just the
+      one token the note named. None qualified for the large-text exemption
+      (largest declared size 15px), so it became a palette change rather than
+      a per-site sweep. `--muted` `#8a8070 → #756c5f` (3.39 → 4.51) and
+      `--accent` `#c4693a → #a55931` (3.38 → 4.50), hue and saturation kept,
+      only lightness dropped ~7.6% to the least-dark values that clear the
+      bar; `--accent-soft` moved in step. Five hardcoded greys collapsed into
+      `var(--muted)` (worst was the globe hint at 2.06, the 10px bottom-nav
+      labels at 2.29); the footer's `.heading`/`.copy` lightened to `#88807a`
+      instead, since dark text on the near-black footer is the one place
+      `var(--muted)` is wrong. Kept the rest of the palette in step so
+      nothing renders the old orange: the pinCard glow, the Wordmark
+      fallback, the OG card constants, and the globe's pin fill and halo
+      (touched deliberately, for consistency). Every `--muted`/`--accent`
+      text usage now verified ≥4.5:1 on both cream and white; the active
+      gallery chip's white label improved 3.87 → 5.16 as a bonus. No logic
+      changed, 323 tests green. Signed off on the preview eyeball pass,
+      OG images included.
 - [x] **17. Profile empty-state copy.** Replaced the `/profile` "Coming soon"
       placeholder (shown when the user hasn't written a headline/bio) with an
       inviting empty state that points to the editor: a `serif` heading "Your
