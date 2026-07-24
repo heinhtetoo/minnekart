@@ -198,7 +198,7 @@
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.2px;
-    color: #a89f8f;
+    color: var(--muted);
   }
   .bottomItem[data-active='true'] {
     color: var(--accent);
@@ -212,7 +212,7 @@
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.2px;
-    color: #a89f8f;
+    color: var(--muted);
   }
   .addFabCircle {
     display: flex;

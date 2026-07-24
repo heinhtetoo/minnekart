@@ -9,7 +9,7 @@ export default function Wordmark({
   size = 24,
   stroke = '#2c4e46',
   base = '#2c4e46',
-  accent = 'var(--accent, #c4693a)',
+  accent = 'var(--accent, #a55931)',
 }: WordmarkProps) {
   return (
     <span

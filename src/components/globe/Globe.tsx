@@ -59,7 +59,7 @@ const MAX_ZOOM = 2.2;
 
 export default function Globe({
   pins,
-  accent = '#c4693a',
+  accent = '#a55931',
   autoSpin = true,
   showGraticule = true,
   onSelect,

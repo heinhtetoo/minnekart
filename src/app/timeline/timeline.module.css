@@ -148,7 +148,7 @@
   padding-left: 6px;
   margin: 14px 0 0;
   font-size: 12px;
-  color: #b0a898;
+  color: var(--muted);
   font-style: italic;
   font-family: var(--font-playfair), serif;
 }
