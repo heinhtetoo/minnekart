@@ -145,7 +145,7 @@ export default function LoggedOutHome({
             style={{
               textAlign: 'center',
               fontSize: 11,
-              color: '#b0a898',
+              color: 'var(--muted)',
               margin: '14px 0 0',
               fontStyle: 'italic',
             }}

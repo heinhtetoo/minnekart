@@ -675,8 +675,25 @@ blocking Tier 2 work:
       scroll survives, keyboard reorder via Space + arrows; optimistic save
       with banner + refetch on failure. 10 new route tests (TDD, red-first);
       306 total green. Verified on Mac Safari and Android Chrome.
-- [ ] **12. Muted-text contrast → WCAG AA** _(BACKLOG)_. ~3.4:1 by design;
-      bump if strict AA is wanted. Small, do opportunistically.
+- [x] **12. Muted-text contrast → WCAG AA** _(24 July 2026)_. An audit of
+      every text colour found 112 usages below the 4.5:1 AA bar, not just the
+      one token the note named. None qualified for the large-text exemption
+      (largest declared size 15px), so it became a palette change rather than
+      a per-site sweep. `--muted` `#8a8070 → #756c5f` (3.39 → 4.51) and
+      `--accent` `#c4693a → #a55931` (3.38 → 4.50), hue and saturation kept,
+      only lightness dropped ~7.6% to the least-dark values that clear the
+      bar; `--accent-soft` moved in step. Five hardcoded greys collapsed into
+      `var(--muted)` (worst was the globe hint at 2.06, the 10px bottom-nav
+      labels at 2.29); the footer's `.heading`/`.copy` lightened to `#88807a`
+      instead, since dark text on the near-black footer is the one place
+      `var(--muted)` is wrong. Kept the rest of the palette in step so
+      nothing renders the old orange: the pinCard glow, the Wordmark
+      fallback, the OG card constants, and the globe's pin fill and halo
+      (touched deliberately, for consistency). Every `--muted`/`--accent`
+      text usage now verified ≥4.5:1 on both cream and white; the active
+      gallery chip's white label improved 3.87 → 5.16 as a bonus. No logic
+      changed, 323 tests green. Signed off on the preview eyeball pass,
+      OG images included.
 - [x] **17. Profile empty-state copy.** Replaced the `/profile` "Coming soon"
       placeholder (shown when the user hasn't written a headline/bio) with an
       inviting empty state that points to the editor: a `serif` heading "Your
@@ -827,13 +844,35 @@ blocking Tier 2 work:
       thumbs). They display fine (browsers sniff the real format) but waste
       storage/bandwidth. One-off script (e.g. sharp server-side); low
       urgency.
-- [ ] **14. Investigate `prettier --write` not persisting locally.** During
-      the mobile-polish commit, `prettier --write progress.md` reported
-      success but `prettier --check` kept failing on the same file. The
-      workaround was to redirect prettier's stdout to a temp file and move it
-      back over the original. So `--write` may not be writing atomically in
-      this dev environment. Check the prettier version and whether it
-      reproduces on other files before relying on `npm run format` locally.
+- [x] **14. Investigate `prettier --write` not persisting locally**
+      _(24 July 2026 — could not reproduce; no defect)_. The original report:
+      during the mobile-polish commit `prettier --write progress.md` reported
+      success but `prettier --check` kept failing on the same file, and the
+      workaround was to redirect stdout to a temp file and move it back.
+      Re-tested end to end and none of it reproduces. `--write` persists (the
+      file's md5 changes); the exact reported cycle works (perturb →
+      `format:check` flags `progress.md` → `format` → `format:check` clean);
+      and prettier is idempotent on `progress.md`, on its content as of the
+      mobile-polish commit `b63e824`, and on adversarial markdown (deeply
+      nested lists, mixed 2/4/6/8-space continuations, loose ordered items, a
+      pipe table with backticked pipes). Crucially the version is not a
+      factor: `b63e824` locked prettier `3.9.4`, the same version running
+      now — so no since-fixed upgrade explains it. Nothing intercepts writes
+      either: no git hooks, no husky/lint-staged, no Claude hooks. The likely
+      cause was environmental — a dirty VS Code buffer for `progress.md`
+      re-saved over the CLI's write — which no code change can prevent.
+      **`npm run format` is trustworthy locally; the workaround is retired.**
+      Two findings came out of it. (a) The VS Code Prettier extension
+      (`esbenp.prettier-vscode` v12.4.0) bundles prettier `3.7.4` while the
+      repo locks `3.9.4`. Output is byte-identical today, but format-on-save
+      drifting from `format:check` is exactly this bug's shape, so
+      `.vscode/settings.json` now pins `prettier.prettierPath` to
+      `./node_modules/prettier`. (b) Prettier 3 reads `.gitignore` as a
+      default ignore path, not just `.prettierignore` — verified by probe.
+      So the `book/` line in `.prettierignore` is **not** redundant with
+      `/book/` in `.gitignore`: the extension's `prettier.ignorePath`
+      defaults to `.prettierignore` alone, making that line the only thing
+      stopping format-on-save reflowing the book chapters. Don't delete it.
 - Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
   opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
   real usage data exists.

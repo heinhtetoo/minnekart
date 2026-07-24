@@ -157,7 +157,7 @@
 
 .pinsHint {
   font-size: 11px;
-  color: #b0a898;
+  color: var(--muted);
   white-space: nowrap;
 }
 
@@ -231,7 +231,7 @@
   border-color: var(--accent);
   box-shadow:
     0 0 0 1px var(--accent),
-    0 6px 18px rgba(196, 105, 58, 0.16);
+    0 6px 18px rgba(165, 89, 49, 0.16);
 }
 
 .pinSwatch {
@@ -261,7 +261,7 @@
 .pinMeta {
   display: block;
   font-size: 11px;
-  color: #8a8878;
+  color: var(--muted);
   margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
@@ -317,7 +317,7 @@
   padding: 0;
   font-family: inherit;
   font-size: 11px;
-  color: #b0a898;
+  color: var(--muted);
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -497,7 +497,7 @@
 
 .featuredDate {
   font-size: 11px;
-  color: #a8a090;
+  color: var(--muted);
   flex-shrink: 0;
 }
 

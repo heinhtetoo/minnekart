@@ -8,8 +8,8 @@ import { ogFonts } from './fonts';
 const PARCHMENT = '#f4efe6';
 const INK = '#1c1917';
 const FOREST = '#2c4e46';
-const ACCENT = '#c4693a';
-const MUTED = '#8a8070';
+const ACCENT = '#a55931';
+const MUTED = '#756c5f';
 
 export const OG_SIZE = { width: 1200, height: 630 };
 

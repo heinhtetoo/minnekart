@@ -2,9 +2,9 @@
   --background: #f4efe6;
   --foreground: #1c1917;
   --forest: #2c4e46;
-  --accent: #c4693a;
-  --accent-soft: rgba(196, 105, 58, 0.16);
-  --muted: #8a8070;
+  --accent: #a55931;
+  --accent-soft: rgba(165, 89, 49, 0.16);
+  --muted: #756c5f;
   --danger: #c0392b;
 }
 
@@ -64,7 +64,7 @@ a {
 }
 
 .field::placeholder {
-  color: #b5ad9d;
+  color: var(--muted);
 }
 
 .label {
