@@ -873,6 +873,18 @@ blocking Tier 2 work:
       `/book/` in `.gitignore`: the extension's `prettier.ignorePath`
       defaults to `.prettierignore` alone, making that line the only thing
       stopping format-on-save reflowing the book chapters. Don't delete it.
+- [ ] **20. Feasibility study — Mapbox GL globe vs the current custom globe**
+      _(RESEARCH)_. Evaluate replacing the in-house Three.js globe
+      (`src/components/globe/Globe.tsx`) with a Mapbox GL JS globe-projection
+      map. Study only — no swap, and the full-bleed globe stays exactly as-is
+      until the study says otherwise. Weigh: bundle size and runtime cost vs
+      the current renderer; Mapbox pricing at expected map-load volume (free
+      tier limits and per-load cost past them); real coastlines/labels/zoom
+      against the current stylised look; the pin, halo and accent-colour
+      styling we'd have to re-create; SSR and `opengraph-image` compatibility
+      (Mapbox GL is client-only, so the OG share cards can't use it); access
+      token / secrets handling; and offline and mobile performance. Deliver a
+      recommendation plus a rough migration cost. Low urgency.
 - Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
   opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
   real usage data exists.
