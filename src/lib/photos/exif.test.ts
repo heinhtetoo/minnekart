@@ -2,6 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ExifSource, readPhotoExif } from './exif';
 
+import {
+  GEOTAGGED_LATITUDE,
+  GEOTAGGED_LONGITUDE,
+  geotaggedJpeg,
+  strippedJpeg,
+} from '../../../test/exif-fixture';
+
 const file = new Blob(['photo']);
 
 function stubExif(parsed: Record<string, unknown> | undefined) {
@@ -172,6 +179,22 @@ describe('readPhotoExif', () => {
     const exif = await readPhotoExif(file, async () => {
       throw new Error('chunk load failed');
     });
+
+    expect(exif).toEqual({ takenAt: null, lat: null, lng: null });
+  });
+});
+
+describe('readPhotoExif against the real exifr', () => {
+  it('extracts the coordinates and date from a geotagged jpeg', async () => {
+    const exif = await readPhotoExif(geotaggedJpeg());
+
+    expect(exif.lat).toBeCloseTo(GEOTAGGED_LATITUDE, 4);
+    expect(exif.lng).toBeCloseTo(GEOTAGGED_LONGITUDE, 4);
+    expect(exif.takenAt).not.toBeNull();
+  });
+
+  it('reports no location for a jpeg that carries no EXIF', async () => {
+    const exif = await readPhotoExif(strippedJpeg());
 
     expect(exif).toEqual({ takenAt: null, lat: null, lng: null });
   });
