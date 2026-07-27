@@ -47,6 +47,22 @@ describe('readPhotoExif', () => {
     arrayBuffer.mockRestore();
   });
 
+  it('uses a buffer it is handed without re-reading anything', async () => {
+    const parse = vi.fn<ExifSource['parse']>(async () => ({
+      latitude: 1,
+      longitude: 2,
+    }));
+    const arrayBuffer = vi.spyOn(Blob.prototype, 'arrayBuffer');
+
+    const exif = await readPhotoExif(new ArrayBuffer(8), async () => ({
+      parse,
+    }));
+
+    expect(arrayBuffer).not.toHaveBeenCalled();
+    expect(exif.lat).toBe(1);
+    arrayBuffer.mockRestore();
+  });
+
   it('hands exifr a buffer rather than the blob itself', async () => {
     const parse = vi.fn<ExifSource['parse']>(async () => ({}));
 

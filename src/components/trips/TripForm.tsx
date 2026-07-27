@@ -7,6 +7,7 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { uploadPhoto } from '@/components/photos/upload';
 import { PlaceResult } from '@/lib/geocode';
 import { readPhotoExif } from '@/lib/photos/exif';
+import { sniffImageFormat } from '@/lib/photos/format';
 import { tripDateError } from '@/lib/trips/dates';
 import { TripDTO } from '@/lib/trips/dto';
 
@@ -21,10 +22,19 @@ const SAVE_ERRORS: Record<string, string> = {
     "You've used your 15 free memories. Upgrade in Settings for unlimited.",
 };
 
+const MAX_SEED_BYTES = 50 * 1024 * 1024;
+
 interface TripFormProps {
   mode: 'create' | 'edit';
   tripId?: string;
   initial?: TripDTO;
+}
+
+function exifDebugEnabled(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  return new URLSearchParams(window.location.search).get('exif') === 'debug';
 }
 
 export default function TripForm({ mode, tripId, initial }: TripFormProps) {
@@ -47,6 +57,7 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
   const [seedNote, setSeedNote] = useState('');
   const [seedBusy, setSeedBusy] = useState(false);
   const [savedWithoutPhoto, setSavedWithoutPhoto] = useState('');
+  const [seedDebug, setSeedDebug] = useState('');
   const seedPick = useRef(0);
 
   function pickPlace(place: PlaceResult) {
@@ -61,13 +72,39 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     const pick = seedPick.current;
     const isStale = () => pick !== seedPick.current;
 
+    if (file.size > MAX_SEED_BYTES) {
+      setSeedFile(null);
+      setSeedNote('');
+      setError('That file is too large. Pick a photo under 50MB.');
+      return;
+    }
+
     setSeedFile(file);
     setSeedBusy(true);
     setSeedNote('');
     setError('');
 
-    const exif = await readPhotoExif(file);
+    const buffer = await file.arrayBuffer();
     if (isStale()) return;
+
+    const format = sniffImageFormat(buffer);
+    if (!format) {
+      setSeedFile(null);
+      setSeedBusy(false);
+      setError('That file is not a photo. Pick a JPEG, PNG, WebP or HEIC.');
+      return;
+    }
+
+    const exif = await readPhotoExif(buffer);
+    if (isStale()) return;
+
+    if (exifDebugEnabled()) {
+      setSeedDebug(
+        `type=${file.type || '(none)'} size=${file.size} ` +
+          `format=${format} date=${exif.takenAt ?? 'null'} ` +
+          `lat=${exif.lat ?? 'null'} lng=${exif.lng ?? 'null'}`,
+      );
+    }
 
     if (exif.takenAt) {
       const day = exif.takenAt.slice(0, 10);
@@ -103,6 +140,7 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     seedPick.current += 1;
     setSeedFile(null);
     setSeedNote('');
+    setSeedDebug('');
     setSeedBusy(false);
   }
 
@@ -193,6 +231,7 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
         <PhotoSeed
           fileName={seedFile?.name ?? ''}
           note={seedNote}
+          debug={seedDebug}
           busy={seedBusy}
           onPick={readSeedPhoto}
           onClear={clearSeedPhoto}
@@ -315,12 +354,14 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
 function PhotoSeed({
   fileName,
   note,
+  debug,
   busy,
   onPick,
   onClear,
 }: {
   fileName: string;
   note: string;
+  debug: string;
   busy: boolean;
   onPick: (file: File) => void;
   onClear: () => void;
@@ -328,9 +369,14 @@ function PhotoSeed({
   return (
     <div className={styles.seed}>
       <label className={styles.seedPick}>
+        {/*
+          No accept filter on purpose. An image-only accept steers Chrome on
+          Android to the gallery picker, whose media provider blanks EXIF
+          location; the file browser hands over the original bytes. The file
+          is vetted by its magic bytes instead, which accept never did.
+        */}
         <input
           type="file"
-          accept="image/*,.heic,.heif"
           onChange={(event) => {
             const file = event.target.files?.[0];
             event.target.value = '';
@@ -349,6 +395,8 @@ function PhotoSeed({
       )}
 
       {busy && <p className={styles.seedHint}>Reading the photo…</p>}
+
+      {debug && <p className={styles.seedDebug}>{debug}</p>}
 
       {!busy && fileName && (
         <p className={styles.seedNote}>

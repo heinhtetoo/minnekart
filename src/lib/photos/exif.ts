@@ -81,7 +81,7 @@ function toCoordinates(parsed: Record<string, unknown>): Coordinates | null {
 }
 
 export async function readPhotoExif(
-  file: Blob,
+  file: Blob | ArrayBuffer,
   load: () => Promise<ExifSource> = loadExifr,
 ): Promise<PhotoExif> {
   try {
@@ -89,7 +89,8 @@ export async function readPhotoExif(
     // One read of one buffer. Handing exifr the Blob makes it read the file
     // itself, and two concurrent reads of the same content:// URI fail on
     // Android, which is how this silently lost every location there.
-    const buffer = await file.arrayBuffer();
+    const buffer =
+      file instanceof ArrayBuffer ? file : await file.arrayBuffer();
     const parsed = await parse(buffer, {
       tiff: true,
       exif: true,
