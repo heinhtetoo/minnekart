@@ -1,38 +1,22 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { ExifSource, GpsBlock, readPhotoExif } from './exif';
+import { ExifSource, readPhotoExif } from './exif';
 
 const file = new Blob(['photo']);
 
-function stubExif(
-  parsed: Record<string, unknown> | undefined,
-  gpsBlock?: GpsBlock,
-): () => Promise<ExifSource> {
-  return async () => ({
-    parse: async () => parsed,
-    gps: async () => gpsBlock,
-  });
-}
-
-function failing(message: string): () => Promise<ExifSource> {
-  return async () => ({
-    parse: async () => {
-      throw new Error(message);
-    },
-    gps: async () => {
-      throw new Error(message);
-    },
-  });
+function stubExif(parsed: Record<string, unknown> | undefined) {
+  return async (): Promise<ExifSource> => ({ parse: async () => parsed });
 }
 
 describe('readPhotoExif', () => {
   it('reads the capture date and coordinates from a geotagged photo', async () => {
     const exif = await readPhotoExif(
       file,
-      stubExif(
-        { DateTimeOriginal: new Date('2024-04-02T09:15:00.000Z') },
-        { latitude: 35.0116, longitude: 135.7681 },
-      ),
+      stubExif({
+        DateTimeOriginal: new Date('2024-04-02T09:15:00.000Z'),
+        latitude: 35.0116,
+        longitude: 135.7681,
+      }),
     );
 
     expect(exif).toEqual({
@@ -42,6 +26,28 @@ describe('readPhotoExif', () => {
     });
   });
 
+  it('reads the file in a single pass', async () => {
+    const parse = vi.fn<ExifSource['parse']>(async () => ({
+      latitude: 1,
+      longitude: 2,
+    }));
+    const arrayBuffer = vi.spyOn(Blob.prototype, 'arrayBuffer');
+
+    await readPhotoExif(file, async () => ({ parse }));
+
+    expect(parse).toHaveBeenCalledTimes(1);
+    expect(arrayBuffer).toHaveBeenCalledTimes(1);
+    arrayBuffer.mockRestore();
+  });
+
+  it('hands exifr a buffer rather than the blob itself', async () => {
+    const parse = vi.fn<ExifSource['parse']>(async () => ({}));
+
+    await readPhotoExif(file, async () => ({ parse }));
+
+    expect(parse.mock.calls[0][0]).toBeInstanceOf(ArrayBuffer);
+  });
+
   it('falls back to CreateDate when DateTimeOriginal is missing', async () => {
     const exif = await readPhotoExif(
       file,
@@ -49,6 +55,36 @@ describe('readPhotoExif', () => {
     );
 
     expect(exif.takenAt).toBe('2019-11-20T22:00:00.000Z');
+  });
+
+  it('derives coordinates from raw degrees when exifr does not compute them', async () => {
+    const exif = await readPhotoExif(
+      file,
+      stubExif({
+        GPSLatitude: [35, 0, 41.76],
+        GPSLatitudeRef: 'N',
+        GPSLongitude: [135, 46, 5.16],
+        GPSLongitudeRef: 'E',
+      }),
+    );
+
+    expect(exif.lat).toBeCloseTo(35.0116, 4);
+    expect(exif.lng).toBeCloseTo(135.7681, 4);
+  });
+
+  it('applies the southern and western hemisphere references', async () => {
+    const exif = await readPhotoExif(
+      file,
+      stubExif({
+        GPSLatitude: [33, 51, 54],
+        GPSLatitudeRef: 'S',
+        GPSLongitude: [151, 12, 36],
+        GPSLongitudeRef: 'W',
+      }),
+    );
+
+    expect(exif.lat).toBeCloseTo(-33.865, 4);
+    expect(exif.lng).toBeCloseTo(-151.21, 4);
   });
 
   it('returns null coordinates when the photo has no GPS block', async () => {
@@ -65,7 +101,7 @@ describe('readPhotoExif', () => {
   it('rejects null-island coordinates as a failed fix', async () => {
     const exif = await readPhotoExif(
       file,
-      stubExif({}, { latitude: 0, longitude: 0 }),
+      stubExif({ latitude: 0, longitude: 0 }),
     );
 
     expect(exif.lat).toBeNull();
@@ -75,7 +111,7 @@ describe('readPhotoExif', () => {
   it('rejects a latitude outside the valid range', async () => {
     const exif = await readPhotoExif(
       file,
-      stubExif({}, { latitude: 91, longitude: 12 }),
+      stubExif({ latitude: 91, longitude: 12 }),
     );
 
     expect(exif.lat).toBeNull();
@@ -84,7 +120,7 @@ describe('readPhotoExif', () => {
   it('rejects a longitude outside the valid range', async () => {
     const exif = await readPhotoExif(
       file,
-      stubExif({}, { latitude: 12, longitude: -181 }),
+      stubExif({ latitude: 12, longitude: -181 }),
     );
 
     expect(exif.lng).toBeNull();
@@ -93,7 +129,7 @@ describe('readPhotoExif', () => {
   it('rejects non-finite coordinates', async () => {
     const exif = await readPhotoExif(
       file,
-      stubExif({}, { latitude: Number.NaN, longitude: 135.7681 }),
+      stubExif({ latitude: Number.NaN, longitude: 135.7681 }),
     );
 
     expect(exif.lat).toBeNull();
@@ -101,7 +137,7 @@ describe('readPhotoExif', () => {
   });
 
   it('rejects a half-missing coordinate pair', async () => {
-    const exif = await readPhotoExif(file, stubExif({}, { latitude: 35.0116 }));
+    const exif = await readPhotoExif(file, stubExif({ latitude: 35.0116 }));
 
     expect(exif.lat).toBeNull();
     expect(exif.lng).toBeNull();
@@ -116,8 +152,18 @@ describe('readPhotoExif', () => {
     expect(exif.takenAt).toBeNull();
   });
 
+  it('degrades to empty metadata when the photo has no EXIF at all', async () => {
+    const exif = await readPhotoExif(file, stubExif(undefined));
+
+    expect(exif).toEqual({ takenAt: null, lat: null, lng: null });
+  });
+
   it('degrades to empty metadata when the parser throws', async () => {
-    const exif = await readPhotoExif(file, failing('corrupt header'));
+    const exif = await readPhotoExif(file, async () => ({
+      parse: async () => {
+        throw new Error('corrupt header');
+      },
+    }));
 
     expect(exif).toEqual({ takenAt: null, lat: null, lng: null });
   });
@@ -128,19 +174,5 @@ describe('readPhotoExif', () => {
     });
 
     expect(exif).toEqual({ takenAt: null, lat: null, lng: null });
-  });
-
-  it('still reports the date when only the GPS read fails', async () => {
-    const exif = await readPhotoExif(file, async () => ({
-      parse: async () => ({
-        DateTimeOriginal: new Date('2024-04-02T09:15:00.000Z'),
-      }),
-      gps: async () => {
-        throw new Error('no gps ifd');
-      },
-    }));
-
-    expect(exif.takenAt).toBe('2024-04-02T09:15:00.000Z');
-    expect(exif.lat).toBeNull();
   });
 });

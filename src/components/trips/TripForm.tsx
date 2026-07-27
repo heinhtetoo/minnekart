@@ -28,6 +28,13 @@ interface TripFormProps {
   initial?: TripDTO;
 }
 
+function exifDebugEnabled(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  return new URLSearchParams(window.location.search).get('exif') === 'debug';
+}
+
 export default function TripForm({ mode, tripId, initial }: TripFormProps) {
   const router = useRouter();
 
@@ -48,6 +55,7 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
   const [seedNote, setSeedNote] = useState('');
   const [seedBusy, setSeedBusy] = useState(false);
   const [savedWithoutPhoto, setSavedWithoutPhoto] = useState('');
+  const [seedDebug, setSeedDebug] = useState('');
   const seedPick = useRef(0);
 
   function pickPlace(place: PlaceResult) {
@@ -62,7 +70,13 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     const pick = seedPick.current;
     const isStale = () => pick !== seedPick.current;
 
-    if (!file.type.startsWith('image/') && !isHeic(file)) {
+    // Android's file browser often reports no type at all, so only turn away
+    // a file it positively identifies as something other than an image.
+    const claimsNonImage =
+      file.type.length > 0 &&
+      !file.type.startsWith('image/') &&
+      file.type !== 'application/octet-stream';
+    if (claimsNonImage && !isHeic(file)) {
       setSeedFile(null);
       setSeedBusy(false);
       setSeedNote('');
@@ -77,6 +91,14 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
 
     const exif = await readPhotoExif(file);
     if (isStale()) return;
+
+    if (exifDebugEnabled()) {
+      setSeedDebug(
+        `type=${file.type || '(none)'} size=${file.size} ` +
+          `date=${exif.takenAt ?? 'null'} ` +
+          `lat=${exif.lat ?? 'null'} lng=${exif.lng ?? 'null'}`,
+      );
+    }
 
     if (exif.takenAt) {
       const day = exif.takenAt.slice(0, 10);
@@ -204,6 +226,7 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
         <PhotoSeed
           fileName={seedFile?.name ?? ''}
           note={seedNote}
+          debug={seedDebug}
           busy={seedBusy}
           onPick={readSeedPhoto}
           onClear={clearSeedPhoto}
@@ -326,12 +349,14 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
 function PhotoSeed({
   fileName,
   note,
+  debug,
   busy,
   onPick,
   onClear,
 }: {
   fileName: string;
   note: string;
+  debug: string;
   busy: boolean;
   onPick: (file: File) => void;
   onClear: () => void;
@@ -366,6 +391,8 @@ function PhotoSeed({
       )}
 
       {busy && <p className={styles.seedHint}>Reading the photo…</p>}
+
+      {debug && <p className={styles.seedDebug}>{debug}</p>}
 
       {!busy && fileName && (
         <p className={styles.seedNote}>
