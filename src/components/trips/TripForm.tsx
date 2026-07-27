@@ -7,7 +7,6 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { uploadPhoto } from '@/components/photos/upload';
 import { PlaceResult } from '@/lib/geocode';
 import { readPhotoExif } from '@/lib/photos/exif';
-import { isHeic } from '@/lib/photos/process';
 import { tripDateError } from '@/lib/trips/dates';
 import { TripDTO } from '@/lib/trips/dto';
 
@@ -26,13 +25,6 @@ interface TripFormProps {
   mode: 'create' | 'edit';
   tripId?: string;
   initial?: TripDTO;
-}
-
-function exifDebugEnabled(): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-  return new URLSearchParams(window.location.search).get('exif') === 'debug';
 }
 
 export default function TripForm({ mode, tripId, initial }: TripFormProps) {
@@ -55,7 +47,6 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
   const [seedNote, setSeedNote] = useState('');
   const [seedBusy, setSeedBusy] = useState(false);
   const [savedWithoutPhoto, setSavedWithoutPhoto] = useState('');
-  const [seedDebug, setSeedDebug] = useState('');
   const seedPick = useRef(0);
 
   function pickPlace(place: PlaceResult) {
@@ -70,20 +61,6 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     const pick = seedPick.current;
     const isStale = () => pick !== seedPick.current;
 
-    // Android's file browser often reports no type at all, so only turn away
-    // a file it positively identifies as something other than an image.
-    const claimsNonImage =
-      file.type.length > 0 &&
-      !file.type.startsWith('image/') &&
-      file.type !== 'application/octet-stream';
-    if (claimsNonImage && !isHeic(file)) {
-      setSeedFile(null);
-      setSeedBusy(false);
-      setSeedNote('');
-      setError('That file is not a photo. Pick a JPEG, PNG, WebP or HEIC.');
-      return;
-    }
-
     setSeedFile(file);
     setSeedBusy(true);
     setSeedNote('');
@@ -91,14 +68,6 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
 
     const exif = await readPhotoExif(file);
     if (isStale()) return;
-
-    if (exifDebugEnabled()) {
-      setSeedDebug(
-        `type=${file.type || '(none)'} size=${file.size} ` +
-          `date=${exif.takenAt ?? 'null'} ` +
-          `lat=${exif.lat ?? 'null'} lng=${exif.lng ?? 'null'}`,
-      );
-    }
 
     if (exif.takenAt) {
       const day = exif.takenAt.slice(0, 10);
@@ -109,10 +78,8 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
       setSeedBusy(false);
       setSeedNote(
         exif.takenAt
-          ? 'Date read from this photo, but it carries no location. ' +
-              'Gallery apps remove it — try picking it from your files.'
-          : 'This photo carries no location or date. Gallery apps remove ' +
-              'the location — try picking it from your files.',
+          ? 'Date read from this photo. It has no location saved in it.'
+          : 'This photo has no location or date saved in it.',
       );
       return;
     }
@@ -226,7 +193,6 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
         <PhotoSeed
           fileName={seedFile?.name ?? ''}
           note={seedNote}
-          debug={seedDebug}
           busy={seedBusy}
           onPick={readSeedPhoto}
           onClear={clearSeedPhoto}
@@ -349,14 +315,12 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
 function PhotoSeed({
   fileName,
   note,
-  debug,
   busy,
   onPick,
   onClear,
 }: {
   fileName: string;
   note: string;
-  debug: string;
   busy: boolean;
   onPick: (file: File) => void;
   onClear: () => void;
@@ -364,13 +328,9 @@ function PhotoSeed({
   return (
     <div className={styles.seed}>
       <label className={styles.seedPick}>
-        {/*
-          No accept filter on purpose. Android steers an image-only accept to
-          the gallery picker, which blanks EXIF location before handing the
-          file over; the file browser returns the original bytes.
-        */}
         <input
           type="file"
+          accept="image/*,.heic,.heif"
           onChange={(event) => {
             const file = event.target.files?.[0];
             event.target.value = '';
@@ -384,15 +344,11 @@ function PhotoSeed({
       {!fileName && (
         <p className={styles.seedHint}>
           Pick one photo and we&apos;ll read its location and date to fill this
-          in. It gets added to the memory when you save. On a phone, choose it
-          from your files rather than your gallery — gallery apps strip the
-          location out.
+          in. It gets added to the memory when you save.
         </p>
       )}
 
       {busy && <p className={styles.seedHint}>Reading the photo…</p>}
-
-      {debug && <p className={styles.seedDebug}>{debug}</p>}
 
       {!busy && fileName && (
         <p className={styles.seedNote}>
