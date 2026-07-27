@@ -97,6 +97,60 @@
   margin: -6px 0 0;
 }
 
+.seed {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px dashed rgba(28, 25, 23, 0.14);
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+
+.seedPick {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--forest);
+  cursor: pointer;
+}
+
+.seedHint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.seedNote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--forest);
+  margin: 0;
+}
+
+.seedClear {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.savedNote {
+  font-size: 13px;
+  color: var(--danger);
+  margin: 0;
+}
+
 .actions {
   display: flex;
   align-items: center;

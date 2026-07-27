@@ -1,5 +1,6 @@
 import { isPhotoContentType, PhotoContentType } from './content-type';
 import { scaledDimensions } from './dimensions';
+import { readPhotoExif } from './exif';
 
 const DISPLAY_MAX = 2560;
 const DISPLAY_QUALITY = 0.82;
@@ -29,20 +30,6 @@ export function isHeic(file: File): boolean {
     name.endsWith('.heic') ||
     name.endsWith('.heif')
   );
-}
-
-async function readTakenAt(file: File): Promise<string | null> {
-  try {
-    const exifr = await import('exifr');
-    const parsed = await exifr.parse(file, ['DateTimeOriginal', 'CreateDate']);
-    const date = parsed?.DateTimeOriginal ?? parsed?.CreateDate;
-    if (date instanceof Date && !Number.isNaN(date.getTime())) {
-      return date.toISOString();
-    }
-    return null;
-  } catch {
-    return null;
-  }
 }
 
 async function toDecodableBlob(file: File): Promise<Blob> {
@@ -95,7 +82,7 @@ async function encodeImage(
 }
 
 export async function processImage(file: File): Promise<ProcessedImage> {
-  const takenAt = await readTakenAt(file);
+  const { takenAt } = await readPhotoExif(file);
   const decodable = await toDecodableBlob(file);
   const bitmap = await createImageBitmap(decodable);
   try {

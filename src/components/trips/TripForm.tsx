@@ -1,9 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 
+import { uploadPhoto } from '@/components/photos/upload';
 import { PlaceResult } from '@/lib/geocode';
+import { readPhotoExif } from '@/lib/photos/exif';
 import { tripDateError } from '@/lib/trips/dates';
 import { TripDTO } from '@/lib/trips/dto';
 
@@ -40,6 +43,12 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const [seedFile, setSeedFile] = useState<File | null>(null);
+  const [seedNote, setSeedNote] = useState('');
+  const [seedBusy, setSeedBusy] = useState(false);
+  const [savedWithoutPhoto, setSavedWithoutPhoto] = useState('');
+  const seedPick = useRef(0);
+
   function pickPlace(place: PlaceResult) {
     setPlaceName(place.placeName);
     setCountry(place.country);
@@ -47,8 +56,63 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     setError('');
   }
 
+  async function readSeedPhoto(file: File) {
+    seedPick.current += 1;
+    const pick = seedPick.current;
+    const isStale = () => pick !== seedPick.current;
+
+    setSeedFile(file);
+    setSeedBusy(true);
+    setSeedNote('');
+    setError('');
+
+    const exif = await readPhotoExif(file);
+    if (isStale()) return;
+
+    if (exif.takenAt) {
+      const day = exif.takenAt.slice(0, 10);
+      setDateStart((current) => current || day);
+    }
+
+    if (exif.lat === null || exif.lng === null) {
+      setSeedBusy(false);
+      setSeedNote(
+        exif.takenAt
+          ? 'Date read from this photo. It has no location saved in it.'
+          : 'This photo has no location or date saved in it.',
+      );
+      return;
+    }
+
+    setCoords({ lat: exif.lat, lng: exif.lng });
+    const result = await geocodeApi.reverse(exif.lat, exif.lng);
+    if (isStale()) return;
+    setSeedBusy(false);
+
+    const place = result.data?.place;
+    if (!place) {
+      setSeedNote('Pinned from this photo. Add a place name and country.');
+      return;
+    }
+    setPlaceName((current) => current || place.placeName);
+    setCountry((current) => current || place.country);
+    setSeedNote('Filled in from this photo. Check it before saving.');
+  }
+
+  function clearSeedPhoto() {
+    seedPick.current += 1;
+    setSeedFile(null);
+    setSeedNote('');
+    setSeedBusy(false);
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    // The memory already exists; re-submitting would create a duplicate.
+    if (savedWithoutPhoto) {
+      router.push(`/trip/${savedWithoutPhoto}/edit`);
+      return;
+    }
     setError('');
     if (!placeName.trim() || !country.trim()) {
       setError('Add a place name and country.');
@@ -80,15 +144,30 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
       mode === 'create'
         ? await tripsApi.create(body)
         : await tripsApi.update(tripId!, body);
-    setBusy(false);
 
-    if (result.ok) {
-      const id = mode === 'create' ? result.data!.trip.id : tripId!;
-      router.push(`/trip/${id}`);
-      router.refresh();
+    if (!result.ok) {
+      setBusy(false);
+      setError(
+        SAVE_ERRORS[result.error ?? ''] ?? 'Could not save this memory.',
+      );
       return;
     }
-    setError(SAVE_ERRORS[result.error ?? ''] ?? 'Could not save this memory.');
+
+    const id = mode === 'create' ? result.data!.trip.id : tripId!;
+    if (mode === 'create' && seedFile) {
+      const upload = await uploadPhoto(id, seedFile).catch(() => ({
+        ok: false as const,
+        error: 'upload_failed',
+      }));
+      if (!upload.ok) {
+        setBusy(false);
+        setSavedWithoutPhoto(id);
+        return;
+      }
+    }
+
+    router.push(`/trip/${id}`);
+    router.refresh();
   }
 
   async function onDelete() {
@@ -110,6 +189,16 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
 
   return (
     <form className={`fade ${styles.form}`} onSubmit={onSubmit}>
+      {mode === 'create' && (
+        <PhotoSeed
+          fileName={seedFile?.name ?? ''}
+          note={seedNote}
+          busy={seedBusy}
+          onPick={readSeedPhoto}
+          onClear={clearSeedPhoto}
+        />
+      )}
+
       <PlaceSearch onPick={pickPlace} />
 
       <div className={styles.row}>
@@ -189,13 +278,24 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
         {error}
       </div>
 
+      {savedWithoutPhoto && (
+        <p className={styles.savedNote}>
+          Memory saved, but the photo could not be uploaded.{' '}
+          <Link href={`/trip/${savedWithoutPhoto}/edit`}>
+            Add it on the edit page.
+          </Link>
+        </p>
+      )}
+
       <div className={styles.actions}>
         <button className="button" type="submit" disabled={busy}>
           {busy
             ? 'Saving…'
-            : mode === 'create'
-              ? 'Save memory'
-              : 'Save changes'}
+            : savedWithoutPhoto
+              ? 'Go to this memory'
+              : mode === 'create'
+                ? 'Save memory'
+                : 'Save changes'}
         </button>
         {mode === 'edit' && (
           <button
@@ -209,6 +309,56 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
         )}
       </div>
     </form>
+  );
+}
+
+function PhotoSeed({
+  fileName,
+  note,
+  busy,
+  onPick,
+  onClear,
+}: {
+  fileName: string;
+  note: string;
+  busy: boolean;
+  onPick: (file: File) => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className={styles.seed}>
+      <label className={styles.seedPick}>
+        <input
+          type="file"
+          accept="image/*,.heic,.heif"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = '';
+            if (file) onPick(file);
+          }}
+          hidden
+        />
+        {fileName ? `Photo: ${fileName}` : 'Start from a photo'}
+      </label>
+
+      {!fileName && (
+        <p className={styles.seedHint}>
+          Pick one photo and we&apos;ll read its location and date to fill this
+          in. It gets added to the memory when you save.
+        </p>
+      )}
+
+      {busy && <p className={styles.seedHint}>Reading the photo…</p>}
+
+      {!busy && fileName && (
+        <p className={styles.seedNote}>
+          <span>{note}</span>
+          <button type="button" className={styles.seedClear} onClick={onClear}>
+            Remove
+          </button>
+        </p>
+      )}
+    </div>
   );
 }
 

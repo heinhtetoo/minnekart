@@ -1,4 +1,5 @@
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+const NOMINATIM_REVERSE_URL = 'https://nominatim.openstreetmap.org/reverse';
 const USER_AGENT = 'Minnekart/0.1 (https://minnekart.vercel.app)';
 const RESULT_LIMIT = 5;
 
@@ -42,6 +43,31 @@ export async function searchPlaces(
 
   const items = (await response.json()) as NominatimItem[];
   return items.map(toPlaceResult);
+}
+
+export async function reverseGeocode(
+  lat: number,
+  lng: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<PlaceResult | null> {
+  const url = new URL(NOMINATIM_REVERSE_URL);
+  url.searchParams.set('lat', String(lat));
+  url.searchParams.set('lon', String(lng));
+  url.searchParams.set('format', 'json');
+  url.searchParams.set('addressdetails', '1');
+
+  const response = await fetchImpl(url, {
+    headers: { 'user-agent': USER_AGENT, 'accept-language': 'en' },
+  });
+  if (!response.ok) {
+    throw new Error(`Reverse geocoding failed with status ${response.status}`);
+  }
+
+  const item = (await response.json()) as NominatimItem & { error?: string };
+  if (item.error || !item.lat || !item.lon) {
+    return null;
+  }
+  return toPlaceResult(item);
 }
 
 function toPlaceResult(item: NominatimItem): PlaceResult {
