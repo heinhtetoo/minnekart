@@ -145,15 +145,6 @@
   cursor: pointer;
 }
 
-.seedDebug {
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
-  line-height: 1.5;
-  color: var(--foreground);
-  word-break: break-all;
-  margin: 0;
-}
-
 .savedNote {
   font-size: 13px;
   color: var(--danger);

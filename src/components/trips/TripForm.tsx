@@ -30,13 +30,6 @@ interface TripFormProps {
   initial?: TripDTO;
 }
 
-function exifDebugEnabled(): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-  return new URLSearchParams(window.location.search).get('exif') === 'debug';
-}
-
 export default function TripForm({ mode, tripId, initial }: TripFormProps) {
   const router = useRouter();
 
@@ -57,7 +50,6 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
   const [seedNote, setSeedNote] = useState('');
   const [seedBusy, setSeedBusy] = useState(false);
   const [savedWithoutPhoto, setSavedWithoutPhoto] = useState('');
-  const [seedDebug, setSeedDebug] = useState('');
   const seedPick = useRef(0);
 
   function pickPlace(place: PlaceResult) {
@@ -98,14 +90,6 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     const exif = await readPhotoExif(buffer);
     if (isStale()) return;
 
-    if (exifDebugEnabled()) {
-      setSeedDebug(
-        `type=${file.type || '(none)'} size=${file.size} ` +
-          `format=${format} date=${exif.takenAt ?? 'null'} ` +
-          `lat=${exif.lat ?? 'null'} lng=${exif.lng ?? 'null'}`,
-      );
-    }
-
     if (exif.takenAt) {
       const day = exif.takenAt.slice(0, 10);
       setDateStart((current) => current || day);
@@ -140,7 +124,6 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     seedPick.current += 1;
     setSeedFile(null);
     setSeedNote('');
-    setSeedDebug('');
     setSeedBusy(false);
   }
 
@@ -231,7 +214,6 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
         <PhotoSeed
           fileName={seedFile?.name ?? ''}
           note={seedNote}
-          debug={seedDebug}
           busy={seedBusy}
           onPick={readSeedPhoto}
           onClear={clearSeedPhoto}
@@ -354,14 +336,12 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
 function PhotoSeed({
   fileName,
   note,
-  debug,
   busy,
   onPick,
   onClear,
 }: {
   fileName: string;
   note: string;
-  debug: string;
   busy: boolean;
   onPick: (file: File) => void;
   onClear: () => void;
@@ -390,13 +370,12 @@ function PhotoSeed({
       {!fileName && (
         <p className={styles.seedHint}>
           Pick one photo and we&apos;ll read its location and date to fill this
-          in. It gets added to the memory when you save.
+          in. It gets added to the memory when you save. On a phone, a photo you
+          take now keeps its location; saved ones usually only give us the date.
         </p>
       )}
 
       {busy && <p className={styles.seedHint}>Reading the photo…</p>}
-
-      {debug && <p className={styles.seedDebug}>{debug}</p>}
 
       {!busy && fileName && (
         <p className={styles.seedNote}>
