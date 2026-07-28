@@ -94,6 +94,27 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     });
   }
 
+  // Place name, country and pin describe one place, so whenever the photo's
+  // location changes they move together. Anything typed by hand is left
+  // alone — that is a label the user chose, not a stale reading.
+  function clearOwnedPlaceName() {
+    if (seedOwned.current.has('placeName')) {
+      setPlaceName('');
+      releaseSeedField('placeName');
+    }
+    if (seedOwned.current.has('country')) {
+      setCountry('');
+      releaseSeedField('country');
+    }
+  }
+
+  function clearOwnedCoords() {
+    if (seedOwned.current.has('coords')) {
+      setCoords(null);
+      releaseSeedField('coords');
+    }
+  }
+
   function pickPlace(place: PlaceResult) {
     setPlaceName(place.placeName);
     setCountry(place.country);
@@ -105,12 +126,33 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     setError('');
   }
 
-  function useSeedLocation() {
+  // An explicit swap takes the photo's place whole, overwriting the searched
+  // one. Moving the pin alone would leave the old name beside new
+  // coordinates, which is the mismatch this is meant to prevent.
+  async function useSeedLocation() {
     if (!seedOffer) return;
-    setCoords(seedOffer);
+    const pick = seedPick.current;
+    const { lat, lng } = seedOffer;
+
+    setCoords({ lat, lng });
     seedOwned.current.add('coords');
     setSeedOffer(null);
-    setSeedNote('Pin moved to where this photo was taken.');
+    setSeedBusy(true);
+
+    const result = await geocodeApi.reverse(lat, lng);
+    if (pick !== seedPick.current) return;
+    setSeedBusy(false);
+
+    const place = result.data?.place;
+    if (!place) {
+      setSeedNote('Pinned from this photo. Check the place name and country.');
+      return;
+    }
+    seedOwned.current.add('placeName');
+    seedOwned.current.add('country');
+    setPlaceName(place.placeName);
+    setCountry(place.country);
+    setSeedNote('Filled in from this photo. Check it before saving.');
   }
 
   async function readSeedPhoto(file: File) {
@@ -149,11 +191,9 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     }
 
     if (exif.lat === null || exif.lng === null) {
-      // A photo with no location must not leave the last photo's pin behind.
-      if (seedOwned.current.has('coords')) {
-        setCoords(null);
-        releaseSeedField('coords');
-      }
+      // A photo with no location must not leave the last photo's place behind.
+      clearOwnedPlaceName();
+      clearOwnedCoords();
       setSeedBusy(false);
       setSeedNote(
         exif.takenAt
@@ -171,6 +211,9 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
       return;
     }
 
+    // Drop the previous photo's name before adopting this one's, so a failed
+    // lookup cannot leave it sitting beside the new pin.
+    clearOwnedPlaceName();
     setCoords(photoCoords);
     seedOwned.current.add('coords');
     const result = await geocodeApi.reverse(exif.lat, exif.lng);
@@ -475,7 +518,7 @@ function PhotoSeed({
                 className={styles.seedSwap}
                 onClick={onUseLocation}
               >
-                Use its location
+                Use the photo&apos;s place
               </button>
             )}
           </span>
