@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import {
+  Dispatch,
+  FormEvent,
+  SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { uploadPhoto } from '@/components/photos/upload';
 import { PlaceResult } from '@/lib/geocode';
@@ -23,6 +30,11 @@ const SAVE_ERRORS: Record<string, string> = {
 };
 
 const MAX_SEED_BYTES = 50 * 1024 * 1024;
+
+// Fields the seed photo filled and the user has not touched since. Only
+// these get replaced by the next photo or cleared when the photo is removed,
+// so nothing typed by hand is ever discarded.
+type SeedField = 'placeName' | 'country' | 'dateStart' | 'coords';
 
 interface TripFormProps {
   mode: 'create' | 'edit';
@@ -50,13 +62,55 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
   const [seedNote, setSeedNote] = useState('');
   const [seedBusy, setSeedBusy] = useState(false);
   const [savedWithoutPhoto, setSavedWithoutPhoto] = useState('');
+  const [seedOffer, setSeedOffer] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const seedPick = useRef(0);
+  const seedOwned = useRef<Set<SeedField>>(new Set());
+
+  // readSeedPhoto branches on whether a pin already exists, and it does so
+  // after awaits, where the closed-over state would be stale.
+  const coordsRef = useRef(coords);
+  useEffect(() => {
+    coordsRef.current = coords;
+  }, [coords]);
+
+  function releaseSeedField(field: SeedField) {
+    seedOwned.current.delete(field);
+  }
+
+  function fillFromPhoto(
+    field: SeedField,
+    setValue: Dispatch<SetStateAction<string>>,
+    value: string,
+  ) {
+    setValue((current) => {
+      if (!seedOwned.current.has(field) && current !== '') {
+        return current;
+      }
+      seedOwned.current.add(field);
+      return value;
+    });
+  }
 
   function pickPlace(place: PlaceResult) {
     setPlaceName(place.placeName);
     setCountry(place.country);
     setCoords({ lat: place.lat, lng: place.lng });
+    (['placeName', 'country', 'coords'] as SeedField[]).forEach(
+      releaseSeedField,
+    );
+    setSeedOffer(null);
     setError('');
+  }
+
+  function useSeedLocation() {
+    if (!seedOffer) return;
+    setCoords(seedOffer);
+    seedOwned.current.add('coords');
+    setSeedOffer(null);
+    setSeedNote('Pin moved to where this photo was taken.');
   }
 
   async function readSeedPhoto(file: File) {
@@ -91,11 +145,15 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     if (isStale()) return;
 
     if (exif.takenAt) {
-      const day = exif.takenAt.slice(0, 10);
-      setDateStart((current) => current || day);
+      fillFromPhoto('dateStart', setDateStart, exif.takenAt.slice(0, 10));
     }
 
     if (exif.lat === null || exif.lng === null) {
+      // A photo with no location must not leave the last photo's pin behind.
+      if (seedOwned.current.has('coords')) {
+        setCoords(null);
+        releaseSeedField('coords');
+      }
       setSeedBusy(false);
       setSeedNote(
         exif.takenAt
@@ -105,7 +163,16 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
       return;
     }
 
-    setCoords({ lat: exif.lat, lng: exif.lng });
+    const photoCoords = { lat: exif.lat, lng: exif.lng };
+    if (!seedOwned.current.has('coords') && coordsRef.current !== null) {
+      setSeedBusy(false);
+      setSeedOffer(photoCoords);
+      setSeedNote('This photo was taken somewhere else.');
+      return;
+    }
+
+    setCoords(photoCoords);
+    seedOwned.current.add('coords');
     const result = await geocodeApi.reverse(exif.lat, exif.lng);
     if (isStale()) return;
     setSeedBusy(false);
@@ -115,15 +182,21 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
       setSeedNote('Pinned from this photo. Add a place name and country.');
       return;
     }
-    setPlaceName((current) => current || place.placeName);
-    setCountry((current) => current || place.country);
+    fillFromPhoto('placeName', setPlaceName, place.placeName);
+    fillFromPhoto('country', setCountry, place.country);
     setSeedNote('Filled in from this photo. Check it before saving.');
   }
 
   function clearSeedPhoto() {
     seedPick.current += 1;
+    if (seedOwned.current.has('placeName')) setPlaceName('');
+    if (seedOwned.current.has('country')) setCountry('');
+    if (seedOwned.current.has('dateStart')) setDateStart('');
+    if (seedOwned.current.has('coords')) setCoords(null);
+    seedOwned.current.clear();
     setSeedFile(null);
     setSeedNote('');
+    setSeedOffer(null);
     setSeedBusy(false);
   }
 
@@ -215,8 +288,10 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
           fileName={seedFile?.name ?? ''}
           note={seedNote}
           busy={seedBusy}
+          canUseLocation={seedOffer !== null}
           onPick={readSeedPhoto}
           onClear={clearSeedPhoto}
+          onUseLocation={useSeedLocation}
         />
       )}
 
@@ -227,7 +302,10 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
           <input
             className="field"
             value={placeName}
-            onChange={(e) => setPlaceName(e.target.value)}
+            onChange={(e) => {
+              releaseSeedField('placeName');
+              setPlaceName(e.target.value);
+            }}
             placeholder="Kyoto"
             maxLength={120}
           />
@@ -236,7 +314,10 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
           <input
             className="field"
             value={country}
-            onChange={(e) => setCountry(e.target.value)}
+            onChange={(e) => {
+              releaseSeedField('country');
+              setCountry(e.target.value);
+            }}
             placeholder="Japan"
             maxLength={80}
           />
@@ -259,7 +340,10 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
             className="field"
             type="date"
             value={dateStart}
-            onChange={(e) => setDateStart(e.target.value)}
+            onChange={(e) => {
+              releaseSeedField('dateStart');
+              setDateStart(e.target.value);
+            }}
           />
         </Field>
         <Field label="End date (optional)">
@@ -337,14 +421,18 @@ function PhotoSeed({
   fileName,
   note,
   busy,
+  canUseLocation,
   onPick,
   onClear,
+  onUseLocation,
 }: {
   fileName: string;
   note: string;
   busy: boolean;
+  canUseLocation: boolean;
   onPick: (file: File) => void;
   onClear: () => void;
+  onUseLocation: () => void;
 }) {
   return (
     <div className={styles.seed}>
@@ -379,7 +467,18 @@ function PhotoSeed({
 
       {!busy && fileName && (
         <p className={styles.seedNote}>
-          <span>{note}</span>
+          <span>
+            {note}
+            {canUseLocation && (
+              <button
+                type="button"
+                className={styles.seedSwap}
+                onClick={onUseLocation}
+              >
+                Use its location
+              </button>
+            )}
+          </span>
           <button type="button" className={styles.seedClear} onClick={onClear}>
             Remove
           </button>

@@ -908,6 +908,17 @@ blocking Tier 2 work:
       (Mapbox GL is client-only, so the OG share cards can't use it); access
       token / secrets handling; and offline and mobile performance. Deliver a
       recommendation plus a rough migration cost. Low urgency.
+- [ ] **21. Seed photo is read and parsed twice.** `TripForm.readSeedPhoto`
+      does `arrayBuffer()` → `sniffImageFormat()` → `readPhotoExif()` at pick
+      time, and `processImage` (`src/lib/photos/process.ts`) repeats all three
+      at save time, so a 15MB photo is loaded and its EXIF parsed twice.
+      Harmless — the reads are sequential, and only the concurrent case ever
+      broke anything — but it is duplicated work. Note the obvious fix is the
+      wrong one: holding the buffer in React state while the form is open
+      trades a transient spike for sustained retention, which is worse on a
+      phone. Pass forward only the cheap results (sniffed format and
+      `takenAt`) so `processImage` can skip `readPhotoExif` while still
+      reading the bytes it needs to decode. Low urgency.
 - Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
   opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
   real usage data exists.
