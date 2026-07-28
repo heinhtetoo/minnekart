@@ -66,8 +66,15 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     lat: number;
     lng: number;
   } | null>(null);
+  const [searchReset, setSearchReset] = useState(0);
   const seedPick = useRef(0);
   const seedOwned = useRef<Set<SeedField>>(new Set());
+
+  // The search box keeps whatever was last searched for. Once the photo's
+  // place takes over it is describing somewhere else, so clear it.
+  function clearPlaceSearch() {
+    setSearchReset((current) => current + 1);
+  }
 
   // readSeedPhoto branches on whether a pin already exists, and it does so
   // after awaits, where the closed-over state would be stale.
@@ -138,6 +145,7 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     seedOwned.current.add('coords');
     setSeedOffer(null);
     setSeedBusy(true);
+    clearPlaceSearch();
 
     const result = await geocodeApi.reverse(lat, lng);
     if (pick !== seedPick.current) return;
@@ -214,6 +222,7 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
     // Drop the previous photo's name before adopting this one's, so a failed
     // lookup cannot leave it sitting beside the new pin.
     clearOwnedPlaceName();
+    clearPlaceSearch();
     setCoords(photoCoords);
     seedOwned.current.add('coords');
     const result = await geocodeApi.reverse(exif.lat, exif.lng);
@@ -338,7 +347,8 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
         />
       )}
 
-      <PlaceSearch onPick={pickPlace} />
+      {/* Remounting on a new key is how the search box gets reset. */}
+      <PlaceSearch key={searchReset} onPick={pickPlace} />
 
       <div className={styles.row}>
         <Field label="Place name">
