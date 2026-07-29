@@ -4,13 +4,11 @@ import { useEffect, useState } from 'react';
 
 import { photosPerTripFor } from '@/lib/billing/limits';
 import { SignedPhoto } from '@/lib/photos/dto';
-import { processImage } from '@/lib/photos/process';
 
-import { photosApi, putBlob } from './api';
+import { photosApi } from './api';
 import SortablePhotoGrid from './SortablePhotoGrid';
+import { uploadPhoto } from './upload';
 import styles from './PhotoUploader.module.css';
-
-const MAX_DISPLAY_BYTES = 8 * 1024 * 1024;
 
 function uploadErrors(limitMessage: string): Record<string, string> {
   return {
@@ -18,6 +16,10 @@ function uploadErrors(limitMessage: string): Record<string, string> {
     rate_limited: 'Too many uploads at once. Please wait a moment.',
     invalid_upload: 'That file could not be processed. Try another.',
     invalid_key: 'Upload failed. Please try again.',
+    image_too_large: 'Image is too large.',
+    storage_failed: 'Upload to storage failed.',
+    upload_failed: 'Upload failed. Please try again.',
+    save_failed: 'Could not save photo.',
   };
 }
 
@@ -76,49 +78,17 @@ export default function PhotoUploader({ tripId, plan }: PhotoUploaderProps) {
 
   async function uploadOne(job: Job, file: File) {
     try {
-      const processed = await processImage(file);
-      if (processed.displayBlob.size > MAX_DISPLAY_BYTES) {
-        patchJob(job.id, { status: 'error', error: 'Image is too large.' });
-        return;
-      }
-      patchJob(job.id, { status: 'uploading' });
-      const presign = await photosApi.presign(tripId, processed.contentType);
-      if (!presign.ok || !presign.data) {
+      const result = await uploadPhoto(tripId, file, (stage) =>
+        patchJob(job.id, { status: stage }),
+      );
+      if (!result.ok) {
         patchJob(job.id, {
           status: 'error',
-          error: UPLOAD_ERRORS[presign.error ?? ''] ?? 'Upload failed.',
+          error: UPLOAD_ERRORS[result.error] ?? 'Upload failed.',
         });
         return;
       }
-      const { displayKey, thumbKey, displayUploadUrl, thumbUploadUrl } =
-        presign.data;
-      const [displayOk, thumbOk] = await Promise.all([
-        putBlob(displayUploadUrl, processed.displayBlob),
-        putBlob(thumbUploadUrl, processed.thumbBlob),
-      ]);
-      if (!displayOk || !thumbOk) {
-        patchJob(job.id, {
-          status: 'error',
-          error: 'Upload to storage failed.',
-        });
-        return;
-      }
-      patchJob(job.id, { status: 'saving' });
-      const created = await photosApi.createRecord(tripId, {
-        displayKey,
-        thumbKey,
-        width: processed.width,
-        height: processed.height,
-        takenAt: processed.takenAt,
-      });
-      if (!created.ok || !created.data) {
-        patchJob(job.id, {
-          status: 'error',
-          error: UPLOAD_ERRORS[created.error ?? ''] ?? 'Could not save photo.',
-        });
-        return;
-      }
-      setPhotos((current) => [...current, created.data!.photo]);
+      setPhotos((current) => [...current, result.photo]);
       setJobs((current) => current.filter((item) => item.id !== job.id));
     } catch (error) {
       patchJob(job.id, {

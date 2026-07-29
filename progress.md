@@ -658,10 +658,47 @@ blocking Tier 2 work:
 
 ### Tier 3 — product polish (activation & paid experience)
 
-- [ ] **10. EXIF GPS pin suggestions** _(BACKLOG)_. Prefill coordinates from
-      photo GPS on upload. Sleeper pick: the ICP's first session is
-      backfilling years of trips, and GPS prefill shortens both time-to-aha
-      and time-to-hitting-the-15-pin cap.
+- [x] **10. EXIF GPS pin suggestions** _(28–29 July 2026)_. "Prefill on upload"
+      could not work as written: `PhotoUploader` only renders on the edit
+      page, so by upload time the pin already exists. The suggestion moved to
+      trip creation instead, which is where it saves the place search.
+      `/trip/new` gained a "Start from a photo" picker: `readPhotoExif`
+      (`src/lib/photos/exif.ts`) reads capture date and coordinates in one
+      pass, a new `reverseGeocode` + `/api/geocode/reverse` (Nominatim
+      `/reverse`, own rate bucket) turns those coordinates into a place name
+      and country, and place/country/pin/date all arrive as editable
+      suggestions. That photo is then uploaded to the new memory after create
+      and before navigating, via `uploadPhoto`
+      (`src/components/photos/upload.ts`) lifted out of `PhotoUploader` so
+      both paths share one pipeline. Every failure degrades to the ordinary
+      search flow. GPS never reaches storage — the canvas re-encode already
+      strips EXIF. No schema change.
+      **Android caveat, learned the hard way.** Android redacts EXIF
+      _location_ from anything in the media collection unless the caller
+      holds `ACCESS_MEDIA_LOCATION`, which Chrome does not — and Samsung's My
+      Files serves `DCIM` through a MediaStore-backed provider, so Gallery
+      and My Files are both redacted. Only a photo taken from the camera at
+      pick time keeps its location. Redaction is location-only, so Android
+      still auto-fills the date from any photo. Two consequences worth
+      keeping: the seed picker deliberately has **no `accept` filter** (an
+      image-only `accept` sends Chrome to the Android Photo Picker, which has
+      no camera option — the one path that works), and files are vetted by
+      magic bytes in `src/lib/photos/format.ts` instead, which `accept` never
+      actually guaranteed. Don't "restore" the accept filter.
+      **Which field belongs to whom.** Filling a field only when it was empty
+      conflated "the last photo put this here" with "the user typed this", so
+      a second photo moved the pin while keeping the first photo's name — the
+      globe and the text disagreeing, silently. `TripForm` now tracks which
+      fields the photo filled and the user has not since touched (`seedOwned`);
+      only those are replaced by the next photo or cleared on remove, and
+      typing in a field or choosing from the search releases it. Place name,
+      country and pin describe **one place**, so they always move together:
+      cleared together when a photo carries no location, replaced together
+      when it carries one, and adopted together by the "Use the photo's place"
+      swap offered when a photo disagrees with a place the user searched for.
+      The place search box is cleared at those same points, since it is a
+      fourth thing claiming to say where the memory is. A name typed by hand
+      survives all of it — that is a label, not a stale reading.
 - [x] **11. Photo reorder** — drag-and-drop in the trip edit page, free for
       all plans (the paywall stays capacity-based by decision). Server:
       `PATCH /api/trips/[id]/photos` takes the full ordered photo-ID list,
@@ -885,6 +922,17 @@ blocking Tier 2 work:
       (Mapbox GL is client-only, so the OG share cards can't use it); access
       token / secrets handling; and offline and mobile performance. Deliver a
       recommendation plus a rough migration cost. Low urgency.
+- [ ] **21. Seed photo is read and parsed twice.** `TripForm.readSeedPhoto`
+      does `arrayBuffer()` → `sniffImageFormat()` → `readPhotoExif()` at pick
+      time, and `processImage` (`src/lib/photos/process.ts`) repeats all three
+      at save time, so a 15MB photo is loaded and its EXIF parsed twice.
+      Harmless — the reads are sequential, and only the concurrent case ever
+      broke anything — but it is duplicated work. Note the obvious fix is the
+      wrong one: holding the buffer in React state while the form is open
+      trades a transient spike for sustained retention, which is worse on a
+      phone. Pass forward only the cheap results (sniffed format and
+      `takenAt`) so `processImage` can skip `readPhotoExif` while still
+      reading the bytes it needs to decode. Low urgency.
 - Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
   opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
   real usage data exists.

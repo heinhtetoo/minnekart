@@ -27,4 +27,8 @@ export const geocodeApi = {
     apiRequest<{ results: PlaceResult[] }>(
       `/api/geocode?q=${encodeURIComponent(query)}`,
     ),
+  reverse: (lat: number, lng: number) =>
+    apiRequest<{ place: PlaceResult | null }>(
+      `/api/geocode/reverse?lat=${lat}&lng=${lng}`,
+    ),
 };

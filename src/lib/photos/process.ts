@@ -1,5 +1,7 @@
 import { isPhotoContentType, PhotoContentType } from './content-type';
 import { scaledDimensions } from './dimensions';
+import { readPhotoExif } from './exif';
+import { ImageFormat, sniffImageFormat } from './format';
 
 const DISPLAY_MAX = 2560;
 const DISPLAY_QUALITY = 0.82;
@@ -31,22 +33,14 @@ export function isHeic(file: File): boolean {
   );
 }
 
-async function readTakenAt(file: File): Promise<string | null> {
-  try {
-    const exifr = await import('exifr');
-    const parsed = await exifr.parse(file, ['DateTimeOriginal', 'CreateDate']);
-    const date = parsed?.DateTimeOriginal ?? parsed?.CreateDate;
-    if (date instanceof Date && !Number.isNaN(date.getTime())) {
-      return date.toISOString();
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-async function toDecodableBlob(file: File): Promise<Blob> {
-  if (!isHeic(file)) {
+// The sniffed format wins when we have one: Android's file browser often
+// reports no MIME type and no extension, which is all isHeic can look at.
+async function toDecodableBlob(
+  file: File,
+  format: ImageFormat | null,
+): Promise<Blob> {
+  const heic = format === null ? isHeic(file) : format === 'heic';
+  if (!heic) {
     return file;
   }
   const heic2any = (await import('heic2any')).default;
@@ -95,8 +89,10 @@ async function encodeImage(
 }
 
 export async function processImage(file: File): Promise<ProcessedImage> {
-  const takenAt = await readTakenAt(file);
-  const decodable = await toDecodableBlob(file);
+  const buffer = await file.arrayBuffer();
+  const format = sniffImageFormat(buffer);
+  const { takenAt } = await readPhotoExif(buffer);
+  const decodable = await toDecodableBlob(file, format);
   const bitmap = await createImageBitmap(decodable);
   try {
     const display = await encodeImage(bitmap, DISPLAY_MAX, DISPLAY_QUALITY);
