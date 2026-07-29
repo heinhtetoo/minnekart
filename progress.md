@@ -658,7 +658,7 @@ blocking Tier 2 work:
 
 ### Tier 3 — product polish (activation & paid experience)
 
-- [x] **10. EXIF GPS pin suggestions** _(28 July 2026)_. "Prefill on upload"
+- [x] **10. EXIF GPS pin suggestions** _(28–29 July 2026)_. "Prefill on upload"
       could not work as written: `PhotoUploader` only renders on the edit
       page, so by upload time the pin already exists. The suggestion moved to
       trip creation instead, which is where it saves the place search.
@@ -685,6 +685,20 @@ blocking Tier 2 work:
       no camera option — the one path that works), and files are vetted by
       magic bytes in `src/lib/photos/format.ts` instead, which `accept` never
       actually guaranteed. Don't "restore" the accept filter.
+      **Which field belongs to whom.** Filling a field only when it was empty
+      conflated "the last photo put this here" with "the user typed this", so
+      a second photo moved the pin while keeping the first photo's name — the
+      globe and the text disagreeing, silently. `TripForm` now tracks which
+      fields the photo filled and the user has not since touched (`seedOwned`);
+      only those are replaced by the next photo or cleared on remove, and
+      typing in a field or choosing from the search releases it. Place name,
+      country and pin describe **one place**, so they always move together:
+      cleared together when a photo carries no location, replaced together
+      when it carries one, and adopted together by the "Use the photo's place"
+      swap offered when a photo disagrees with a place the user searched for.
+      The place search box is cleared at those same points, since it is a
+      fourth thing claiming to say where the memory is. A name typed by hand
+      survives all of it — that is a label, not a stale reading.
 - [x] **11. Photo reorder** — drag-and-drop in the trip edit page, free for
       all plans (the paywall stays capacity-based by decision). Server:
       `PATCH /api/trips/[id]/photos` takes the full ordered photo-ID list,
