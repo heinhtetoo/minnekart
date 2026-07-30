@@ -872,6 +872,36 @@ blocking Tier 2 work:
       rhythm per card preserved), TripForm no-pin prompt ("Search above to
       drop a pin…"). The design's pin line and Save `flex:1` turned out to
       already match. Verified live and on preview; merged via PR #6.
+- [ ] **22. Seed photo preview on the new-trip page.** "Start from a photo"
+      currently gives no visual confirmation of what was picked — only the
+      filled fields and a Remove button. Show a thumbnail of the chosen
+      photo. It should come from the bytes already in hand at pick time
+      (`TripForm.readSeedPhoto` holds the `ArrayBuffer`), not a second read,
+      and the object URL must be revoked on replace, on Remove and on
+      unmount. Mind task 21 while doing it — the buffer question overlaps,
+      and holding a full-size buffer in React state to feed a preview is the
+      exact retention trade-off task 21 warns against; downscale first.
+- [ ] **23. Small non-interactive globe beside the pin on the new-trip page.**
+      A read-only mini globe showing where the selected pin sits, so the
+      lat/lng line stops being the only feedback. No zoom, no drag, no
+      click — display only. Decide whether it reuses
+      `src/components/globe/Globe.tsx` at a small size or is a lighter
+      purpose-built render; a second Three.js canvas on a form page is the
+      cost to check first, especially on mobile. Must react to every source
+      that moves the pin (place search, photo EXIF, "Use its location",
+      clearing) — see the field-provenance rules on task 10. Depends on
+      task 20's outcome only if the globe renderer changes.
+- [ ] **24. Redesign the main globe pin as a photo thumbnail** _(DESIGN FILE
+      PENDING)_. Replace the current coloured circle with a pin carrying a
+      thumbnail of a photo from the trip's photo list, falling back to the
+      existing gradient colour when the trip has no photos. The user is
+      supplying a design file as the reference — do not start until it
+      lands. Things to weigh up front: which photo is picked (first in
+      order? cover?); thumbnail fetching and texture cost with many pins on
+      one globe; the signed-URL lifetime versus a long-lived globe session;
+      the public `/t/` and `/u/` views and the `opengraph-image` route,
+      which render pins too. The full-bleed globe layout itself stays
+      untouched — this is the pin only.
 
 ### Tier 4 — hygiene / post-PMF
 
