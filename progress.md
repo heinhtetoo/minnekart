@@ -872,15 +872,29 @@ blocking Tier 2 work:
       rhythm per card preserved), TripForm no-pin prompt ("Search above to
       drop a pin…"). The design's pin line and Save `flex:1` turned out to
       already match. Verified live and on preview; merged via PR #6.
-- [ ] **22. Seed photo preview on the new-trip page.** "Start from a photo"
-      currently gives no visual confirmation of what was picked — only the
-      filled fields and a Remove button. Show a thumbnail of the chosen
-      photo. It should come from the bytes already in hand at pick time
-      (`TripForm.readSeedPhoto` holds the `ArrayBuffer`), not a second read,
-      and the object URL must be revoked on replace, on Remove and on
-      unmount. Mind task 21 while doing it — the buffer question overlaps,
-      and holding a full-size buffer in React state to feed a preview is the
-      exact retention trade-off task 21 warns against; downscale first.
+- [x] **22. Seed photo preview on the new-trip page** _(3 August 2026)_. "Start
+      from a photo" confirmed a pick with a filename and nothing else; it now
+      shows a 72px thumbnail beside the filename and status note.
+      `createPreviewUrl` (`src/lib/photos/preview.ts`) decodes the buffer
+      already read at pick time, downscales to 320px via the existing
+      `scaledDimensions`, and returns an object URL — measured in real
+      Chromium at 3840×2160/1.39MB in → 320×180/10.5KB out. **Downscaling is
+      the point, not an optimisation:** pointing an `<img>` at the file costs
+      no decode but holds the full raster for as long as the form is open
+      (~48MB for a 12MP photo), which is the retention trade-off task 21
+      warns about. It wraps the buffer, never the `File`, so nothing re-reads
+      the `content://` URI — that read is what broke EXIF on Android. The
+      object URL's lifetime lives in one effect keyed on the URL, so replace,
+      Remove and unmount are covered without any call site remembering; a
+      preview whose pick went stale is revoked on the spot, since it never
+      reaches state for the effect to see. Returns `null` where the browser
+      has no decoder (HEIC in Chrome and Firefox, verified) and the card shows
+      a one-line note instead. `.seed` became a flex row with `.seedBody`
+      holding the old contents, so with no thumbnail it collapses to exactly
+      its previous appearance. No unit test — `createImageBitmap` and
+      `<canvas>` do not exist under vitest's `environment: 'node'`, the same
+      reason `process.ts` has none; verified by bundling the real module with
+      esbuild and running it in headless Chromium.
 - [ ] **23. Small non-interactive globe beside the pin on the new-trip page.**
       A read-only mini globe showing where the selected pin sits, so the
       lat/lng line stops being the only feedback. No zoom, no drag, no

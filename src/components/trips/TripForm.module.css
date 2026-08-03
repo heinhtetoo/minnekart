@@ -85,16 +85,25 @@
   color: var(--muted);
 }
 
+/* Carries the negative top margin the two lines below used to own, so the
+   block sits where it always did. */
+.pinRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -6px 0 0;
+}
+
 .coords {
   font-size: 12px;
   color: var(--forest);
-  margin: -6px 0 0;
+  margin: 0;
 }
 
 .coordsPrompt {
   font-size: 12px;
   color: var(--muted);
-  margin: -6px 0 0;
+  margin: 0;
 }
 
 .seed {

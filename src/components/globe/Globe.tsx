@@ -4,10 +4,9 @@ import { drag } from 'd3-drag';
 import { geoGraticule, geoOrthographic, geoPath } from 'd3-geo';
 import { select } from 'd3-selection';
 import { useEffect, useRef } from 'react';
-import { feature, mesh } from 'topojson-client';
 
-import worldData from '@/data/world-110m.json';
 import { isPinVisible, Rotation } from '@/lib/globe/projection';
+import { borders, GLOBE_COLORS as COLORS, land } from '@/lib/globe/world';
 
 import styles from './Globe.module.css';
 
@@ -35,24 +34,6 @@ interface GlobeApi {
 }
 
 const IDLE_RESUME_MS = 5000;
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const topology = worldData as any;
-const land = feature(topology, topology.objects.countries) as any;
-const borders = mesh(
-  topology,
-  topology.objects.countries,
-  (a: any, b: any) => a !== b,
-);
-/* eslint-enable @typescript-eslint/no-explicit-any */
-
-const COLORS = {
-  water: '#9ecdb6',
-  land: '#e4dcd0',
-  border: '#66a07e',
-  graticule: '#86b89a',
-  stroke: '#fff',
-};
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2.2;

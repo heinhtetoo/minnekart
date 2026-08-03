@@ -11,6 +11,7 @@ import {
   useState,
 } from 'react';
 
+import MiniGlobe from '@/components/globe/MiniGlobe';
 import { uploadPhoto } from '@/components/photos/upload';
 import { PlaceResult } from '@/lib/geocode';
 import { readPhotoExif } from '@/lib/photos/exif';
@@ -400,15 +401,18 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
         </Field>
       </div>
 
-      {coords ? (
-        <p className={styles.coords}>
-          Pin set · {coords.lat.toFixed(3)}, {coords.lng.toFixed(3)}
-        </p>
-      ) : (
-        <p className={styles.coordsPrompt}>
-          Search above to drop a pin on the globe.
-        </p>
-      )}
+      <div className={styles.pinRow}>
+        <MiniGlobe lat={coords?.lat ?? null} lng={coords?.lng ?? null} />
+        {coords ? (
+          <p className={styles.coords}>
+            Pin set · {coords.lat.toFixed(3)}, {coords.lng.toFixed(3)}
+          </p>
+        ) : (
+          <p className={styles.coordsPrompt}>
+            Search above to drop a pin on the globe.
+          </p>
+        )}
+      </div>
 
       <div className={styles.row}>
         <Field label="Start date">
