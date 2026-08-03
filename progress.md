@@ -895,16 +895,38 @@ blocking Tier 2 work:
       `<canvas>` do not exist under vitest's `environment: 'node'`, the same
       reason `process.ts` has none; verified by bundling the real module with
       esbuild and running it in headless Chromium.
-- [ ] **23. Small non-interactive globe beside the pin on the new-trip page.**
-      A read-only mini globe showing where the selected pin sits, so the
-      lat/lng line stops being the only feedback. No zoom, no drag, no
-      click — display only. Decide whether it reuses
-      `src/components/globe/Globe.tsx` at a small size or is a lighter
-      purpose-built render; a second Three.js canvas on a form page is the
-      cost to check first, especially on mobile. Must react to every source
-      that moves the pin (place search, photo EXIF, "Use its location",
-      clearing) — see the field-provenance rules on task 10. Depends on
-      task 20's outcome only if the globe renderer changes.
+- [x] **23. Small non-interactive globe beside the pin on the new-trip page**
+      _(3 August 2026)_. `Pin set · 35.012, 135.768` was the only feedback
+      that a pin existed and it never said where; a 112px globe centred on
+      the pin now sits beside it. Display only — no drag, zoom or click.
+      `MiniGlobe` (`src/components/globe/MiniGlobe.tsx`) is a **pure function
+      of `lat`/`lng`**: no effect, no refs, no cleanup. That is what
+      satisfies "must react to every source that moves the pin" for free —
+      `coords` is already the single source of truth for the place search,
+      the photo's EXIF, "Use the photo's place" and clearing, so a component
+      rendering from it cannot drift. Rotating to `[-lng, -lat, 0]` puts the
+      pin at the centre by definition, leaving no projection maths to get
+      wrong; unpinned it renders at the angle the home globe opens at.
+      **It deliberately does not reuse `Globe.tsx`** — adding a
+      non-interactive mode there would thread conditionals through the drag,
+      pinch, wheel and auto-spin paths (the code behind the iOS
+      tap-starvation and pinch-ordering bugs) to inherit features this globe
+      does not want. Two notes for later. (a) The task text said "a second
+      Three.js canvas" — **there is no Three.js in this project**;
+      `Globe.tsx` is d3-geo drawing an orthographic projection into SVG. The
+      real cost was `src/data/world-110m.json` (105KB), and it is not a
+      second copy: the topology stays in one chunk shared with the home page,
+      so `/trip/new` added ~12KB and `next/dynamic` was not needed. (b) The
+      topology derivation and palette moved to `src/lib/globe/world.ts` so
+      the two globes cannot drift on colour — the only edit to `Globe.tsx`,
+      and proven a true no-op by rendering both versions in headless Chromium
+      and comparing the SVG (identical, 197,071 chars). `Globe.tsx` still
+      hardcodes its gradient ids, so `MiniGlobe` uses `useId()` (sanitised —
+      React's format is not safe inside `url(#…)`) and the two can share a
+      page later without colliding. No unit test: `projection.ts` already
+      covers the only pure logic and the rest is SVG output, verified by
+      server-rendering Kyoto, Sydney, Tromsø, null island and the unpinned
+      state and reading the screenshots.
 - [ ] **24. Redesign the main globe pin as a photo thumbnail** _(DESIGN FILE
       PENDING)_. Replace the current coloured circle with a pin carrying a
       thumbnail of a photo from the trip's photo list, falling back to the
