@@ -112,9 +112,9 @@ export function tripCard({
         </div>
         <div
           style={{
-            fontFamily: 'Playfair Display',
+            fontFamily: 'EB Garamond',
             fontSize: 78,
-            fontWeight: 700,
+            fontWeight: 600,
             color: INK,
             lineHeight: 1.05,
             letterSpacing: -2,
@@ -145,9 +145,9 @@ function stat(value: number, label: string): ReactElement {
     >
       <div
         style={{
-          fontFamily: 'Playfair Display',
+          fontFamily: 'EB Garamond',
           fontSize: 68,
-          fontWeight: 700,
+          fontWeight: 600,
           color: FOREST,
         }}
       >
@@ -211,9 +211,9 @@ export function brandCard({
       ) : null}
       <div
         style={{
-          fontFamily: 'Playfair Display',
+          fontFamily: 'EB Garamond',
           fontSize: 76,
-          fontWeight: 700,
+          fontWeight: 600,
           color: INK,
           lineHeight: 1.05,
           letterSpacing: -2,
@@ -254,9 +254,9 @@ export function globeCard({
       {wordmark(28)}
       <div
         style={{
-          fontFamily: 'Playfair Display',
+          fontFamily: 'EB Garamond',
           fontSize: 84,
-          fontWeight: 700,
+          fontWeight: 600,
           color: INK,
           letterSpacing: -2,
         }}

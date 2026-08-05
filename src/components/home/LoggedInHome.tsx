@@ -72,7 +72,7 @@ export default function LoggedInHome({
           <h1
             className="serif"
             style={{
-              fontSize: 'clamp(34px,6vw,60px)',
+              fontSize: 'clamp(39px,6.6vw,66px)',
               fontWeight: 700,
               color: 'var(--foreground)',
               margin: 0,

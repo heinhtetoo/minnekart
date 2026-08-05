@@ -162,7 +162,7 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
         <h1
           className="serif"
           style={{
-            fontSize: 26,
+            fontSize: 30,
             fontWeight: 600,
             color: 'var(--foreground)',
             margin: '0 0 8px',

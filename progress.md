@@ -927,17 +927,186 @@ blocking Tier 2 work:
       covers the only pure logic and the rest is SVG output, verified by
       server-rendering Kyoto, Sydney, Tromsø, null island and the unpinned
       state and reading the screenshots.
-- [ ] **24. Redesign the main globe pin as a photo thumbnail** _(DESIGN FILE
-      PENDING)_. Replace the current coloured circle with a pin carrying a
-      thumbnail of a photo from the trip's photo list, falling back to the
-      existing gradient colour when the trip has no photos. The user is
-      supplying a design file as the reference — do not start until it
-      lands. Things to weigh up front: which photo is picked (first in
-      order? cover?); thumbnail fetching and texture cost with many pins on
-      one globe; the signed-URL lifetime versus a long-lived globe session;
-      the public `/t/` and `/u/` views and the `opengraph-image` route,
-      which render pins too. The full-bleed globe layout itself stays
-      untouched — this is the pin only.
+- [ ] **24. Redesign the main globe pin — photo medallion** _(design file
+      landed 5 August 2026; reframed the same day for the age-of-sail
+      direction — see task 26)_. Replaces the current coloured dot in
+      `drawPins` (`src/components/globe/Globe.tsx:179`) — an `r=6` accent
+      circle inside an `r=15` halo — with a circular photo medallion on a stem
+      whose tip sits on the coordinate.
+      **Structure from the design file, finish from task 26.** The reference
+      is the Claude Design project **"Atlas Travel Site — Redesign"**
+      (`Atlas Travel Site - Redesign.dc.html`; `_heartTexture`,
+      `_pinTextures`, `_updateMarkers`). Its geometry is sound and worth
+      keeping: a 176px texture with the head at (88, 60), thumbnail clipped to
+      `R-4` where `R=46`, a stem from the bottom of the head (y=100) to the
+      tip (y=162), and **the tip on the coordinate rather than the centre** —
+      ours is centred today, so every pin shifts up by the stem length. With
+      no photo the head fills with the trip's gradient, and the design's
+      `GRAD_PAIRS` are byte-identical to `src/lib/photos/gradient.ts`, so the
+      fallback is already ours (`coverGradient(trip.id)`) and its warm
+      terracotta and sepia pairs sit fine on a chart unchanged.
+      **What the design file specifies and we are _not_ taking.** Its finish
+      belongs to the glossy direction we moved away from: a white rim under a
+      15px white blur, an additive white radial halo pulsing at ~2.2 rad/s, a
+      1.22×/1.4× hover flare and a dark hover tooltip. Under task 26 the rim
+      becomes a fine ink or sepia rule — a double rule reads as an engraved
+      plate — and the glow, the pulse and the tooltip go entirely. That is a
+      saving, not a sacrifice: the pulse was the only thing needing the
+      per-frame loop, which is deliberately off on coarse pointers because it
+      starved taps on iOS Safari, and the glow was the only thing needing a
+      per-pin `feDropShadow` re-rasterised every frame. Dropping both removes
+      this task's two worst overheads. Drop the billboarding too — the mock
+      leans each pin 0.5 toward the camera because it is a plane in 3D,
+      whereas our orthographic SVG draws in screen space and is always
+      upright — and the tooltip, which duplicates the peek card.
+      **Phase A — shape and ink, gradient fill only.** Head, rim, stem,
+      tip-on-coordinate, no photos, on the logged-in home and the logged-out
+      demo. Pure SVG geometry: no data changes, no network, no public-page
+      decision, and it delivers most of the identity shift on its own. Do not
+      start it before task 26's palette lands — the rim colour derives from
+      `GLOBE_COLORS.stroke`, so building against today's `#fff` means building
+      it twice.
+      **Phase B — the photo in the medallion, logged-in home only.** Blocked
+      on one refactor: `drawPins` wipes and rebuilds the layer every frame
+      (`pinLayer.selectAll('*').remove()`) and the desktop rAF loop re-arms
+      unconditionally, so appending an `<image>` per pin per frame would
+      re-fetch and re-decode thumbnails at 60fps. Fix that _first_ — define
+      each thumbnail once in `<defs>` as a `<pattern>` and only reposition per
+      frame, or replace remove-and-rebuild with a keyed data-join on `pin.id`.
+      The data is already there: `GlobePin` (`Globe.tsx:13`) carries only
+      `id`/`lng`/`lat`/`placeName` and needs the thumb URL, but `tripCovers()`
+      (`src/lib/trips/covers.ts`) already returns the first photo by
+      `position` then `createdAt`, presigned, and `src/app/page.tsx` already
+      fetches it for the "Your Pins" cards — so the logged-in home pays no
+      extra query and no extra network, same URLs, browser cache. Two catches
+      remain: signed thumb URLs expire after an hour (`READ_EXPIRY_SECONDS`,
+      `src/lib/photos/sign.ts`), so an hour-old globe would show broken heads
+      where it shows a dot today — fall back to the gradient on `error` at
+      minimum; and `isPinVisible` culls the far side, so a head now floating
+      above its coordinate can straddle the limb. Crowding is the thing to
+      eyeball: a legible head is `r=14–18` against today's `r=6`, on a sphere
+      that rests at ~209px radius, with up to 15 free-tier pins and no cap on
+      paid.
+      **Phase C — the public globe, a product decision rather than a styling
+      one.** `/u/[username]` currently exposes **no photos at all** —
+      `PeekPanel` has no images and `TripDTO` carries no photo fields.
+      Thumbnail pins there means widening the DTO and putting presigned R2
+      URLs for every trip's first photo into a public page's HTML. For a
+      product marketed on privacy that deserves deciding on its own merits.
+      `opengraph-image` goes through Satori and renders no globe — checked,
+      not assumed.
+      The full-bleed globe layout, size and every interaction stay untouched
+      throughout. This is the pin only.
+- [x] **25. Typography — Playfair Display → EB Garamond** _(5 August 2026)_.
+      DM Sans stays. One serif site-wide, two faces total. Landed on
+      `design/age-of-sail`, not `dev`.
+      **Why this and not the design file's pairing.** The imported design
+      proposes Cinzel + Nunito Sans; both rejected. Cinzel is inscriptional
+      Roman capitals — no true lowercase, effectively no descenders, and no
+      italic at all — so it cannot carry sentence-length headings. Nunito Sans
+      was a lateral move from DM Sans that bought a change of flavour for a
+      full-app migration. IM Fell was considered for the age-of-sail direction
+      and rejected on two mechanical grounds: every cut is `latin` only with no
+      `latin-ext`, so Central and Eastern European place names (Gdańsk, Łódź,
+      Plzeň, Košice) would render half in a fallback; and it ships one weight
+      with no bold, so it cannot express hierarchy. Fraunces lost on period —
+      its Windsor/Cooper lineage is 1900s–20s soft display, which argues with
+      engraved cartography rather than supporting it. EB Garamond is the right
+      family tree for the era, has a true chancery italic (load-bearing for
+      task 26), a variable weight axis, and `latin-ext` and beyond so no place
+      name breaks.
+      **Correction — it does _not_ have small caps.** The Google Fonts build
+      exposes only `dnom frac liga locl numr pnum rlig tnum`; there is no
+      `smcp`. An earlier note here claimed real OpenType small caps as a reason
+      for choosing it. That was wrong, and task 26 has been amended. The italic
+      was the larger reason and is unaffected, so the choice stands.
+      **Correction — figures are oldstyle with no lining alternate.** Digits
+      3, 5, 7 and 9 descend below the baseline across seven distinct heights,
+      and there is no `lnum` feature to switch. `.otpCell` therefore moved to
+      `--font-sans`: six boxed digits at seven heights reads as a rendering bug
+      on the login flow. `.statValue` and `.priceValue` kept the serif.
+      **Cost: +6 KB, measured.** `latin` woff2, like for like — Playfair roman
+      38.5 KB → EB Garamond roman 44.2 KB. The earlier "the swap makes the site
+      lighter" claim was true of the Cinzel/Nunito pairing only and does not
+      carry over. The italic is a separate +47.8 KB, deferred to task 26. The
+      OG asset went the other way: `playfair-700.ttf` 123.5 KB →
+      `eb-garamond-600.ttf` 54.6 KB.
+      **What changed.** `layout.tsx` swapped `Playfair_Display` for
+      `EB_Garamond` and both CSS variables were renamed by role —
+      `--font-playfair` → `--font-serif`, `--font-dm-sans` → `--font-sans`,
+      across 13 CSS references in `globals.css` and the `profile`, `timeline`,
+      `pricing`, `ContentPage` and `Nav` module CSS. The rename is the point:
+      the next serif change is now one line in `layout.tsx`.
+      **The optical pass — 38 sizes, from measured metrics not guesswork.**
+      EB Garamond's x-height is 0.418 em against Playfair's 0.517 and DM Sans's
+      0.504; cap height 0.654 against 0.708. So matching x-height needs ×1.24
+      but matching cap height needs only ×1.08 — lowercase headings and the
+      single-capital avatars want very different corrections. Rendering every
+      real string at its real size in both faces and comparing settled the
+      bands actually used: **≥36px ×1.10, 22–30px ×1.15, ≤20px ×1.18, and
+      ×1.08 for the two avatar initials** (`Nav .avatar` 15→16,
+      `profile .avatar` 26→28), which are cap-height-only sites. 23 sizes in
+      module CSS, 15 inline in TSX.
+      **No weight bumps.** The plan called for 500 rather than 400 near body
+      text. The render says otherwise — at the corrected sizes the strokes are
+      already proportionally thicker, and w500/w600 read heavier than Playfair
+      did. Every weight is unchanged.
+      **OG cards.** `fonts.ts` now loads `eb-garamond-600.ttf` as
+      `'EB Garamond'` weight 600 (`OgFont['weight']` widened from
+      `400 | 500 | 700` to `400 | 500 | 600`), and the four
+      `'Playfair Display'` literals in `card.tsx` became `'EB Garamond'` with
+      `fontWeight` 700 → 600. Satori will not take a variable font — the
+      shipped TTFs have no `fvar` — so the static cut is sourced by asking
+      Google Fonts with a UA that supports neither woff nor woff2
+      (`curl -A "Mozilla/5.0 (Linux; U; Android 4.0.3; …)" "https://fonts.googleapis.com/css?family=EB+Garamond:600"`
+      returns a TTF URL). Verified by rendering all three data-free routes and
+      measuring the ink: the heading sets 690px wide against EB Garamond's
+      701px and Playfair's 805px, so the swap took. Eyeballing alone had me
+      call it wrong — measure this one.
+      **The hero italic is unchanged, not regressed.** `layout.tsx` never
+      requested Playfair's italic either, so `LoggedOutHome`'s "mapped." and
+      `timeline .endNote` were already synthesised obliques. Rendered all three
+      side by side: EB Garamond's synthesised oblique is no worse than
+      Playfair's was, and the true chancery italic is a marked upgrade — which
+      is task 26's to deliver.
+      Gates green: format, lint, typecheck, 367 tests, build.
+- [ ] **26. Age-of-sail treatment for the globe** _(new, 5 August 2026)_. The
+      direction settled alongside task 25: antique cartography for the globe
+      and the headings that belong to it, clean and modern everywhere else.
+      Task 25 is deliberately mechanical and ships without this — this task is
+      where the aesthetic risk lives. Ship 25, live with it for a few days,
+      then commit to this.
+      **Globe palette.** `GLOBE_COLORS.stroke` is `#fff`
+      (`src/lib/globe/world.ts`), and that white outline is the single most
+      contemporary thing on the page: antique charts have no white anywhere,
+      everything sits on the paper tone. Sepia or ink instead. Desaturate the
+      `#9ecdb6` sea toward a greyer blue-green. Land stays `#e4dcd0` —
+      parchment is already correct, leave it alone.
+      **Cartographic devices.** Rhumb lines radiating from compass points
+      across the existing graticule — the portolan-chart signature, and pure
+      geometry on a d3-geo globe. A compass rose. Optionally a cartouche frame
+      for title blocks.
+      **Typographic usage — this is what makes the serif read as a map.** EB
+      Garamond's chancery italic reserved for map-label roles: the globe's
+      place label, the pin caption, the highlight line. The italic is a real
+      cost rather than a freebie — requesting it properly in `layout.tsx` is
+      +47.8 KB `latin` woff2 — but it is the highest-signal cartographic
+      gesture available, and the side-by-side done during task 25 showed it is
+      a marked upgrade on the synthesised oblique the hero renders today.
+      **Small caps are not available, contrary to an earlier note here.** The
+      Google Fonts build of EB Garamond has no `smcp` feature (verified
+      against the binary during task 25), so `font-variant-caps: small-caps`
+      would be browser-synthesised — scaled capitals, not drawn ones. Keep the
+      letterspaced `text-transform: uppercase` the section labels already use;
+      it is the better of the two. If real small caps ever become
+      load-bearing, `Cormorant SC` is a separate family and therefore a third
+      face — a decision in its own right, not a free addition.
+      **The commitment point.** This changes the globe's colours, and the
+      globe as it stands is liked as-is. Layout, size and the full-bleed
+      treatment do not move — but the palette does, and that is the point of
+      no easy return in this direction. Be sure before starting, not during.
+      Task 24 phase A depends on the palette landing first, since the pin's
+      rim colour derives from `GLOBE_COLORS.stroke`.
 
 ### Tier 4 — hygiene / post-PMF
 
@@ -977,8 +1146,10 @@ blocking Tier 2 work:
       defaults to `.prettierignore` alone, making that line the only thing
       stopping format-on-save reflowing the book chapters. Don't delete it.
 - [ ] **20. Feasibility study — Mapbox GL globe vs the current custom globe**
-      _(RESEARCH)_. Evaluate replacing the in-house Three.js globe
-      (`src/components/globe/Globe.tsx`) with a Mapbox GL JS globe-projection
+      _(RESEARCH)_. Evaluate replacing the in-house globe
+      (`src/components/globe/Globe.tsx` — d3-geo drawing an orthographic
+      projection into SVG; there is no Three.js in this project, only in the
+      design mocks) with a Mapbox GL JS globe-projection
       map. Study only — no swap, and the full-bleed globe stays exactly as-is
       until the study says otherwise. Weigh: bundle size and runtime cost vs
       the current renderer; Mapbox pricing at expected map-load volume (free

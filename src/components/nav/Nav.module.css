@@ -86,9 +86,9 @@
   border: none;
   background: var(--forest);
   color: #f4efe6;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  font-family: var(--font-playfair), serif;
+  font-family: var(--font-serif), serif;
   cursor: pointer;
   display: flex;
   align-items: center;

@@ -10,7 +10,7 @@
 }
 
 .title {
-  font-size: clamp(28px, 5vw, 40px);
+  font-size: clamp(32px, 5.5vw, 44px);
   font-weight: 700;
   color: var(--foreground);
   letter-spacing: -1px;

@@ -86,7 +86,7 @@ export default async function SettingsPage() {
       <h1
         className="serif"
         style={{
-          fontSize: 'clamp(34px,5vw,50px)',
+          fontSize: 'clamp(39px,5.7vw,55px)',
           fontWeight: 700,
           color: 'var(--foreground)',
           letterSpacing: '-1.2px',

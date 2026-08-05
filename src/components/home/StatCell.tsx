@@ -18,7 +18,7 @@ export default function StatCell({ value, label, bordered }: StatCellProps) {
       <div
         className="serif"
         style={{
-          fontSize: 'clamp(34px,5vw,48px)',
+          fontSize: 'clamp(39px,5.5vw,53px)',
           fontWeight: 600,
           lineHeight: 1,
         }}

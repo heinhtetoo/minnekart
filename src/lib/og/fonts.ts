@@ -4,7 +4,7 @@ import { join } from 'node:path';
 export interface OgFont {
   name: string;
   data: Buffer;
-  weight: 400 | 500 | 700;
+  weight: 400 | 500 | 600;
   style: 'normal';
 }
 
@@ -18,14 +18,14 @@ export function ogFonts(): Promise<OgFont[]> {
   cached ??= Promise.all([
     load('dm-sans-400.ttf'),
     load('dm-sans-500.ttf'),
-    load('playfair-700.ttf'),
-  ]).then(([sansRegular, sansMedium, serifBold]) => [
+    load('eb-garamond-600.ttf'),
+  ]).then(([sansRegular, sansMedium, serifSemiBold]) => [
     { name: 'DM Sans', data: sansRegular, weight: 400, style: 'normal' },
     { name: 'DM Sans', data: sansMedium, weight: 500, style: 'normal' },
     {
-      name: 'Playfair Display',
-      data: serifBold,
-      weight: 700,
+      name: 'EB Garamond',
+      data: serifSemiBold,
+      weight: 600,
       style: 'normal',
     },
   ]);

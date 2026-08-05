@@ -1,16 +1,18 @@
 import type { Metadata } from 'next';
-import { DM_Sans, Playfair_Display } from 'next/font/google';
+import { DM_Sans, EB_Garamond } from 'next/font/google';
 import './globals.css';
 
 import { env } from '@/lib/env';
 
 const dmSans = DM_Sans({
-  variable: '--font-dm-sans',
+  variable: '--font-sans',
   subsets: ['latin'],
 });
 
-const playfairDisplay = Playfair_Display({
-  variable: '--font-playfair',
+// Named by role, not by face: the variable outlives any particular font.
+// No italic requested — EB Garamond's chancery italic is task 26.
+const ebGaramond = EB_Garamond({
+  variable: '--font-serif',
   subsets: ['latin'],
 });
 
@@ -29,10 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${dmSans.variable} ${playfairDisplay.variable}`}
-    >
+    <html lang="en" className={`${dmSans.variable} ${ebGaramond.variable}`}>
       <body>{children}</body>
     </html>
   );
