@@ -4,7 +4,7 @@ import { geoOrthographic, geoPath } from 'd3-geo';
 import { useId, useMemo } from 'react';
 
 import { Rotation } from '@/lib/globe/projection';
-import { borders, GLOBE_COLORS, land } from '@/lib/globe/world';
+import { borders, GLOBE_COLORS, GLOBE_VIGNETTE, land } from '@/lib/globe/world';
 
 // The angle the main globe opens at, so an unpinned mini globe looks like a
 // small version of the one on the home page rather than a different planet.
@@ -63,8 +63,8 @@ export default function MiniGlobe({
     >
       <defs>
         <radialGradient id={vignetteId} cx="50%" cy="50%" r="50%">
-          <stop offset="58%" stopColor="rgba(0,0,0,0)" />
-          <stop offset="100%" stopColor="rgba(0,20,40,.14)" />
+          <stop offset="58%" stopColor={GLOBE_VIGNETTE.inner} />
+          <stop offset="100%" stopColor={GLOBE_VIGNETTE.outer} />
         </radialGradient>
       </defs>
 

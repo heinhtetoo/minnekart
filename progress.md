@@ -1070,43 +1070,67 @@ blocking Tier 2 work:
       Playfair's was, and the true chancery italic is a marked upgrade — which
       is task 26's to deliver.
       Gates green: format, lint, typecheck, 367 tests, build.
-- [ ] **26. Age-of-sail treatment for the globe** _(new, 5 August 2026)_. The
-      direction settled alongside task 25: antique cartography for the globe
-      and the headings that belong to it, clean and modern everywhere else.
-      Task 25 is deliberately mechanical and ships without this — this task is
-      where the aesthetic risk lives. Ship 25, live with it for a few days,
-      then commit to this.
-      **Globe palette.** `GLOBE_COLORS.stroke` is `#fff`
-      (`src/lib/globe/world.ts`), and that white outline is the single most
-      contemporary thing on the page: antique charts have no white anywhere,
-      everything sits on the paper tone. Sepia or ink instead. Desaturate the
-      `#9ecdb6` sea toward a greyer blue-green. Land stays `#e4dcd0` —
-      parchment is already correct, leave it alone.
-      **Cartographic devices.** Rhumb lines radiating from compass points
-      across the existing graticule — the portolan-chart signature, and pure
-      geometry on a d3-geo globe. A compass rose. Optionally a cartouche frame
-      for title blocks.
-      **Typographic usage — this is what makes the serif read as a map.** EB
-      Garamond's chancery italic reserved for map-label roles: the globe's
-      place label, the pin caption, the highlight line. The italic is a real
-      cost rather than a freebie — requesting it properly in `layout.tsx` is
-      +47.8 KB `latin` woff2 — but it is the highest-signal cartographic
-      gesture available, and the side-by-side done during task 25 showed it is
-      a marked upgrade on the synthesised oblique the hero renders today.
-      **Small caps are not available, contrary to an earlier note here.** The
-      Google Fonts build of EB Garamond has no `smcp` feature (verified
-      against the binary during task 25), so `font-variant-caps: small-caps`
-      would be browser-synthesised — scaled capitals, not drawn ones. Keep the
-      letterspaced `text-transform: uppercase` the section labels already use;
-      it is the better of the two. If real small caps ever become
-      load-bearing, `Cormorant SC` is a separate family and therefore a third
-      face — a decision in its own right, not a free addition.
-      **The commitment point.** This changes the globe's colours, and the
-      globe as it stands is liked as-is. Layout, size and the full-bleed
-      treatment do not move — but the palette does, and that is the point of
-      no easy return in this direction. Be sure before starting, not during.
-      Task 24 phase A depends on the palette landing first, since the pin's
-      rim colour derives from `GLOBE_COLORS.stroke`.
+- [x] **26. Give the globe a distinct, polished look** _(5 August 2026)_.
+      Retitled from "age-of-sail treatment": the literal chart styling was
+      tried and mostly abandoned. What landed is a palette inversion and the
+      chancery italic. On `design/age-of-sail`, on top of task 25.
+      **The palette is the whole thing, and value beat hue.** Both the
+      original green and the sepia this task first shipped put land and sea at
+      almost the same lightness, so the continents never resolved — which is
+      why the sepia read faded rather than considered. Eight palettes were
+      rendered on the real globe and compared; every one that looked polished
+      inverted the value. Chosen: **pale continents on a dark sea.** Water
+      `#9ecdb6` → `#2c4e46`, coastlines and borders `#66a07e` → `#1c3a33`,
+      graticule `#86b89a` → parchment `#e4dcd0` at 0.16 opacity (a pale line
+      on a dark sea wants a fraction of the opacity a green one did). Land
+      stays `#e4dcd0`. The sea is **`--forest`, already the stats band, the
+      footer and the sign-in button**, so the globe adds no new colour to the
+      product and now rhymes with the page instead of sitting apart from it.
+      **The white atmosphere rim is gone.** `appendAtmosphere` — a white
+      radial glow at 0.22 opacity — and its circle are deleted. That is what
+      made the globe read as a backlit sphere. The vignette carries the
+      dimension instead, warmed and deepened to `rgba(0,0,0,.28)`, and the
+      shadow ellipse now casts in forest, `rgba(44,78,70,.22)`.
+      **Correction to what this task used to claim.** It said
+      `GLOBE_COLORS.stroke` (`#fff`) was "the single most contemporary thing on
+      the page". It is not a globe outline — it is used in exactly two places,
+      `Globe.tsx` and `MiniGlobe.tsx`, and both are the _pin's_ rim. See the
+      note to task 24 below.
+      **The vignette stops moved into `world.ts`** as `GLOBE_VIGNETTE`. They
+      were duplicated between `Globe.tsx` and `MiniGlobe.tsx`; centralising is
+      what stops the two globes drifting, the same reason `GLOBE_COLORS`
+      exists. `MiniGlobe` took the whole palette with no other edit, verified
+      at 112px for Kyoto, Sydney, Tromsø and unpinned.
+      **Rhumb lines were built, then reverted.** A full portolan wind-rose
+      network shipped first: `src/lib/globe/rhumb.ts` with great circles from
+      the destination-point formula, emitted as a MultiLineString because
+      `geoPath` under `clipAngle(90)` closes a Polygon along the limb, plus 9
+      unit tests. It was reverted on the call that a rhumb network is a _chart_
+      device — on a globe it converges on an arbitrary point and reads as
+      decoration, where a graticule is the honest geometry of a sphere. The
+      graticule is back exactly as it was, at the new colour and opacity, and
+      `rhumb.ts` is deleted. Recorded here because the reasoning is worth more
+      than the code was: if it is ever revisited, draw it _over_ the land, not
+      under, or the lines stop dead at every coastline and read as a clipping
+      bug.
+      **No compass rose, no cartouche.** Not wanted.
+      **The chancery italic now loads** — one line in `layout.tsx`
+      (`style: ['normal', 'italic']`). No per-site work was needed:
+      `.detailPrompt`, `.detailQuote`, `timeline .endNote`,
+      `TripDetailBody .quote` and `LoggedOutHome`'s hero "mapped." were already
+      `font-style: italic` on the serif and were rendering synthesised
+      obliques. All five upgraded at once, confirmed on the hero. Not a
+      universal cost either — the browser fetches the italic only on pages that
+      render italic.
+      **Verification.** The globe does not render in the headless _page_
+      harness (blank on the task-25 screenshots too, before any globe change),
+      so everything visual was checked by bundling the real `Globe.tsx` and
+      `MiniGlobe.tsx` with esbuild and rendering them in Chromium. Gates green:
+      format, lint, typecheck, 367 tests, build.
+      **Task 24 got easier, not harder.** Against sepia the pins' white rims
+      looked conspicuously modern. Against the dark sea they read as a crisp
+      highlight — the terracotta pops where before it competed with a mid-tone
+      sea. The pin redesign no longer has to fight the palette.
 
 ### Tier 4 — hygiene / post-PMF
 

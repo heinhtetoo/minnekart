@@ -6,7 +6,12 @@ import { select } from 'd3-selection';
 import { useEffect, useRef } from 'react';
 
 import { isPinVisible, Rotation } from '@/lib/globe/projection';
-import { borders, GLOBE_COLORS as COLORS, land } from '@/lib/globe/world';
+import {
+  borders,
+  GLOBE_COLORS as COLORS,
+  GLOBE_VIGNETTE,
+  land,
+} from '@/lib/globe/world';
 
 import styles from './Globe.module.css';
 
@@ -87,7 +92,6 @@ export default function Globe({
     const svg = select(svgEl);
     svg.selectAll('*').remove();
     const defs = svg.append('defs');
-    appendAtmosphere(defs);
     appendVignette(defs);
     appendShadowFilter(defs);
 
@@ -99,7 +103,7 @@ export default function Globe({
       .attr('cy', height / 2 + base * 0.9)
       .attr('rx', base * 0.86)
       .attr('ry', base * 0.11)
-      .attr('fill', 'rgba(10,30,50,.13)')
+      .attr('fill', 'rgba(44,78,70,.22)')
       .attr('filter', 'url(#globe-shadow)');
     root
       .append('circle')
@@ -118,7 +122,7 @@ export default function Globe({
         .attr('fill', 'none')
         .attr('stroke', COLORS.graticule)
         .attr('stroke-width', 0.45)
-        .attr('opacity', 0.7);
+        .attr('opacity', 0.16);
     }
     root
       .append('g')
@@ -138,14 +142,6 @@ export default function Globe({
       .attr('stroke', COLORS.border)
       .attr('stroke-width', 0.35)
       .attr('opacity', 0.55);
-    root
-      .append('circle')
-      .attr('class', 'atmosphere')
-      .attr('cx', width / 2)
-      .attr('cy', height / 2)
-      .attr('r', view.scale)
-      .attr('fill', 'url(#globe-atmosphere)')
-      .attr('pointer-events', 'none');
     root
       .append('circle')
       .attr('class', 'vignette')
@@ -171,7 +167,6 @@ export default function Globe({
         .selectAll<SVGPathElement, unknown>('path')
         .attr('d', path as never);
       svg.select('.borders').attr('d', path as never);
-      svg.select('.atmosphere').attr('r', r);
       svg.select('.vignette').attr('r', r);
       drawPins();
     }
@@ -404,25 +399,6 @@ export default function Globe({
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-function appendAtmosphere(defs: any) {
-  const gradient = defs
-    .append('radialGradient')
-    .attr('id', 'globe-atmosphere')
-    .attr('cx', '36%')
-    .attr('cy', '30%')
-    .attr('r', '64%');
-  gradient
-    .append('stop')
-    .attr('offset', '50%')
-    .attr('stop-color', '#fff')
-    .attr('stop-opacity', 0);
-  gradient
-    .append('stop')
-    .attr('offset', '100%')
-    .attr('stop-color', '#fff')
-    .attr('stop-opacity', 0.22);
-}
-
 function appendVignette(defs: any) {
   const gradient = defs
     .append('radialGradient')
@@ -433,11 +409,11 @@ function appendVignette(defs: any) {
   gradient
     .append('stop')
     .attr('offset', '58%')
-    .attr('stop-color', 'rgba(0,0,0,0)');
+    .attr('stop-color', GLOBE_VIGNETTE.inner);
   gradient
     .append('stop')
     .attr('offset', '100%')
-    .attr('stop-color', 'rgba(0,20,40,.14)');
+    .attr('stop-color', GLOBE_VIGNETTE.outer);
 }
 
 function appendShadowFilter(defs: any) {
