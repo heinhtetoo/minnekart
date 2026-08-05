@@ -927,76 +927,78 @@ blocking Tier 2 work:
       covers the only pure logic and the rest is SVG output, verified by
       server-rendering Kyoto, Sydney, Tromsø, null island and the unpinned
       state and reading the screenshots.
-- [ ] **24. Redesign the main globe pin — photo medallion** _(design file
-      landed 5 August 2026; reframed the same day for the age-of-sail
-      direction — see task 26)_. Replaces the current coloured dot in
-      `drawPins` (`src/components/globe/Globe.tsx:179`) — an `r=6` accent
-      circle inside an `r=15` halo — with a circular photo medallion on a stem
-      whose tip sits on the coordinate.
-      **Structure from the design file, finish from task 26.** The reference
-      is the Claude Design project **"Atlas Travel Site — Redesign"**
-      (`Atlas Travel Site - Redesign.dc.html`; `_heartTexture`,
-      `_pinTextures`, `_updateMarkers`). Its geometry is sound and worth
-      keeping: a 176px texture with the head at (88, 60), thumbnail clipped to
-      `R-4` where `R=46`, a stem from the bottom of the head (y=100) to the
-      tip (y=162), and **the tip on the coordinate rather than the centre** —
-      ours is centred today, so every pin shifts up by the stem length. With
-      no photo the head fills with the trip's gradient, and the design's
-      `GRAD_PAIRS` are byte-identical to `src/lib/photos/gradient.ts`, so the
-      fallback is already ours (`coverGradient(trip.id)`) and its warm
-      terracotta and sepia pairs sit fine on a chart unchanged.
-      **What the design file specifies and we are _not_ taking.** Its finish
-      belongs to the glossy direction we moved away from: a white rim under a
-      15px white blur, an additive white radial halo pulsing at ~2.2 rad/s, a
-      1.22×/1.4× hover flare and a dark hover tooltip. Under task 26 the rim
-      becomes a fine ink or sepia rule — a double rule reads as an engraved
-      plate — and the glow, the pulse and the tooltip go entirely. That is a
-      saving, not a sacrifice: the pulse was the only thing needing the
-      per-frame loop, which is deliberately off on coarse pointers because it
-      starved taps on iOS Safari, and the glow was the only thing needing a
-      per-pin `feDropShadow` re-rasterised every frame. Dropping both removes
-      this task's two worst overheads. Drop the billboarding too — the mock
-      leans each pin 0.5 toward the camera because it is a plane in 3D,
-      whereas our orthographic SVG draws in screen space and is always
-      upright — and the tooltip, which duplicates the peek card.
-      **Phase A — shape and ink, gradient fill only.** Head, rim, stem,
-      tip-on-coordinate, no photos, on the logged-in home and the logged-out
-      demo. Pure SVG geometry: no data changes, no network, no public-page
-      decision, and it delivers most of the identity shift on its own. Do not
-      start it before task 26's palette lands — the rim colour derives from
-      `GLOBE_COLORS.stroke`, so building against today's `#fff` means building
-      it twice.
-      **Phase B — the photo in the medallion, logged-in home only.** Blocked
-      on one refactor: `drawPins` wipes and rebuilds the layer every frame
-      (`pinLayer.selectAll('*').remove()`) and the desktop rAF loop re-arms
+- [x] **24. Bigger globe pins with a photo inside** _(5 August 2026)_.
+      Scaled back from the design file's lollipop; shipped on
+      `design/age-of-sail`.
+      **What was dropped, and why the phases changed.** The imported design
+      (`Atlas Travel Site - Redesign.dc.html`, `_heartTexture`) specified a
+      circular head on a glowing white stem with the tip on the coordinate, a
+      pulsing additive halo and a hover tooltip. None of that shipped. The
+      logged phases were: A shape and ink, B photo, C public globes. **Phase A
+      was cancelled** — the pin keeps its existing concentric-circle form and
+      only its radius changed. **Phase B is what landed.** **Phase C stays
+      deferred**: the public globes are untouched.
+      **Sizes.** Dot `r` 6 → **11** (22px across), halo 15 → 20, hover 9 → 14.
+      Below about r=10 a thumbnail is indistinguishable from a colour swatch;
+      above r=13 a clustered group like a European tour starts to overlap
+      badly on a sphere that rests at ~209px radius.
+      **The white rim stays — correcting what this task used to say here.** It
+      instructed replacing the rim with a sepia ink rule. That was right
+      against the parchment palette task 26 first tried, and wrong after task
+      26 settled on a dark `#2c4e46` sea, where the white reads as a crisp
+      highlight and earns its place. Verified by rendering.
+      **`GlobePin` gained `thumbUrl` and `gradientSeed`, both optional.**
+      `id` could not be reused for either: all three call sites pass the
+      array index and read it back in
+      `onSelect={(id) => setSelected(Number(id))}`. Optional fields mean
+      `LoggedOutHome` and `PublicGlobe` needed no edit and keep plain accent
+      pins. `LoggedInHome` passes `item.thumbUrl` and `item.id` and nothing
+      else moved — `HomeTrip` already carries the thumb because
+      `src/app/page.tsx` fetches `tripCovers()` for the "Your Pins" cards, so
+      the pin is the same URL the card requests, a browser cache hit, no extra
+      query and no extra network. Pin and card therefore always show the same
+      photo.
+      **`coverGradientPair(seed)` added to `src/lib/photos/gradient.ts`.** SVG
+      needs `<linearGradient>` stops, not a CSS string; `coverGradient` now
+      builds its string from the same function so `GRAD_PAIRS` stays one
+      source of truth, with a test asserting the pair's colours are the ones
+      the CSS embeds. The angle is deliberately not exported — every real call
+      site takes the default index, so the `ANGLES` variation is effectively
+      dead, and at 22px it is imperceptible.
+      **Images live in `<defs>` and are created once.** `drawPins` wipes and
+      rebuilds the pin layer every frame and the desktop rAF loop re-arms
       unconditionally, so appending an `<image>` per pin per frame would
-      re-fetch and re-decode thumbnails at 60fps. Fix that _first_ — define
-      each thumbnail once in `<defs>` as a `<pattern>` and only reposition per
-      frame, or replace remove-and-rebuild with a keyed data-join on `pin.id`.
-      The data is already there: `GlobePin` (`Globe.tsx:13`) carries only
-      `id`/`lng`/`lat`/`placeName` and needs the thumb URL, but `tripCovers()`
-      (`src/lib/trips/covers.ts`) already returns the first photo by
-      `position` then `createdAt`, presigned, and `src/app/page.tsx` already
-      fetches it for the "Your Pins" cards — so the logged-in home pays no
-      extra query and no extra network, same URLs, browser cache. Two catches
-      remain: signed thumb URLs expire after an hour (`READ_EXPIRY_SECONDS`,
-      `src/lib/photos/sign.ts`), so an hour-old globe would show broken heads
-      where it shows a dot today — fall back to the gradient on `error` at
-      minimum; and `isPinVisible` culls the far side, so a head now floating
-      above its coordinate can straddle the limb. Crowding is the thing to
-      eyeball: a legible head is `r=14–18` against today's `r=6`, on a sphere
-      that rests at ~209px radius, with up to 15 free-tier pins and no cap on
-      paid.
-      **Phase C — the public globe, a product decision rather than a styling
-      one.** `/u/[username]` currently exposes **no photos at all** —
-      `PeekPanel` has no images and `TripDTO` carries no photo fields.
-      Thumbnail pins there means widening the DTO and putting presigned R2
-      URLs for every trip's first photo into a public page's HTML. For a
-      product marketed on privacy that deserves deciding on its own merits.
-      `opengraph-image` goes through Satori and renders no globe — checked,
-      not assumed.
-      The full-bleed globe layout, size and every interaction stay untouched
-      throughout. This is the pin only.
+      re-decode thumbnails at 60fps. `ensurePinFills` appends a
+      `<linearGradient>` and a `<pattern>` the first time it sees a pin and
+      skips them thereafter. It is called from `drawPins`, not from one-shot
+      setup in the effect body, because `pins` changes through `pinsRef`
+      without re-running the effect. **This is what let the hot loop stay
+      untouched — no data-join refactor, and nothing near the drag, pinch,
+      wheel or auto-spin paths.**
+      **Three stacked circles, gradient under photo.** A thumbnail that is
+      still loading, or whose signed URL has expired after its hour
+      (`READ_EXPIRY_SECONDS`), simply reveals the gradient beneath it, so
+      there is no `onerror` handling to get wrong. Each pin is now a `<g>` so
+      hover grows the whole face; the ring carries `pointer-events="all"`
+      because with `fill: none` only its 2px stroke would otherwise be
+      clickable.
+      **Def ids are namespaced per instance** off `useId()`, sanitised the way
+      `MiniGlobe` does. `globe-vignette` and `globe-shadow` were hardcoded, so
+      two globes on one page would have collided; per-pin ids would have made
+      that worse.
+      **Verification.** Rendered the real `Globe.tsx` in Chromium with a mixed
+      set — a clustered European group, photo pins and photo-less pins.
+      Structural check: 4 images, all 4 inside `<defs>`, 4 patterns, 8
+      gradients, 12 faces, and the image count does not grow with redraws.
+      Hover measured `[20, 11, 11, 11] → [20, 14, 14, 14] → back`, so both
+      faces and the ring grow while the halo holds. Click round-tripped
+      `selectedId: "2"` for the third pin, which is the index contract most
+      likely to break. Gates green: format, lint, typecheck, 370 tests, build.
+      **Harness note for next time:** under Chrome's `--virtual-time-budget`,
+      rAF fires exactly once and `performance.now()` never advances, so the
+      globe's 950ms focus animation can never complete and anything behind it
+      silently no-ops. Interaction tests need real time and a `fetch` back to
+      a logging server; static screenshots are fine under virtual time.
 - [x] **25. Typography — Playfair Display → EB Garamond** _(5 August 2026)_.
       DM Sans stays. One serif site-wide, two faces total. Landed on
       `design/age-of-sail`, not `dev`.

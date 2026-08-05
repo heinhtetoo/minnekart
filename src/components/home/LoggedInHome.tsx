@@ -47,6 +47,10 @@ export default function LoggedInHome({
     lng: item.lng,
     lat: item.lat,
     placeName: item.placeName,
+    // Same URL the card below already requests, so the pin is a cache hit and
+    // the two always show the same photo.
+    thumbUrl: item.thumbUrl,
+    gradientSeed: item.id,
   }));
 
   return (
