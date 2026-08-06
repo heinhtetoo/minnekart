@@ -1133,6 +1133,29 @@ blocking Tier 2 work:
       looked conspicuously modern. Against the dark sea they read as a crisp
       highlight — the terracotta pops where before it competed with a mid-tone
       sea. The pin redesign no longer has to fight the palette.
+- [ ] **27. Globe does not auto-spin on Android Chrome** _(reported 6 August 2026)_. The globe sits still on a phone until you drag it. Not a
+      mystery — `Globe.tsx:428` skips the idle spin whenever
+      `matchMedia('(pointer: coarse)')` matches, so it is off on **every** touch
+      device, not just Android. That guard is the fix for the iOS Safari
+      tap-starvation bug in "Post-launch bugs": the spin redraws all ~177
+      country paths every frame forever (nothing resets `lastInteraction` while
+      you tap the page rather than the globe), and that continuous main-thread
+      work starved tap/click dispatch on the sign-in form. So **do not just
+      delete the guard** — that reintroduces a confirmed, much worse bug.
+      Three angles worth weighing, cheapest first. (a) The starvation was
+      observed on iOS Safari; the guard was applied to all coarse pointers
+      without ever testing whether Android Chrome suffers it. (b) The harm was
+      to a _form_ sharing a page with a spinning globe — the `autoSpin` prop
+      exists on `Globe` but no call site ever passes it, so the logged-out home
+      (which has the auth card) and the logged-in home (which has no form)
+      are treated identically. Scoping the skip to the page that actually broke
+      is one prop. (c) The real cost is the redraw itself: throttling the spin
+      well below 60fps, or resetting `lastInteraction` from a document-level
+      `touchstart` so it parks while the user is busy elsewhere, removes the
+      starvation rather than trading a feature for it. Whatever lands must be
+      verified on real iOS Safari _and_ Android Chrome hardware — the headless
+      harness cannot see this class of bug — and must honour
+      `prefers-reduced-motion`, which the spin does not check today.
 
 ### Tier 4 — hygiene / post-PMF
 
@@ -1196,6 +1219,28 @@ blocking Tier 2 work:
       phone. Pass forward only the cheap results (sniffed format and
       `takenAt`) so `processImage` can skip `readPhotoExif` while still
       reading the bytes it needs to decode. Low urgency.
+- [ ] **28. Refactor `TripForm.tsx` — 688 lines against the repo's 300-line
+      rule.** One file holds the whole add/edit memory flow: a root component
+      with 14 `useState` and 3 `useRef`, plus `PhotoSeed`, `PlaceSearch` and
+      `Field` defined below it. It splits along seams that already exist.
+      `PlaceSearch` (~75 lines) is self-contained — its own query state,
+      debounce and result list, talking to the parent through one `onPick`.
+      `Field` is presentational. The seed-photo flow is the big one (~300
+      lines across `readSeedPhoto`, `fillFromPhoto`, `useSeedLocation`,
+      `clearSeedPhoto`, the `seedPick`/`seedOwned` refs and the `PhotoSeed`
+      view) and wants to be a hook plus a component, not more sub-components in
+      the same file. What is left is a form that submits.
+      **The risk is the provenance rules, not the line count.** `seedOwned`
+      tracks which fields the photo filled versus which the user typed, so a
+      later edit releases the right ones — those rules are written up under
+      task 10 and are exactly the kind of thing a mechanical extraction
+      silently inverts. `readSeedPhoto`'s `isStale()` guard against a second
+      pick landing first is the same shape of hazard.
+      **There is not one test on this file** (`src/components/trips/` has no
+      test at all) and both `/trip/new` and `/trip/[id]/edit` render it, so
+      characterisation tests over the provenance and staleness behaviour come
+      first — extract second. Pure hygiene; no user-visible change. Low
+      urgency, but do it before the next feature lands in this file.
 - Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
   opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
   real usage data exists.
