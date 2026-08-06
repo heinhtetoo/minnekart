@@ -1219,8 +1219,9 @@ blocking Tier 2 work:
       phone. Pass forward only the cheap results (sniffed format and
       `takenAt`) so `processImage` can skip `readPhotoExif` while still
       reading the bytes it needs to decode. Low urgency.
-- [ ] **28. Refactor `TripForm.tsx` — 688 lines against the repo's 300-line
-      rule.** One file holds the whole add/edit memory flow: a root component
+- [x] **28. Refactor `TripForm.tsx` — 688 lines against the repo's 300-line
+      rule** _(6 August 2026)_. One file held the whole add/edit memory flow: a
+      root component
       with 14 `useState` and 3 `useRef`, plus `PhotoSeed`, `PlaceSearch` and
       `Field` defined below it. It splits along seams that already exist.
       `PlaceSearch` (~75 lines) is self-contained — its own query state,
@@ -1238,9 +1239,47 @@ blocking Tier 2 work:
       pick landing first is the same shape of hazard.
       **There is not one test on this file** (`src/components/trips/` has no
       test at all) and both `/trip/new` and `/trip/[id]/edit` render it, so
-      characterisation tests over the provenance and staleness behaviour come
-      first — extract second. Pure hygiene; no user-visible change. Low
-      urgency, but do it before the next feature lands in this file.
+      characterisation tests over the provenance and staleness behaviour came
+      first — extract second.
+      **Done as a pure-logic extraction, no new dependencies.** The provenance
+      rules became a reducer (`seed-fields.ts`) and the photo read became an
+      async sequence with its collaborators injected (`seed-photo.ts`), both
+      plain modules testable under the existing node vitest setup — the same
+      shape as `src/components/home/format.ts`. `vitest.config.ts` and
+      `package.json` are untouched. The alternative, jsdom plus Testing
+      Library, would have stood up a whole component-test stack for one file
+      when the risk we actually named is pure logic.
+      **The reducer is what retired the refs.** `fillFromPhoto`'s functional
+      `setValue((current) => …)` existed only to read fresh state after an
+      await, and `coordsRef` mirrored `coords` for the same reason; a reducer
+      gets both for free, so `shouldOfferSwap(state)` is now an exported
+      predicate. `seedPick` stays a ref in the component and reaches the
+      sequence as an injected `isStale()`, which is what makes the
+      abandoned-pick path assertable — including that a preview belonging to a
+      superseded pick is revoked, since state never reached it and the cleanup
+      effect will never see it.
+      **34 new tests** (367 → 401, 59 → 61 files) over both the rules and every
+      branch of the read. The one they exist for: a photo read defers to a
+      hand-typed place name, but "Use the photo's place" deliberately overwrites
+      it — one action away from each other and easy to collapse by accident.
+      **One behaviour changed, deliberately.** Picking an over-50MB file while
+      an earlier read was still in flight used to leave `seedBusy` true, so
+      "Reading the photo…" hung there forever; the size-check branch cleared
+      the file and note but never the busy flag. It was not a targeted fix: the
+      old code had two rejection branches clearing different subsets of the same
+      four fields, and collapsing them into one `photoRejected` action means
+      deciding what "rejected" is as a state, which is all four cleared. A test
+      starting from a mid-read state pins it, and was checked by reverting the
+      one word and watching it — and only it — fail. Everything else is
+      byte-for-byte the same behaviour, note strings included.
+      **Result**: `TripForm.tsx` 688 → 287 lines, and six files beside it, all
+      under 300. `PlaceFields.tsx` was not in the plan — the extraction alone
+      landed at 340 because inline `dispatch` objects are longer than the old
+      setters, so the search box, place name, country and pin row moved out
+      together as the one place a location gets set. Gates green: format, lint,
+      typecheck, 400 tests, build, and `/trip/new` serving 200 in dev.
+      **Not verified by a human in a browser** — the photo-pick flows in the
+      plan's manual pass need a real device and a logged-in session.
 - Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
   opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
   real usage data exists.
