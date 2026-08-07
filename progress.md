@@ -1133,7 +1133,8 @@ blocking Tier 2 work:
       looked conspicuously modern. Against the dark sea they read as a crisp
       highlight — the terracotta pops where before it competed with a mid-tone
       sea. The pin redesign no longer has to fight the palette.
-- [x] **27. Globe does not auto-spin on Android Chrome** _(7 August 2026)_. The
+- [ ] **27. Globe does not auto-spin on Android Chrome** _(fix shipped to `dev`
+      7 August 2026; OPEN pending iOS)_. The
       globe sat still on a phone until you dragged it. Not a
       mystery — `Globe.tsx:428` skipped the idle spin whenever
       `matchMedia('(pointer: coarse)')` matches, so it is off on **every** touch
@@ -1220,10 +1221,14 @@ blocking Tier 2 work:
       One check failed first time and was **my harness, not the code**: a
       synthetic `MouseEvent` with no `view`, which d3-drag reads to bind its
       move/up listeners, so no drag ever started.
-      **Still wants a human on real hardware** — emulated coarse pointers prove
-      the branching, not that iOS Safari's tap dispatch survives. Check the
-      logged-out sign-in taps have not regressed, and that the logged-in home's
-      pin list and bottom nav respond first tap while the globe turns.
+      **Confirmed working on Android Chrome** on the `dev` preview (7 August
+      2026). **Still open: iOS Safari has not been tested**, which is the whole
+      reason the guard existed — emulated coarse pointers prove the branching,
+      not that WebKit's tap dispatch survives a spinning globe. Two things to
+      check before ticking this: the logged-out sign-in taps have not regressed,
+      and the logged-in home's pin list and bottom nav respond on the first tap
+      while the globe turns. If either is flaky, the fallback is one line —
+      `spinOnTouch={false}` on `LoggedInHome` too.
 
 ### Tier 4 — hygiene / post-PMF
 
@@ -1348,6 +1353,125 @@ blocking Tier 2 work:
       typecheck, 400 tests, build, and `/trip/new` serving 200 in dev.
       **Not verified by a human in a browser** — the photo-pick flows in the
       plan's manual pass need a real device and a logged-in session.
+- [ ] **30. Optimise for AI answer engines and search (GEO/SEO).** Task 9 built
+      the base layer — `/guides` hub-and-spoke, branded OG cards, per-page
+      `metadata`, sitemap, robots. This is the layer above it, aimed at being
+      **quoted** by ChatGPT, Claude, Perplexity and AI Overviews rather than
+      just ranked. Audited the current state and scoped it to three phases.
+      **Deliberately excluded, after scoping**: new `/guides` spokes (the only
+      item with an ongoing content cost, and speculative), and rewriting the
+      existing statement-shaped H2s into questions (marginal gain, and it makes
+      good prose worse — "Why private, and not a public feed" beats "Why should
+      a travel map be private?"). An `llms.txt` rides along as an optional
+      passenger, never as a deliverable — no engine commits to honouring it.
+      **Phase A — decisions and hygiene, one sitting.** The crawler policy comes
+      first and nothing else ships before it. `robots.ts` names no AI crawler,
+      so the catch-all allows every one. Split them by purpose rather than
+      treating "AI crawler" as one switch: the **citation** bots
+      (`OAI-SearchBot`, `PerplexityBot`, `Claude-SearchBot`) are the entire
+      point of this task, while the **training** bots (`GPTBot`, `ClaudeBot`,
+      `CCBot`, `Google-Extended`, `Applebot-Extended`) cost approximately
+      nothing measurable to refuse. Note that `Google-Extended` gates Gemini
+      training **only, not Google Search indexing** — the usual mistake is
+      leaving it open believing SEO depends on it. Decision: allow citation
+      bots, refuse training bots, and close `/u/[username]` to both. That is
+      on-message for a privacy product — cite us, do not train on our users —
+      and `/u/` being opt-in public meant "someone can visit my globe", not "my
+      travel history is in a training corpus". **Do not oversell it**:
+      robots.txt is advisory and stops only the compliant. Bot names rot, so
+      verify each against its vendor's docs at implementation time.
+      Also in phase A: `alternates.canonical` per page, since only
+      `metadataBase` is set (`layout.tsx:22`) and the home page takes
+      `?invite=` and `?signup=`, so signals split today. And `sitemap.ts` sets
+      `lastModified: new Date()` on all nine routes, so every deploy claims
+      every page changed, which trains crawlers to distrust the field entirely.
+      Drop the blanket value; hardcode real dates on the guides only, where
+      freshness actually means something.
+      **Phase B — JSON-LD, the largest single gap.** `grep schema.org` returns
+      nothing. This is how an answer engine learns what the product is, what it
+      costs and who publishes it. Wants `Organization` plus `WebSite` at the
+      root, `SoftwareApplication` with `offers` on `/pricing`, and `Article`
+      plus `BreadcrumbList` on the guides. No dependency — a `<script>` tag in
+      the existing layouts. **Generate the offers from `pricingTiers()`**
+      (`src/lib/billing/pricing.ts`), already the single source of truth for
+      free, $39 annual, $5 monthly and $99 lifetime, so the schema cannot drift
+      from the page — and mismatched JSON-LD is worse than none, since Google
+      reads it as a quality signal. `PricingTier.price` holds a display string
+      with a currency symbol, so add numeric amount and currency fields to the
+      tier rather than parsing that string, which would be exactly the
+      fragility worth avoiding.
+      Builders are pure functions, so they test under the existing node vitest
+      setup the way `src/lib/globe/spin.ts` does.
+      **Phase C — two bounded edits to pages that already exist.** Not a content
+      programme. (a) A comparison **table** on
+      `/guides/polarsteps-alternative`, which already makes the comparison in
+      prose — tables get extracted verbatim, so this is the highest-yield hour
+      in the task. Competitor claims must stay factually current; they age
+      badly and cost trust when they do. (b) An FAQ section on `/pricing`,
+      roughly six questions already answered in support, with claims consistent
+      with `/privacy` and `/terms` per task 9's house rule. **Note on
+      `FAQPage` schema**: Google restricted FAQ rich results to government and
+      health sites in 2023, so it will not produce snippets here. The FAQ earns
+      its place as content answer engines parse, not as markup — do not add the
+      schema expecting rich results.
+      **Expectation setting.** A and B make the site _eligible_ to be quoted; C
+      is what gives an engine something to quote. AI citations have no reliable
+      measurement yet, so no dashboard will confirm any of this worked. Same
+      6–12 month clock task 9 noted. Static build only, no schema or migration.
+      **Found while auditing, deliberately not in scope**: `/pricing` and both
+      guides are `export const dynamic = 'force-dynamic'`, because they call
+      `getServerSessionUser()` for the nav — so every crawler hit does a DB
+      session lookup and nothing is CDN-cached. That hurts TTFB and crawl
+      budget, but fixing it means splitting the viewer-dependent nav out so the
+      shell can be static. Real refactor risk for a performance win, not a GEO
+      one. Its own task if it is worth doing.
+- [ ] **31. Analytics — measure the product without breaking the promise.**
+      **The constraint comes first, because it rules out most of the market.**
+      The site publishes "no analytics" in six places, and `/privacy` makes it
+      specific and checkable: "There is no Google Analytics, no pixel, no
+      session recorder. The only third-party code that ever loads is Cloudflare
+      Turnstile on the signup form and Paddle on the checkout." `/about` says
+      privacy is "the reason the product is shaped the way it is", and
+      `/guides/polarsteps-alternative` leans on it against a named competitor.
+      **Any client-side analytics script breaks that literally**, however
+      privacy-respecting the vendor. Google Analytics is named as absent, so it
+      is not a candidate at all.
+      **What that leaves is better than it sounds**, because most of what is
+      worth knowing is already in Postgres and needs no new collection.
+      **Part 1 — product metrics from data we already hold.** Activation (share
+      of signups adding a first trip within 24h), how many users reach the
+      `FREE_TRIP_LIMIT` of 15 and what share of those upgrade, free-to-paid
+      conversion and time to convert, median trips and photos per user, 30-day
+      retention. All of it is SQL over `users`, `sessions`, `trips` and
+      `photos`, joined to `users.plan` for revenue. Advantages a hosted tool
+      cannot match: exact rather than sampled, **retrospective** — the rows were
+      always there, so a question asked today can look at last March, where a
+      tracker only answers what it was configured for in advance — and
+      identity-resolved without sending anyone's identity anywhere. Ship it as
+      saved SQL first; a card in `/admin` (which already has the owner gate and
+      `InviteManager` to copy) only if it earns the upkeep.
+      **Part 2 — Google Search Console for acquisition.** Free, verified by DNS
+      record or HTML file, and it runs **no code on the site** — it reports
+      Google's own index data rather than watching visitors, so the published
+      claim stays true. Gives search queries, impressions, clicks, average
+      position and index coverage per page. This is the feedback loop task 30
+      needs; without it the JSON-LD and the guides ship with no way to tell
+      whether they worked.
+      **The blind spot, stated honestly.** Neither part can see anyone who
+      visited and left without signing up, which is most people. Non-search
+      referrals — Reddit, a newsletter, an AI engine's citation link — are
+      invisible. That is the real price of the privacy claim, and it is
+      accepted deliberately rather than overlooked.
+      **Rejected**: Umami, Plausible, Cloudflare's beacon and Vercel Web
+      Analytics. All are decent and some are free, but every one injects a
+      script and would force rewriting the claim across six pages including the
+      privacy policy — a weaker, less checkable claim on a product whose pitch
+      is that it does not do this. Not worth a page-view count.
+      **Worth a look if acquisition data ever becomes urgent**: Cloudflare Web
+      Analytics is server-side and needs no beacon when the domain is proxied
+      through Cloudflare. We already hold a Cloudflare account for Turnstile and
+      R2, so the only question is whether DNS routes through their proxy.
+      Free, zero code, and it would not touch the claim.
 - Globe auto-spin as a `/settings` toggle _(BACKLOG, idea)_. Task 27 makes the
   spin follow the OS `prefers-reduced-motion` preference, which is the right
   default. An in-app toggle would go further: stop the spin without changing an
