@@ -1142,20 +1142,52 @@ blocking Tier 2 work:
       you tap the page rather than the globe), and that continuous main-thread
       work starved tap/click dispatch on the sign-in form. So **do not just
       delete the guard** — that reintroduces a confirmed, much worse bug.
-      Three angles worth weighing, cheapest first. (a) The starvation was
-      observed on iOS Safari; the guard was applied to all coarse pointers
-      without ever testing whether Android Chrome suffers it. (b) The harm was
-      to a _form_ sharing a page with a spinning globe — the `autoSpin` prop
-      exists on `Globe` but no call site ever passes it, so the logged-out home
-      (which has the auth card) and the logged-in home (which has no form)
-      are treated identically. Scoping the skip to the page that actually broke
-      is one prop. (c) The real cost is the redraw itself: throttling the spin
-      well below 60fps, or resetting `lastInteraction` from a document-level
-      `touchstart` so it parks while the user is busy elsewhere, removes the
-      starvation rather than trading a feature for it. Whatever lands must be
-      verified on real iOS Safari _and_ Android Chrome hardware — the headless
-      harness cannot see this class of bug — and must honour
-      `prefers-reduced-motion`, which the spin does not check today.
+      **The fix is to scope the guard to the page that broke.** The harm was
+      never the globe; it was a globe sharing a page with a _form_. There are
+      three call sites and only `LoggedOutHome.tsx:134` has one — the auth
+      card. `LoggedInHome.tsx:96` and `PublicGlobe.tsx:68` have no form at all,
+      and the logged-in home is almost certainly where this was noticed. So:
+      move the coarse-pointer skip out of `Globe.tsx` and behind a prop, and
+      set it only on the logged-out home. About five lines. The spin returns on
+      Android _and_ iOS everywhere except the one page with a confirmed bug,
+      which keeps exactly the fix that works today. Note `autoSpin` already
+      exists as a prop and no call site passes it, so it is dead as written —
+      `autoSpin={false}` is too blunt here because it would also kill the
+      desktop spin on that page.
+      **Rejected: detecting iOS Safari and skipping only there.** It does not
+      say what it means — every browser on iOS is WebKit, so Chrome and Firefox
+      on iPhone starve identically and the real condition is "iOS", not
+      "Safari". iOS is also hard to detect now: iPadOS 13+ reports as
+      `Macintosh`, so `/iPad/` silently fails and needs a
+      `maxTouchPoints > 1 && /Macintosh/` limb, a check that rots quietly and
+      **fails open** — the worst direction, since it brings the tap bug back on
+      a device we cannot test. It would also grant something never verified: we
+      know Android Chrome did not show that symptom, not that a permanent 60fps
+      redraw of ~177 country paths is acceptable there on battery.
+      **Deferred, and only worth it to get the spin back on the logged-out
+      home**: reset `lastInteraction` from a document-level `pointerdown` so the
+      spin parks whenever the user touches anything. All six writes to
+      `lastInteraction` today are inside globe handlers, which is exactly why it
+      never stops while you tap a form. That removes the starvation instead of
+      trading a feature for it, but it needs an iPhone to verify, so keep it
+      separate from the page-scoping change.
+      **Honour `prefers-reduced-motion` in the same change.** It gates the same
+      switch from the other side and is one extra condition once you are already
+      in there. The Phase 10 accessibility pass reaches CSS only —
+      `globals.css:183` turns off `scroll-behavior` and the `.fade` animation —
+      but the spin is `Globe.tsx:418` mutating a rotation inside a
+      `requestAnimationFrame` loop, so no media query touches it. Someone with
+      Reduce Motion on gets no fades and no smooth scrolling, and then the
+      largest moving thing on the site rotating for as long as the tab is open.
+      Add `matchMedia('(prefers-reduced-motion: reduce)').matches` beside the
+      pointer check. **Drag-to-spin must keep working** — the setting means "do
+      not move things at me unprompted", not "disable motion", and a drag is
+      motion the user asked for, so this gates the idle auto-spin only. **No
+      on-screen notice** explaining why it stopped: nothing looks broken, the
+      globe still drags, and a label on the hero explains a deliberate OS
+      setting back to the person who chose it.
+      Verify on real iOS Safari _and_ Android Chrome hardware; the headless
+      harness cannot see this class of bug.
 
 ### Tier 4 — hygiene / post-PMF
 
@@ -1280,6 +1312,17 @@ blocking Tier 2 work:
       typecheck, 400 tests, build, and `/trip/new` serving 200 in dev.
       **Not verified by a human in a browser** — the photo-pick flows in the
       plan's manual pass need a real device and a logged-in session.
+- Globe auto-spin as a `/settings` toggle _(BACKLOG, idea)_. Task 27 makes the
+  spin follow the OS `prefers-reduced-motion` preference, which is the right
+  default. An in-app toggle would go further: stop the spin without changing an
+  OS-wide setting, or keep it while reducing motion everywhere else. Undecided,
+  and not free — it needs a `users` column beside `globe_public`
+  (`src/db/schema.ts:38`) and a card on `/settings` following
+  `GlobeVisibility`, and a new `users` column downs every logged-in request
+  until Migrate Neon runs. Revisit once the media query has shipped and we know
+  whether anyone actually wants the override. The settings row is also the only
+  place a "following your system Reduce Motion setting" explanation belongs —
+  task 27 deliberately keeps it off the globe itself.
 - Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
   opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
   real usage data exists.
