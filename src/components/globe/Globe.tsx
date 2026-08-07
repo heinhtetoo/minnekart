@@ -6,6 +6,7 @@ import { select } from 'd3-selection';
 import { useEffect, useId, useRef } from 'react';
 
 import { isPinVisible, Rotation } from '@/lib/globe/projection';
+import { shouldAutoSpin } from '@/lib/globe/spin';
 import {
   borders,
   GLOBE_COLORS as COLORS,
@@ -31,6 +32,10 @@ interface GlobeProps {
   pins: GlobePin[];
   accent?: string;
   autoSpin?: boolean;
+  // Set false where the globe shares a page with controls a user taps
+  // straight away, e.g. the auth card. The idle spin's redraw delays tap
+  // dispatch on iOS, and a sign-in form is the worst place to lose a tap.
+  spinOnTouch?: boolean;
   showGraticule?: boolean;
   onSelect?: (id: string) => void;
   focusId?: string | null;
@@ -56,6 +61,7 @@ export default function Globe({
   pins,
   accent = '#a55931',
   autoSpin = true,
+  spinOnTouch = true,
   showGraticule = true,
   onSelect,
   focusId = null,
@@ -422,15 +428,40 @@ export default function Globe({
     };
 
     redraw();
-    // Skip the idle auto-spin on touch devices: its per-frame redraw runs
-    // continuously (nothing resets lastInteraction while the user taps the
-    // page, not the globe) and starves tap/click dispatch on iOS Safari.
+
     const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
-    if (autoSpin && !coarsePointer) {
+    const spins = shouldAutoSpin({
+      autoSpin,
+      spinOnTouch,
+      coarsePointer,
+      reduceMotion: window.matchMedia('(prefers-reduced-motion: reduce)')
+        .matches,
+    });
+    if (spins) {
       raf = requestAnimationFrame(spin);
     }
 
+    // Only the globe's own handlers reset lastInteraction, so without this the
+    // spin never pauses while the user is busy elsewhere on the page — the
+    // continuous redraw is what starved tap dispatch on iOS. Capture phase,
+    // because d3-drag stops propagation on the events it handles. Touch only:
+    // on desktop this would park the spin on every click, for no benefit.
+    const noteInteraction = () => {
+      lastInteraction = performance.now();
+    };
+    if (spins && coarsePointer) {
+      document.addEventListener('pointerdown', noteInteraction, {
+        capture: true,
+        passive: true,
+      });
+    }
+
     return () => {
+      // The capture flag is part of the listener's identity; without it here
+      // the removal silently does nothing.
+      document.removeEventListener('pointerdown', noteInteraction, {
+        capture: true,
+      });
       cancelAnimationFrame(raf);
       cancelAnimationFrame(animationFrame);
       svg.on('wheel', null);
@@ -441,7 +472,7 @@ export default function Globe({
       svg.on('.drag', null);
       apiRef.current = null;
     };
-  }, [accent, autoSpin, defsPrefix, showGraticule, width, height]);
+  }, [accent, autoSpin, spinOnTouch, defsPrefix, showGraticule, width, height]);
 
   useEffect(() => {
     if (focusId === appliedFocusRef.current) return;

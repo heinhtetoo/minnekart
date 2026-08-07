@@ -1133,8 +1133,9 @@ blocking Tier 2 work:
       looked conspicuously modern. Against the dark sea they read as a crisp
       highlight — the terracotta pops where before it competed with a mid-tone
       sea. The pin redesign no longer has to fight the palette.
-- [ ] **27. Globe does not auto-spin on Android Chrome** _(reported 6 August 2026)_. The globe sits still on a phone until you drag it. Not a
-      mystery — `Globe.tsx:428` skips the idle spin whenever
+- [x] **27. Globe does not auto-spin on Android Chrome** _(7 August 2026)_. The
+      globe sat still on a phone until you dragged it. Not a
+      mystery — `Globe.tsx:428` skipped the idle spin whenever
       `matchMedia('(pointer: coarse)')` matches, so it is off on **every** touch
       device, not just Android. That guard is the fix for the iOS Safari
       tap-starvation bug in "Post-launch bugs": the spin redraws all ~177
@@ -1164,13 +1165,20 @@ blocking Tier 2 work:
       a device we cannot test. It would also grant something never verified: we
       know Android Chrome did not show that symptom, not that a permanent 60fps
       redraw of ~177 country paths is acceptable there on battery.
-      **Deferred, and only worth it to get the spin back on the logged-out
-      home**: reset `lastInteraction` from a document-level `pointerdown` so the
-      spin parks whenever the user touches anything. All six writes to
-      `lastInteraction` today are inside globe handlers, which is exactly why it
-      never stops while you tap a form. That removes the starvation instead of
-      trading a feature for it, but it needs an iPhone to verify, so keep it
-      separate from the page-scoping change.
+      **Shipped alongside, not deferred: the root-cause fix.** Page scoping was
+      logged on the strength of the old bug entry's "only that form — every form
+      after login was fine". That evidence does not hold: every form after login
+      (`/trip/new`, `/settings`) sits on a page with **no spinning globe**, since
+      `MiniGlobe` has no animation loop at all. The observation is explained by
+      "no spin on those pages", not by immunity — so the logged-in home's pin
+      list and bottom nav were never actually tested under a spinning globe, and
+      page scoping alone would have switched a 60fps loop back on over them.
+      So `lastInteraction` is now also reset by a document-level `pointerdown`,
+      and the spin parks whenever the user touches anything anywhere. All six
+      previous writes were inside globe handlers, which is exactly why it never
+      stopped while you tapped a form. Capture phase, because d3-drag stops
+      propagation on the events it handles; **coarse pointers only**, so desktop
+      keeps today's behaviour rather than stalling on every click.
       **Honour `prefers-reduced-motion` in the same change.** It gates the same
       switch from the other side and is one extra condition once you are already
       in there. The Phase 10 accessibility pass reaches CSS only —
@@ -1186,8 +1194,36 @@ blocking Tier 2 work:
       on-screen notice** explaining why it stopped: nothing looks broken, the
       globe still drags, and a label on the hero explains a deliberate OS
       setting back to the person who chose it.
-      Verify on real iOS Safari _and_ Android Chrome hardware; the headless
-      harness cannot see this class of bug.
+      **Shape of the change.** `Globe` gains `spinOnTouch` (default true), set
+      false only at `LoggedOutHome.tsx:134`, the one call site with the auth
+      card beside it; `LoggedInHome` and `PublicGlobe` are untouched and get the
+      spin back. The three-way decision moved to `shouldAutoSpin` in
+      `src/lib/globe/spin.ts` — a pure predicate with 7 tests, following
+      `projection.ts` next door. Worth extracting: three booleans is eight cases
+      and exactly the shape that gets inverted later, and it is the only part of
+      this task a test can reach.
+      **Verified in a real browser, not just by gates.** The task looked
+      untestable — no jsdom in the suite, and starvation itself cannot be
+      reproduced headlessly — but the _spin decisions_ can be. Bundled the real
+      `Globe.tsx` with esbuild and drove Playwright's cached Chromium over CDP,
+      using `Emulation.setEmulatedMedia` for Reduce Motion and
+      `setTouchEmulationEnabled` for `pointer: coarse`, then sampled the
+      `.borders` path `d` attribute 600ms apart to tell moving from still.
+      12/12: spins on desktop; does not under Reduce Motion; **drag still turns
+      it** under Reduce Motion; touch emulation really does give
+      `pointer: coarse`; spins on touch; a tap elsewhere parks it; the
+      `spinOnTouch={false}` globe stays still on touch; a desktop click does
+      _not_ park it (proving the listener is coarse-only); and
+      `DOMDebugger.getEventListeners` shows one `pointerdown` listener on
+      `document` after four remounts and zero after unmount, so the cleanup's
+      `capture: true` is right — without it removal silently no-ops.
+      One check failed first time and was **my harness, not the code**: a
+      synthetic `MouseEvent` with no `view`, which d3-drag reads to bind its
+      move/up listeners, so no drag ever started.
+      **Still wants a human on real hardware** — emulated coarse pointers prove
+      the branching, not that iOS Safari's tap dispatch survives. Check the
+      logged-out sign-in taps have not regressed, and that the logged-in home's
+      pin list and bottom nav respond first tap while the globe turns.
 
 ### Tier 4 — hygiene / post-PMF
 
