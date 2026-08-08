@@ -5,13 +5,13 @@ where every pin is a place you've stood, opening into the story, dates, and
 photographs of that visit.
 
 [![CI](https://github.com/heinhtetoo/minnekart/actions/workflows/ci.yml/badge.svg)](https://github.com/heinhtetoo/minnekart/actions/workflows/ci.yml)
-[![Live](https://img.shields.io/badge/live-minnekart.vercel.app-1f3d36)](https://minnekart.vercel.app)
+[![Live](https://img.shields.io/badge/live-minnekart.com-1f3d36)](https://minnekart.com)
 
 ![Spinning the globe, clicking a pin, and reading the memory it holds](docs/media/globe.gif)
 
 _Drag to spin, click a pin, and the globe flies to it while the memory card
-fills in. The live site is invite-only, so the public URL shows the logged-out
-globe rather than a tour._
+fills in. Signup is currently invite-only, so the public URL shows the
+logged-out globe rather than a tour._
 
 ## What it is
 
@@ -21,9 +21,9 @@ dates, a highlight, a longer story, and the photographs from that trip. Trips
 stay private by default, and any one of them can be handed to a friend as a
 signed share link.
 
-It is a real, deployed application rather than a demo — invite-only signup,
-email verification, photo uploads straight to object storage, and a public
-profile page for anyone who wants to show their globe off.
+It is a real, deployed application rather than a demo — signup with email
+verification, photo uploads straight to object storage, subscription billing,
+and a public profile page for anyone who wants to show their globe off.
 
 ## Highlights
 
@@ -31,40 +31,53 @@ profile page for anyone who wants to show their globe off.
   `d3-geo` and topojson, with the world atlas bundled into the app — no
   map-tile vendor, no API key, no per-view cost. Drag to spin, pinch or scroll
   to zoom, click a pin and the globe eases across to centre it.
-- **Hand-rolled invite-only auth.** argon2id (m=19456, t=2, p=1), opaque
-  session tokens stored only as SHA-256 hashes, 30-day sliding expiry renewed
-  past the halfway mark, OTP email verification with attempt caps, and
-  database-backed rate limiting on the login and signup paths.
-- **176 tests across 38 files, integration-first.** They run against a real
+- **Hand-rolled auth.** argon2id (m=19456, t=2, p=1), opaque session tokens
+  stored only as SHA-256 hashes, 30-day sliding expiry renewed past the halfway
+  mark, OTP email verification with attempt caps, and database-backed rate
+  limiting on the login and signup paths.
+- **Signup opens with one environment variable.** Invite-gated by default;
+  `OPEN_SIGNUP` makes the invite optional and hands the door to Cloudflare
+  Turnstile, backed by per-IP quotas (5/hour, 20/day) and a global daily
+  kill-valve. The flag is off in production today.
+- **Subscription billing, with the webhook as the source of truth.** Paddle as
+  Merchant of Record, so sales tax is their problem rather than a solo
+  operator's. Signed webhooks with replay-safe dedupe drive plan state; the
+  capacity caps are enforced server-side in the route handlers, never in the
+  client. Cancel, resume and update-card all live in the app.
+- **408 tests across 62 files, integration-first.** They run against a real
   Postgres service container in CI, not mocks — route handlers are exercised
   end to end against actual SQL, so migrations and constraints are covered too.
 - **Direct-to-R2 photo uploads.** Presigned `PUT` straight from the browser,
   short-lived signed `GET` for display, with EXIF and HEIC handling done
   client-side. Storage sits behind an `ObjectStorage` interface
   (`src/lib/storage/types.ts`) with `r2` and `memory` drivers.
-- **Roughly $0/month.** Vercel, Neon and R2 free tiers, with backups taken by
+- **Near-zero marginal cost.** Vercel, Neon and R2 all sit on free tiers, so
+  the bills are a domain, transactional email and Paddle's cut of revenue —
+  a paying user costs fractions of a cent of storage. Backups are taken by
   `pg_dump` (database) and an `rclone` mirror (photos) on a Tailscale-only box
   that never sits in the request path.
 
 ## Stack
 
-| Layer     | Choice                                                               |
-| --------- | -------------------------------------------------------------------- |
-| Framework | Next.js 16 (App Router), React 19, TypeScript in strict mode         |
-| Database  | Neon Postgres via Drizzle ORM, migrations checked into `drizzle/`    |
-| Auth      | Hand-rolled: argon2 passwords, database-backed sessions, invite-only |
-| Storage   | Cloudflare R2 over the S3 API, presigned upload and display URLs     |
-| Email     | Abstracted `sendEmail()`; Resend API in prod, console output in dev  |
-| Styling   | CSS Modules, co-located per component                                |
-| Testing   | Vitest, integration-first against real Postgres                      |
-| Hosting   | Vercel: `main` deploys production, `dev` deploys the preview         |
+| Layer     | Choice                                                              |
+| --------- | ------------------------------------------------------------------- |
+| Framework | Next.js 16 (App Router), React 19, TypeScript in strict mode        |
+| Database  | Neon Postgres via Drizzle ORM, migrations checked into `drizzle/`   |
+| Auth      | Hand-rolled: argon2 passwords, database-backed sessions, invites    |
+| Bot gate  | Cloudflare Turnstile on signup, with database-backed quotas         |
+| Billing   | Paddle as Merchant of Record, plan state driven by signed webhooks  |
+| Storage   | Cloudflare R2 over the S3 API, presigned upload and display URLs    |
+| Email     | Abstracted `sendEmail()`; Resend API in prod, console output in dev |
+| Styling   | CSS Modules, co-located per component                               |
+| Testing   | Vitest, integration-first against real Postgres                     |
+| Hosting   | Vercel: `main` deploys production, `dev` deploys the preview        |
 
 The absences are deliberate: no CSS framework, no auth library, no component
 library. The dependency list is short and every entry earns its place.
 
 ## Design decisions
 
-A few of the calls worth defending. All nine, with their reasoning, are in
+A few of the calls worth defending. Every one, with its reasoning, is in
 [PRD.md](./PRD.md).
 
 **Database sessions over stateless JWT.** JWTs cannot be revoked without
@@ -79,6 +92,14 @@ parameters (the workaround is either weaker hashing or $5/month), D1 offers
 batch-only transactions where the auth flows need interactive ones, and Next.js
 on Workers rides a community adapter with feature lag. Cloudflare stays scoped
 to R2, so either side remains independently swappable.
+
+**Bought a Merchant of Record instead of wiring up Stripe.** Everything else
+here is hand-rolled, so this is the deliberate exception. The people this is
+built for — expats, long-term travellers — are scattered across dozens of tax
+jurisdictions, and taking their money directly would create registration and
+filing obligations that a solo operator cannot safely carry. Paddle becomes the
+legal seller and remits the VAT/GST. Tax exposure is a legal problem, not an
+engineering one, and a few percent of $39 is a cheap way to not have it.
 
 **Seams where the cloud would otherwise be.** Email and storage each sit behind
 an interface with a local driver — `console` email, `memory` storage. That is
@@ -139,8 +160,10 @@ drizzle/          Generated SQL migrations
 - [progress.md](./progress.md) — the implementation plan, phase by phase, as it
   was actually worked through.
 - [BACKLOG.md](./BACKLOG.md) — what is knowingly left undone, and why.
-- [docs/OPS.md](./docs/OPS.md) — runbook: environment variables, email and
-  storage setup, backups, and the restore drill.
+- [docs/BUSINESS.md](./docs/BUSINESS.md) — positioning, pricing and the
+  reasoning behind the freemium caps.
+- [docs/OPS.md](./docs/OPS.md) — runbook: environments, environment variables,
+  email, storage and billing setup, backups, and the restore drill.
 
 ## Licence
 
