@@ -1472,6 +1472,33 @@ blocking Tier 2 work:
       through Cloudflare. We already hold a Cloudflare account for Turnstile and
       R2, so the only question is whether DNS routes through their proxy.
       Free, zero code, and it would not touch the claim.
+- [ ] **32. Presigned photo uploads have no size ceiling and no orphan
+      cleanup.** `R2Storage.presignPut` (`src/lib/storage/r2.ts:38`) signs no
+      `Content-Length` condition, so a verified user can `PUT` an arbitrarily
+      large object straight to R2. The 8MB/1MB caps
+      (`src/app/api/trips/[id]/photos/route.ts:25`) only get checked when — and
+      if — the client calls back to `POST /photos` to record it; an oversized
+      object is deleted then, but the bytes were already fully uploaded and
+      billed. Worse: if the client never calls that route (crash, or
+      deliberately), the object sits in R2 **forever** with no DB row pointing
+      at it — there is no lifecycle policy and no reconciliation job. The
+      60/min presign rate limit bounds request rate, not per-request size, so
+      it does not close this. Low severity while signup is invite-gated; stops
+      being low severity once task 6's `OPEN_SIGNUP` flag actually flips.
+      Standard fix: a staged upload key (`uploads/<uuid>` promoted to
+      `photos/...` only on record creation) with an R2 lifecycle rule expiring
+      anything left in the staging prefix after ~24h — closes both the cost
+      exposure and the orphan problem via one Cloudflare-side rule, no app
+      code needed on the read/write path.
+- [ ] **33. R2 API token scope isn't documented or asserted.** `docs/OPS.md`'s
+      R2 section (§ Object storage) covers the CORS policy and the SDK
+      checksum footgun but never states the token must be scoped to **Object
+      Read & Write on the one bucket**, not account-wide R2 access. Cloudflare's
+      token UI does not default to least privilege, so a token minted without
+      reading this carefully can end up with reach beyond the app's own bucket.
+      Add the scoping instruction to the setup checklist and verify the
+      currently-live prod and dev tokens against it in the Cloudflare
+      dashboard — a docs + ops check, no code change.
 - Globe auto-spin as a `/settings` toggle _(BACKLOG, idea)_. Task 27 makes the
   spin follow the OS `prefers-reduced-motion` preference, which is the right
   default. An in-app toggle would go further: stop the spin without changing an
