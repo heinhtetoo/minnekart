@@ -3,25 +3,39 @@
 import { drag } from 'd3-drag';
 import { geoGraticule, geoOrthographic, geoPath } from 'd3-geo';
 import { select } from 'd3-selection';
-import { useEffect, useRef } from 'react';
-import { feature, mesh } from 'topojson-client';
+import { useEffect, useId, useRef } from 'react';
 
-import worldData from '@/data/world-110m.json';
 import { isPinVisible, Rotation } from '@/lib/globe/projection';
+import { shouldAutoSpin } from '@/lib/globe/spin';
+import {
+  borders,
+  GLOBE_COLORS as COLORS,
+  GLOBE_VIGNETTE,
+  land,
+} from '@/lib/globe/world';
+import { coverGradientPair } from '@/lib/photos/gradient';
 
 import styles from './Globe.module.css';
 
 export interface GlobePin {
+  // The caller's array index, round-tripped through onSelect — not a trip id,
+  // so it cannot be used to seed the gradient.
   id: string;
   lng: number;
   lat: number;
   placeName: string;
+  thumbUrl?: string | null;
+  gradientSeed?: string;
 }
 
 interface GlobeProps {
   pins: GlobePin[];
   accent?: string;
   autoSpin?: boolean;
+  // Set false where the globe shares a page with controls a user taps
+  // straight away, e.g. the auth card. The idle spin's redraw delays tap
+  // dispatch on iOS, and a sign-in form is the worst place to lose a tap.
+  spinOnTouch?: boolean;
   showGraticule?: boolean;
   onSelect?: (id: string) => void;
   focusId?: string | null;
@@ -36,31 +50,18 @@ interface GlobeApi {
 
 const IDLE_RESUME_MS = 5000;
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const topology = worldData as any;
-const land = feature(topology, topology.objects.countries) as any;
-const borders = mesh(
-  topology,
-  topology.objects.countries,
-  (a: any, b: any) => a !== b,
-);
-/* eslint-enable @typescript-eslint/no-explicit-any */
-
-const COLORS = {
-  water: '#9ecdb6',
-  land: '#e4dcd0',
-  border: '#66a07e',
-  graticule: '#86b89a',
-  stroke: '#fff',
-};
-
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2.2;
+
+const PIN_RADIUS = 11;
+const PIN_HOVER_RADIUS = 14;
+const PIN_HALO_RADIUS = 20;
 
 export default function Globe({
   pins,
   accent = '#a55931',
   autoSpin = true,
+  spinOnTouch = true,
   showGraticule = true,
   onSelect,
   focusId = null,
@@ -73,6 +74,9 @@ export default function Globe({
   const focusIdRef = useRef(focusId);
   const appliedFocusRef = useRef<string | null>(focusId);
   const apiRef = useRef<GlobeApi | null>(null);
+  // Namespaces this globe's <defs>, so two globes on one page cannot collide.
+  // useId's own format is not safe inside url(#…), hence the strip.
+  const defsPrefix = `globe-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
   useEffect(() => {
     pinsRef.current = pins;
@@ -106,9 +110,8 @@ export default function Globe({
     const svg = select(svgEl);
     svg.selectAll('*').remove();
     const defs = svg.append('defs');
-    appendAtmosphere(defs);
-    appendVignette(defs);
-    appendShadowFilter(defs);
+    appendVignette(defs, defsPrefix);
+    appendShadowFilter(defs, defsPrefix);
 
     const root = svg.append('g');
     root
@@ -118,8 +121,8 @@ export default function Globe({
       .attr('cy', height / 2 + base * 0.9)
       .attr('rx', base * 0.86)
       .attr('ry', base * 0.11)
-      .attr('fill', 'rgba(10,30,50,.13)')
-      .attr('filter', 'url(#globe-shadow)');
+      .attr('fill', 'rgba(44,78,70,.22)')
+      .attr('filter', `url(#${defsPrefix}-shadow)`);
     root
       .append('circle')
       .attr('class', 'water')
@@ -137,7 +140,7 @@ export default function Globe({
         .attr('fill', 'none')
         .attr('stroke', COLORS.graticule)
         .attr('stroke-width', 0.45)
-        .attr('opacity', 0.7);
+        .attr('opacity', 0.16);
     }
     root
       .append('g')
@@ -159,19 +162,11 @@ export default function Globe({
       .attr('opacity', 0.55);
     root
       .append('circle')
-      .attr('class', 'atmosphere')
-      .attr('cx', width / 2)
-      .attr('cy', height / 2)
-      .attr('r', view.scale)
-      .attr('fill', 'url(#globe-atmosphere)')
-      .attr('pointer-events', 'none');
-    root
-      .append('circle')
       .attr('class', 'vignette')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', view.scale)
-      .attr('fill', 'url(#globe-vignette)')
+      .attr('fill', `url(#${defsPrefix}-vignette)`)
       .attr('pointer-events', 'none');
     const pinLayer = root.append('g').attr('class', 'pins');
 
@@ -190,9 +185,53 @@ export default function Globe({
         .selectAll<SVGPathElement, unknown>('path')
         .attr('d', path as never);
       svg.select('.borders').attr('d', path as never);
-      svg.select('.atmosphere').attr('r', r);
       svg.select('.vignette').attr('r', r);
       drawPins();
+    }
+
+    // drawPins runs every frame, so the gradient and the thumbnail live in
+    // <defs> and are created once. Appending an <image> per pin per frame
+    // would re-fetch and re-decode the thumbnails at 60fps. Idempotent, and
+    // called from drawPins rather than set up once above, because `pins`
+    // changes through pinsRef without re-running this effect.
+    function ensurePinFills(pin: GlobePin): {
+      base: string;
+      photo: string | null;
+    } {
+      const gradientId = `${defsPrefix}-grad-${pin.id}`;
+      const patternId = `${defsPrefix}-photo-${pin.id}`;
+
+      if (pin.gradientSeed && defs.select(`#${gradientId}`).empty()) {
+        const [from, to] = coverGradientPair(pin.gradientSeed);
+        const gradient = defs
+          .append('linearGradient')
+          .attr('id', gradientId)
+          .attr('x1', '0%')
+          .attr('y1', '0%')
+          .attr('x2', '100%')
+          .attr('y2', '100%');
+        gradient.append('stop').attr('offset', '0%').attr('stop-color', from);
+        gradient.append('stop').attr('offset', '100%').attr('stop-color', to);
+      }
+
+      if (pin.thumbUrl && defs.select(`#${patternId}`).empty()) {
+        defs
+          .append('pattern')
+          .attr('id', patternId)
+          .attr('patternContentUnits', 'objectBoundingBox')
+          .attr('width', 1)
+          .attr('height', 1)
+          .append('image')
+          .attr('href', pin.thumbUrl)
+          .attr('width', 1)
+          .attr('height', 1)
+          .attr('preserveAspectRatio', 'xMidYMid slice');
+      }
+
+      return {
+        base: pin.gradientSeed ? `url(#${gradientId})` : accent,
+        photo: pin.thumbUrl ? `url(#${patternId})` : null,
+      };
     }
 
     function drawPins() {
@@ -201,33 +240,52 @@ export default function Globe({
         if (!isPinVisible(pin.lng, pin.lat, view.rotation)) continue;
         const point = projection([pin.lng, pin.lat]);
         if (!point) continue;
-        pinLayer
+        const fills = ensurePinFills(pin);
+
+        // One group per pin, so hover can grow the whole face without having
+        // to work out which circles belong together.
+        const group = pinLayer.append('g');
+        const circle = (radius: number, fill: string) =>
+          group
+            .append('circle')
+            .attr('cx', point[0])
+            .attr('cy', point[1])
+            .attr('r', radius)
+            .attr('fill', fill)
+            .attr('pointer-events', 'none');
+
+        circle(PIN_HALO_RADIUS, toRgba(accent, 0.2));
+        // The gradient sits under the photo rather than beside it, so a
+        // thumbnail that is still loading — or whose signed URL has expired
+        // after its hour — falls back on its own with no error handling.
+        circle(PIN_RADIUS, fills.base).attr('class', 'pin-face');
+        if (fills.photo) {
+          circle(PIN_RADIUS, fills.photo).attr('class', 'pin-face');
+        }
+
+        const setRadius = (radius: number) =>
+          group.selectAll('.pin-face, .pin-ring').attr('r', radius);
+
+        group
           .append('circle')
+          .attr('class', 'pin-ring')
           .attr('cx', point[0])
           .attr('cy', point[1])
-          .attr('r', 15)
-          .attr('fill', toRgba(accent, 0.2))
-          .attr('pointer-events', 'none');
-        pinLayer
-          .append('circle')
-          .attr('cx', point[0])
-          .attr('cy', point[1])
-          .attr('r', 6)
-          .attr('fill', accent)
+          .attr('r', PIN_RADIUS)
+          .attr('fill', 'none')
           .attr('stroke', COLORS.stroke)
           .attr('stroke-width', 2)
+          // fill is none, so without this only the 2px stroke would be
+          // clickable rather than the whole face.
+          .attr('pointer-events', 'all')
           .attr('cursor', 'pointer')
           .on('click', (event: MouseEvent) => {
             event.stopPropagation();
             appliedFocusRef.current = pin.id;
             focusPin(pin);
           })
-          .on('mouseenter', function () {
-            select(this).attr('r', 9);
-          })
-          .on('mouseleave', function () {
-            select(this).attr('r', 6);
-          });
+          .on('mouseenter', () => setRadius(PIN_HOVER_RADIUS))
+          .on('mouseleave', () => setRadius(PIN_RADIUS));
       }
     }
 
@@ -370,15 +428,40 @@ export default function Globe({
     };
 
     redraw();
-    // Skip the idle auto-spin on touch devices: its per-frame redraw runs
-    // continuously (nothing resets lastInteraction while the user taps the
-    // page, not the globe) and starves tap/click dispatch on iOS Safari.
+
     const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
-    if (autoSpin && !coarsePointer) {
+    const spins = shouldAutoSpin({
+      autoSpin,
+      spinOnTouch,
+      coarsePointer,
+      reduceMotion: window.matchMedia('(prefers-reduced-motion: reduce)')
+        .matches,
+    });
+    if (spins) {
       raf = requestAnimationFrame(spin);
     }
 
+    // Only the globe's own handlers reset lastInteraction, so without this the
+    // spin never pauses while the user is busy elsewhere on the page — the
+    // continuous redraw is what starved tap dispatch on iOS. Capture phase,
+    // because d3-drag stops propagation on the events it handles. Touch only:
+    // on desktop this would park the spin on every click, for no benefit.
+    const noteInteraction = () => {
+      lastInteraction = performance.now();
+    };
+    if (spins && coarsePointer) {
+      document.addEventListener('pointerdown', noteInteraction, {
+        capture: true,
+        passive: true,
+      });
+    }
+
     return () => {
+      // The capture flag is part of the listener's identity; without it here
+      // the removal silently does nothing.
+      document.removeEventListener('pointerdown', noteInteraction, {
+        capture: true,
+      });
       cancelAnimationFrame(raf);
       cancelAnimationFrame(animationFrame);
       svg.on('wheel', null);
@@ -389,7 +472,7 @@ export default function Globe({
       svg.on('.drag', null);
       apiRef.current = null;
     };
-  }, [accent, autoSpin, showGraticule, width, height]);
+  }, [accent, autoSpin, spinOnTouch, defsPrefix, showGraticule, width, height]);
 
   useEffect(() => {
     if (focusId === appliedFocusRef.current) return;
@@ -423,46 +506,27 @@ export default function Globe({
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-function appendAtmosphere(defs: any) {
+function appendVignette(defs: any, prefix: string) {
   const gradient = defs
     .append('radialGradient')
-    .attr('id', 'globe-atmosphere')
-    .attr('cx', '36%')
-    .attr('cy', '30%')
-    .attr('r', '64%');
-  gradient
-    .append('stop')
-    .attr('offset', '50%')
-    .attr('stop-color', '#fff')
-    .attr('stop-opacity', 0);
-  gradient
-    .append('stop')
-    .attr('offset', '100%')
-    .attr('stop-color', '#fff')
-    .attr('stop-opacity', 0.22);
-}
-
-function appendVignette(defs: any) {
-  const gradient = defs
-    .append('radialGradient')
-    .attr('id', 'globe-vignette')
+    .attr('id', `${prefix}-vignette`)
     .attr('cx', '50%')
     .attr('cy', '50%')
     .attr('r', '50%');
   gradient
     .append('stop')
     .attr('offset', '58%')
-    .attr('stop-color', 'rgba(0,0,0,0)');
+    .attr('stop-color', GLOBE_VIGNETTE.inner);
   gradient
     .append('stop')
     .attr('offset', '100%')
-    .attr('stop-color', 'rgba(0,20,40,.14)');
+    .attr('stop-color', GLOBE_VIGNETTE.outer);
 }
 
-function appendShadowFilter(defs: any) {
+function appendShadowFilter(defs: any, prefix: string) {
   defs
     .append('filter')
-    .attr('id', 'globe-shadow')
+    .attr('id', `${prefix}-shadow`)
     .attr('x', '-50%')
     .attr('y', '-50%')
     .attr('width', '200%')

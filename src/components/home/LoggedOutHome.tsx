@@ -102,7 +102,7 @@ export default function LoggedOutHome({
         <h1
           className="serif"
           style={{
-            fontSize: 'clamp(44px,8vw,84px)',
+            fontSize: 'clamp(48px,8.8vw,92px)',
             fontWeight: 700,
             color: 'var(--foreground)',
             margin: 0,
@@ -131,7 +131,12 @@ export default function LoggedOutHome({
 
       <section className={styles.hero}>
         <div className={styles.globeLayer}>
-          <Globe pins={pins} width={960} height={960} />
+          {/*
+            No idle spin on touch here: the auth card sits beside this globe,
+            and the spin's continuous redraw is what made its taps need
+            repeating on iOS. Every other globe keeps it.
+          */}
+          <Globe pins={pins} width={960} height={960} spinOnTouch={false} />
         </div>
         <div ref={getStartedRef} id="get-started" className={styles.formWrap}>
           <AuthCard
@@ -194,7 +199,7 @@ export default function LoggedOutHome({
           <h2
             className="serif"
             style={{
-              fontSize: 'clamp(26px,4vw,38px)',
+              fontSize: 'clamp(30px,4.4vw,42px)',
               fontWeight: 600,
               color: 'var(--foreground)',
               margin: '0 0 12px',
@@ -344,7 +349,7 @@ function HowCard({
       <h3
         className="serif"
         style={{
-          fontSize: 20,
+          fontSize: 24,
           fontWeight: 600,
           color: 'var(--foreground)',
           margin: '0 0 8px',

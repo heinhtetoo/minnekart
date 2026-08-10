@@ -42,7 +42,7 @@ export default function PeekPanel({
         <div>
           <div
             className="serif"
-            style={{ fontSize: 19, fontWeight: 600, color: 'var(--forest)' }}
+            style={{ fontSize: 22, fontWeight: 600, color: 'var(--forest)' }}
           >
             {title}
           </div>
@@ -70,7 +70,7 @@ export default function PeekPanel({
         <p
           className="serif"
           style={{
-            fontSize: 15,
+            fontSize: 18,
             color: 'var(--foreground)',
             margin: '12px 0 0',
             lineHeight: 1.6,

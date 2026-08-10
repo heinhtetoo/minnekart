@@ -47,6 +47,10 @@ export default function LoggedInHome({
     lng: item.lng,
     lat: item.lat,
     placeName: item.placeName,
+    // Same URL the card below already requests, so the pin is a cache hit and
+    // the two always show the same photo.
+    thumbUrl: item.thumbUrl,
+    gradientSeed: item.id,
   }));
 
   return (
@@ -72,7 +76,7 @@ export default function LoggedInHome({
           <h1
             className="serif"
             style={{
-              fontSize: 'clamp(34px,6vw,60px)',
+              fontSize: 'clamp(39px,6.6vw,66px)',
               fontWeight: 700,
               color: 'var(--foreground)',
               margin: 0,

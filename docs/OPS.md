@@ -194,7 +194,7 @@ both bit us at launch — check them when creating a new bucket or adding a doma
    ```json
    [
      {
-       "AllowedOrigins": ["https://minnekart.vercel.app"],
+       "AllowedOrigins": ["https://minnekart.com"],
        "AllowedMethods": ["PUT", "GET", "HEAD"],
        "AllowedHeaders": ["content-type"],
        "ExposeHeaders": ["ETag"],
@@ -203,8 +203,10 @@ both bit us at launch — check them when creating a new bucket or adding a doma
    ]
    ```
 
-   Add each new origin (custom domain, or `http://localhost:3000` if you ever run
-   the real R2 driver locally). Thumbnails render via `<img src>`, which isn't
+   That is the production apex; `www` 308-redirects to it, so the browser's
+   origin is always the apex. Add each further origin you need (the `dev` branch
+   alias on the dev bucket, or `http://localhost:3000` if you ever run the real
+   R2 driver locally). Thumbnails render via `<img src>`, which isn't
    CORS-gated — this is only for the upload `fetch`. Takes effect immediately, no
    redeploy.
 

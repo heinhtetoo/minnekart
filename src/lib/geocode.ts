@@ -1,6 +1,6 @@
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 const NOMINATIM_REVERSE_URL = 'https://nominatim.openstreetmap.org/reverse';
-const USER_AGENT = 'Minnekart/0.1 (https://minnekart.vercel.app)';
+const USER_AGENT = 'Minnekart/0.1 (https://minnekart.com)';
 const RESULT_LIMIT = 5;
 
 export interface PlaceResult {

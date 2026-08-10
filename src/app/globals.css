@@ -25,7 +25,7 @@ body {
   flex-direction: column;
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-dm-sans), sans-serif;
+  font-family: var(--font-sans), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -40,7 +40,7 @@ a {
 }
 
 .serif {
-  font-family: var(--font-playfair), serif;
+  font-family: var(--font-serif), serif;
 }
 
 .field {
@@ -50,7 +50,7 @@ a {
   border: 1px solid rgba(28, 25, 23, 0.16);
   background: #fff;
   font-size: 16px;
-  font-family: var(--font-dm-sans), sans-serif;
+  font-family: var(--font-sans), sans-serif;
   color: var(--foreground);
   outline: none;
   transition:
@@ -86,7 +86,7 @@ a {
   color: var(--background);
   font-size: 14px;
   font-weight: 600;
-  font-family: var(--font-dm-sans), sans-serif;
+  font-family: var(--font-sans), sans-serif;
   cursor: pointer;
   transition:
     background 0.15s,
@@ -140,7 +140,10 @@ a {
   border: 1px solid rgba(28, 25, 23, 0.18);
   background: #fff;
   outline: none;
-  font-family: var(--font-playfair), serif;
+  /* Sans, not the serif: EB Garamond ships oldstyle figures with no lining
+     alternate, so 3 5 7 9 hang below the baseline across seven distinct
+     heights — fine in running text, wrong in a row of boxed digits. */
+  font-family: var(--font-sans), sans-serif;
   color: var(--foreground);
   transition:
     border-color 0.15s,
@@ -197,8 +200,8 @@ select:focus-visible,
 }
 
 .placeholder h1 {
-  font-family: var(--font-playfair), serif;
-  font-size: 48px;
+  font-family: var(--font-serif), serif;
+  font-size: 53px;
   font-weight: 700;
   color: var(--forest);
   letter-spacing: -1px;

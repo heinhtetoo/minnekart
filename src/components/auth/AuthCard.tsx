@@ -395,7 +395,7 @@ function Heading({
       <h2
         className="serif"
         style={{
-          fontSize: 23,
+          fontSize: 27,
           fontWeight: 600,
           color: 'var(--foreground)',
           margin: '0 0 3px',

@@ -872,6 +872,363 @@ blocking Tier 2 work:
       rhythm per card preserved), TripForm no-pin prompt ("Search above to
       drop a pin…"). The design's pin line and Save `flex:1` turned out to
       already match. Verified live and on preview; merged via PR #6.
+- [x] **22. Seed photo preview on the new-trip page** _(3 August 2026)_. "Start
+      from a photo" confirmed a pick with a filename and nothing else; it now
+      shows a 72px thumbnail beside the filename and status note.
+      `createPreviewUrl` (`src/lib/photos/preview.ts`) decodes the buffer
+      already read at pick time, downscales to 320px via the existing
+      `scaledDimensions`, and returns an object URL — measured in real
+      Chromium at 3840×2160/1.39MB in → 320×180/10.5KB out. **Downscaling is
+      the point, not an optimisation:** pointing an `<img>` at the file costs
+      no decode but holds the full raster for as long as the form is open
+      (~48MB for a 12MP photo), which is the retention trade-off task 21
+      warns about. It wraps the buffer, never the `File`, so nothing re-reads
+      the `content://` URI — that read is what broke EXIF on Android. The
+      object URL's lifetime lives in one effect keyed on the URL, so replace,
+      Remove and unmount are covered without any call site remembering; a
+      preview whose pick went stale is revoked on the spot, since it never
+      reaches state for the effect to see. Returns `null` where the browser
+      has no decoder (HEIC in Chrome and Firefox, verified) and the card shows
+      a one-line note instead. `.seed` became a flex row with `.seedBody`
+      holding the old contents, so with no thumbnail it collapses to exactly
+      its previous appearance. No unit test — `createImageBitmap` and
+      `<canvas>` do not exist under vitest's `environment: 'node'`, the same
+      reason `process.ts` has none; verified by bundling the real module with
+      esbuild and running it in headless Chromium.
+- [x] **23. Small non-interactive globe beside the pin on the new-trip page**
+      _(3 August 2026)_. `Pin set · 35.012, 135.768` was the only feedback
+      that a pin existed and it never said where; a 112px globe centred on
+      the pin now sits beside it. Display only — no drag, zoom or click.
+      `MiniGlobe` (`src/components/globe/MiniGlobe.tsx`) is a **pure function
+      of `lat`/`lng`**: no effect, no refs, no cleanup. That is what
+      satisfies "must react to every source that moves the pin" for free —
+      `coords` is already the single source of truth for the place search,
+      the photo's EXIF, "Use the photo's place" and clearing, so a component
+      rendering from it cannot drift. Rotating to `[-lng, -lat, 0]` puts the
+      pin at the centre by definition, leaving no projection maths to get
+      wrong; unpinned it renders at the angle the home globe opens at.
+      **It deliberately does not reuse `Globe.tsx`** — adding a
+      non-interactive mode there would thread conditionals through the drag,
+      pinch, wheel and auto-spin paths (the code behind the iOS
+      tap-starvation and pinch-ordering bugs) to inherit features this globe
+      does not want. Two notes for later. (a) The task text said "a second
+      Three.js canvas" — **there is no Three.js in this project**;
+      `Globe.tsx` is d3-geo drawing an orthographic projection into SVG. The
+      real cost was `src/data/world-110m.json` (105KB), and it is not a
+      second copy: the topology stays in one chunk shared with the home page,
+      so `/trip/new` added ~12KB and `next/dynamic` was not needed. (b) The
+      topology derivation and palette moved to `src/lib/globe/world.ts` so
+      the two globes cannot drift on colour — the only edit to `Globe.tsx`,
+      and proven a true no-op by rendering both versions in headless Chromium
+      and comparing the SVG (identical, 197,071 chars). `Globe.tsx` still
+      hardcodes its gradient ids, so `MiniGlobe` uses `useId()` (sanitised —
+      React's format is not safe inside `url(#…)`) and the two can share a
+      page later without colliding. No unit test: `projection.ts` already
+      covers the only pure logic and the rest is SVG output, verified by
+      server-rendering Kyoto, Sydney, Tromsø, null island and the unpinned
+      state and reading the screenshots.
+- [x] **24. Bigger globe pins with a photo inside** _(5 August 2026)_.
+      Scaled back from the design file's lollipop; shipped on
+      `design/age-of-sail`.
+      **What was dropped, and why the phases changed.** The imported design
+      (`Atlas Travel Site - Redesign.dc.html`, `_heartTexture`) specified a
+      circular head on a glowing white stem with the tip on the coordinate, a
+      pulsing additive halo and a hover tooltip. None of that shipped. The
+      logged phases were: A shape and ink, B photo, C public globes. **Phase A
+      was cancelled** — the pin keeps its existing concentric-circle form and
+      only its radius changed. **Phase B is what landed.** **Phase C stays
+      deferred**: the public globes are untouched.
+      **Sizes.** Dot `r` 6 → **11** (22px across), halo 15 → 20, hover 9 → 14.
+      Below about r=10 a thumbnail is indistinguishable from a colour swatch;
+      above r=13 a clustered group like a European tour starts to overlap
+      badly on a sphere that rests at ~209px radius.
+      **The white rim stays — correcting what this task used to say here.** It
+      instructed replacing the rim with a sepia ink rule. That was right
+      against the parchment palette task 26 first tried, and wrong after task
+      26 settled on a dark `#2c4e46` sea, where the white reads as a crisp
+      highlight and earns its place. Verified by rendering.
+      **`GlobePin` gained `thumbUrl` and `gradientSeed`, both optional.**
+      `id` could not be reused for either: all three call sites pass the
+      array index and read it back in
+      `onSelect={(id) => setSelected(Number(id))}`. Optional fields mean
+      `LoggedOutHome` and `PublicGlobe` needed no edit and keep plain accent
+      pins. `LoggedInHome` passes `item.thumbUrl` and `item.id` and nothing
+      else moved — `HomeTrip` already carries the thumb because
+      `src/app/page.tsx` fetches `tripCovers()` for the "Your Pins" cards, so
+      the pin is the same URL the card requests, a browser cache hit, no extra
+      query and no extra network. Pin and card therefore always show the same
+      photo.
+      **`coverGradientPair(seed)` added to `src/lib/photos/gradient.ts`.** SVG
+      needs `<linearGradient>` stops, not a CSS string; `coverGradient` now
+      builds its string from the same function so `GRAD_PAIRS` stays one
+      source of truth, with a test asserting the pair's colours are the ones
+      the CSS embeds. The angle is deliberately not exported — every real call
+      site takes the default index, so the `ANGLES` variation is effectively
+      dead, and at 22px it is imperceptible.
+      **Images live in `<defs>` and are created once.** `drawPins` wipes and
+      rebuilds the pin layer every frame and the desktop rAF loop re-arms
+      unconditionally, so appending an `<image>` per pin per frame would
+      re-decode thumbnails at 60fps. `ensurePinFills` appends a
+      `<linearGradient>` and a `<pattern>` the first time it sees a pin and
+      skips them thereafter. It is called from `drawPins`, not from one-shot
+      setup in the effect body, because `pins` changes through `pinsRef`
+      without re-running the effect. **This is what let the hot loop stay
+      untouched — no data-join refactor, and nothing near the drag, pinch,
+      wheel or auto-spin paths.**
+      **Three stacked circles, gradient under photo.** A thumbnail that is
+      still loading, or whose signed URL has expired after its hour
+      (`READ_EXPIRY_SECONDS`), simply reveals the gradient beneath it, so
+      there is no `onerror` handling to get wrong. Each pin is now a `<g>` so
+      hover grows the whole face; the ring carries `pointer-events="all"`
+      because with `fill: none` only its 2px stroke would otherwise be
+      clickable.
+      **Def ids are namespaced per instance** off `useId()`, sanitised the way
+      `MiniGlobe` does. `globe-vignette` and `globe-shadow` were hardcoded, so
+      two globes on one page would have collided; per-pin ids would have made
+      that worse.
+      **Verification.** Rendered the real `Globe.tsx` in Chromium with a mixed
+      set — a clustered European group, photo pins and photo-less pins.
+      Structural check: 4 images, all 4 inside `<defs>`, 4 patterns, 8
+      gradients, 12 faces, and the image count does not grow with redraws.
+      Hover measured `[20, 11, 11, 11] → [20, 14, 14, 14] → back`, so both
+      faces and the ring grow while the halo holds. Click round-tripped
+      `selectedId: "2"` for the third pin, which is the index contract most
+      likely to break. Gates green: format, lint, typecheck, 370 tests, build.
+      **Harness note for next time:** under Chrome's `--virtual-time-budget`,
+      rAF fires exactly once and `performance.now()` never advances, so the
+      globe's 950ms focus animation can never complete and anything behind it
+      silently no-ops. Interaction tests need real time and a `fetch` back to
+      a logging server; static screenshots are fine under virtual time.
+- [x] **25. Typography — Playfair Display → EB Garamond** _(5 August 2026)_.
+      DM Sans stays. One serif site-wide, two faces total. Landed on
+      `design/age-of-sail`, not `dev`.
+      **Why this and not the design file's pairing.** The imported design
+      proposes Cinzel + Nunito Sans; both rejected. Cinzel is inscriptional
+      Roman capitals — no true lowercase, effectively no descenders, and no
+      italic at all — so it cannot carry sentence-length headings. Nunito Sans
+      was a lateral move from DM Sans that bought a change of flavour for a
+      full-app migration. IM Fell was considered for the age-of-sail direction
+      and rejected on two mechanical grounds: every cut is `latin` only with no
+      `latin-ext`, so Central and Eastern European place names (Gdańsk, Łódź,
+      Plzeň, Košice) would render half in a fallback; and it ships one weight
+      with no bold, so it cannot express hierarchy. Fraunces lost on period —
+      its Windsor/Cooper lineage is 1900s–20s soft display, which argues with
+      engraved cartography rather than supporting it. EB Garamond is the right
+      family tree for the era, has a true chancery italic (load-bearing for
+      task 26), a variable weight axis, and `latin-ext` and beyond so no place
+      name breaks.
+      **Correction — it does _not_ have small caps.** The Google Fonts build
+      exposes only `dnom frac liga locl numr pnum rlig tnum`; there is no
+      `smcp`. An earlier note here claimed real OpenType small caps as a reason
+      for choosing it. That was wrong, and task 26 has been amended. The italic
+      was the larger reason and is unaffected, so the choice stands.
+      **Correction — figures are oldstyle with no lining alternate.** Digits
+      3, 5, 7 and 9 descend below the baseline across seven distinct heights,
+      and there is no `lnum` feature to switch. `.otpCell` therefore moved to
+      `--font-sans`: six boxed digits at seven heights reads as a rendering bug
+      on the login flow. `.statValue` and `.priceValue` kept the serif.
+      **Cost: +6 KB, measured.** `latin` woff2, like for like — Playfair roman
+      38.5 KB → EB Garamond roman 44.2 KB. The earlier "the swap makes the site
+      lighter" claim was true of the Cinzel/Nunito pairing only and does not
+      carry over. The italic is a separate +47.8 KB, deferred to task 26. The
+      OG asset went the other way: `playfair-700.ttf` 123.5 KB →
+      `eb-garamond-600.ttf` 54.6 KB.
+      **What changed.** `layout.tsx` swapped `Playfair_Display` for
+      `EB_Garamond` and both CSS variables were renamed by role —
+      `--font-playfair` → `--font-serif`, `--font-dm-sans` → `--font-sans`,
+      across 13 CSS references in `globals.css` and the `profile`, `timeline`,
+      `pricing`, `ContentPage` and `Nav` module CSS. The rename is the point:
+      the next serif change is now one line in `layout.tsx`.
+      **The optical pass — 38 sizes, from measured metrics not guesswork.**
+      EB Garamond's x-height is 0.418 em against Playfair's 0.517 and DM Sans's
+      0.504; cap height 0.654 against 0.708. So matching x-height needs ×1.24
+      but matching cap height needs only ×1.08 — lowercase headings and the
+      single-capital avatars want very different corrections. Rendering every
+      real string at its real size in both faces and comparing settled the
+      bands actually used: **≥36px ×1.10, 22–30px ×1.15, ≤20px ×1.18, and
+      ×1.08 for the two avatar initials** (`Nav .avatar` 15→16,
+      `profile .avatar` 26→28), which are cap-height-only sites. 23 sizes in
+      module CSS, 15 inline in TSX.
+      **No weight bumps.** The plan called for 500 rather than 400 near body
+      text. The render says otherwise — at the corrected sizes the strokes are
+      already proportionally thicker, and w500/w600 read heavier than Playfair
+      did. Every weight is unchanged.
+      **OG cards.** `fonts.ts` now loads `eb-garamond-600.ttf` as
+      `'EB Garamond'` weight 600 (`OgFont['weight']` widened from
+      `400 | 500 | 700` to `400 | 500 | 600`), and the four
+      `'Playfair Display'` literals in `card.tsx` became `'EB Garamond'` with
+      `fontWeight` 700 → 600. Satori will not take a variable font — the
+      shipped TTFs have no `fvar` — so the static cut is sourced by asking
+      Google Fonts with a UA that supports neither woff nor woff2
+      (`curl -A "Mozilla/5.0 (Linux; U; Android 4.0.3; …)" "https://fonts.googleapis.com/css?family=EB+Garamond:600"`
+      returns a TTF URL). Verified by rendering all three data-free routes and
+      measuring the ink: the heading sets 690px wide against EB Garamond's
+      701px and Playfair's 805px, so the swap took. Eyeballing alone had me
+      call it wrong — measure this one.
+      **The hero italic is unchanged, not regressed.** `layout.tsx` never
+      requested Playfair's italic either, so `LoggedOutHome`'s "mapped." and
+      `timeline .endNote` were already synthesised obliques. Rendered all three
+      side by side: EB Garamond's synthesised oblique is no worse than
+      Playfair's was, and the true chancery italic is a marked upgrade — which
+      is task 26's to deliver.
+      Gates green: format, lint, typecheck, 367 tests, build.
+- [x] **26. Give the globe a distinct, polished look** _(5 August 2026)_.
+      Retitled from "age-of-sail treatment": the literal chart styling was
+      tried and mostly abandoned. What landed is a palette inversion and the
+      chancery italic. On `design/age-of-sail`, on top of task 25.
+      **The palette is the whole thing, and value beat hue.** Both the
+      original green and the sepia this task first shipped put land and sea at
+      almost the same lightness, so the continents never resolved — which is
+      why the sepia read faded rather than considered. Eight palettes were
+      rendered on the real globe and compared; every one that looked polished
+      inverted the value. Chosen: **pale continents on a dark sea.** Water
+      `#9ecdb6` → `#2c4e46`, coastlines and borders `#66a07e` → `#1c3a33`,
+      graticule `#86b89a` → parchment `#e4dcd0` at 0.16 opacity (a pale line
+      on a dark sea wants a fraction of the opacity a green one did). Land
+      stays `#e4dcd0`. The sea is **`--forest`, already the stats band, the
+      footer and the sign-in button**, so the globe adds no new colour to the
+      product and now rhymes with the page instead of sitting apart from it.
+      **The white atmosphere rim is gone.** `appendAtmosphere` — a white
+      radial glow at 0.22 opacity — and its circle are deleted. That is what
+      made the globe read as a backlit sphere. The vignette carries the
+      dimension instead, warmed and deepened to `rgba(0,0,0,.28)`, and the
+      shadow ellipse now casts in forest, `rgba(44,78,70,.22)`.
+      **Correction to what this task used to claim.** It said
+      `GLOBE_COLORS.stroke` (`#fff`) was "the single most contemporary thing on
+      the page". It is not a globe outline — it is used in exactly two places,
+      `Globe.tsx` and `MiniGlobe.tsx`, and both are the _pin's_ rim. See the
+      note to task 24 below.
+      **The vignette stops moved into `world.ts`** as `GLOBE_VIGNETTE`. They
+      were duplicated between `Globe.tsx` and `MiniGlobe.tsx`; centralising is
+      what stops the two globes drifting, the same reason `GLOBE_COLORS`
+      exists. `MiniGlobe` took the whole palette with no other edit, verified
+      at 112px for Kyoto, Sydney, Tromsø and unpinned.
+      **Rhumb lines were built, then reverted.** A full portolan wind-rose
+      network shipped first: `src/lib/globe/rhumb.ts` with great circles from
+      the destination-point formula, emitted as a MultiLineString because
+      `geoPath` under `clipAngle(90)` closes a Polygon along the limb, plus 9
+      unit tests. It was reverted on the call that a rhumb network is a _chart_
+      device — on a globe it converges on an arbitrary point and reads as
+      decoration, where a graticule is the honest geometry of a sphere. The
+      graticule is back exactly as it was, at the new colour and opacity, and
+      `rhumb.ts` is deleted. Recorded here because the reasoning is worth more
+      than the code was: if it is ever revisited, draw it _over_ the land, not
+      under, or the lines stop dead at every coastline and read as a clipping
+      bug.
+      **No compass rose, no cartouche.** Not wanted.
+      **The chancery italic now loads** — one line in `layout.tsx`
+      (`style: ['normal', 'italic']`). No per-site work was needed:
+      `.detailPrompt`, `.detailQuote`, `timeline .endNote`,
+      `TripDetailBody .quote` and `LoggedOutHome`'s hero "mapped." were already
+      `font-style: italic` on the serif and were rendering synthesised
+      obliques. All five upgraded at once, confirmed on the hero. Not a
+      universal cost either — the browser fetches the italic only on pages that
+      render italic.
+      **Verification.** The globe does not render in the headless _page_
+      harness (blank on the task-25 screenshots too, before any globe change),
+      so everything visual was checked by bundling the real `Globe.tsx` and
+      `MiniGlobe.tsx` with esbuild and rendering them in Chromium. Gates green:
+      format, lint, typecheck, 367 tests, build.
+      **Task 24 got easier, not harder.** Against sepia the pins' white rims
+      looked conspicuously modern. Against the dark sea they read as a crisp
+      highlight — the terracotta pops where before it competed with a mid-tone
+      sea. The pin redesign no longer has to fight the palette.
+- [ ] **27. Globe does not auto-spin on Android Chrome** _(fix shipped to `dev`
+      7 August 2026; OPEN pending iOS)_. The
+      globe sat still on a phone until you dragged it. Not a
+      mystery — `Globe.tsx:428` skipped the idle spin whenever
+      `matchMedia('(pointer: coarse)')` matches, so it is off on **every** touch
+      device, not just Android. That guard is the fix for the iOS Safari
+      tap-starvation bug in "Post-launch bugs": the spin redraws all ~177
+      country paths every frame forever (nothing resets `lastInteraction` while
+      you tap the page rather than the globe), and that continuous main-thread
+      work starved tap/click dispatch on the sign-in form. So **do not just
+      delete the guard** — that reintroduces a confirmed, much worse bug.
+      **The fix is to scope the guard to the page that broke.** The harm was
+      never the globe; it was a globe sharing a page with a _form_. There are
+      three call sites and only `LoggedOutHome.tsx:134` has one — the auth
+      card. `LoggedInHome.tsx:96` and `PublicGlobe.tsx:68` have no form at all,
+      and the logged-in home is almost certainly where this was noticed. So:
+      move the coarse-pointer skip out of `Globe.tsx` and behind a prop, and
+      set it only on the logged-out home. About five lines. The spin returns on
+      Android _and_ iOS everywhere except the one page with a confirmed bug,
+      which keeps exactly the fix that works today. Note `autoSpin` already
+      exists as a prop and no call site passes it, so it is dead as written —
+      `autoSpin={false}` is too blunt here because it would also kill the
+      desktop spin on that page.
+      **Rejected: detecting iOS Safari and skipping only there.** It does not
+      say what it means — every browser on iOS is WebKit, so Chrome and Firefox
+      on iPhone starve identically and the real condition is "iOS", not
+      "Safari". iOS is also hard to detect now: iPadOS 13+ reports as
+      `Macintosh`, so `/iPad/` silently fails and needs a
+      `maxTouchPoints > 1 && /Macintosh/` limb, a check that rots quietly and
+      **fails open** — the worst direction, since it brings the tap bug back on
+      a device we cannot test. It would also grant something never verified: we
+      know Android Chrome did not show that symptom, not that a permanent 60fps
+      redraw of ~177 country paths is acceptable there on battery.
+      **Shipped alongside, not deferred: the root-cause fix.** Page scoping was
+      logged on the strength of the old bug entry's "only that form — every form
+      after login was fine". That evidence does not hold: every form after login
+      (`/trip/new`, `/settings`) sits on a page with **no spinning globe**, since
+      `MiniGlobe` has no animation loop at all. The observation is explained by
+      "no spin on those pages", not by immunity — so the logged-in home's pin
+      list and bottom nav were never actually tested under a spinning globe, and
+      page scoping alone would have switched a 60fps loop back on over them.
+      So `lastInteraction` is now also reset by a document-level `pointerdown`,
+      and the spin parks whenever the user touches anything anywhere. All six
+      previous writes were inside globe handlers, which is exactly why it never
+      stopped while you tapped a form. Capture phase, because d3-drag stops
+      propagation on the events it handles; **coarse pointers only**, so desktop
+      keeps today's behaviour rather than stalling on every click.
+      **Honour `prefers-reduced-motion` in the same change.** It gates the same
+      switch from the other side and is one extra condition once you are already
+      in there. The Phase 10 accessibility pass reaches CSS only —
+      `globals.css:183` turns off `scroll-behavior` and the `.fade` animation —
+      but the spin is `Globe.tsx:418` mutating a rotation inside a
+      `requestAnimationFrame` loop, so no media query touches it. Someone with
+      Reduce Motion on gets no fades and no smooth scrolling, and then the
+      largest moving thing on the site rotating for as long as the tab is open.
+      Add `matchMedia('(prefers-reduced-motion: reduce)').matches` beside the
+      pointer check. **Drag-to-spin must keep working** — the setting means "do
+      not move things at me unprompted", not "disable motion", and a drag is
+      motion the user asked for, so this gates the idle auto-spin only. **No
+      on-screen notice** explaining why it stopped: nothing looks broken, the
+      globe still drags, and a label on the hero explains a deliberate OS
+      setting back to the person who chose it.
+      **Shape of the change.** `Globe` gains `spinOnTouch` (default true), set
+      false only at `LoggedOutHome.tsx:134`, the one call site with the auth
+      card beside it; `LoggedInHome` and `PublicGlobe` are untouched and get the
+      spin back. The three-way decision moved to `shouldAutoSpin` in
+      `src/lib/globe/spin.ts` — a pure predicate with 7 tests, following
+      `projection.ts` next door. Worth extracting: three booleans is eight cases
+      and exactly the shape that gets inverted later, and it is the only part of
+      this task a test can reach.
+      **Verified in a real browser, not just by gates.** The task looked
+      untestable — no jsdom in the suite, and starvation itself cannot be
+      reproduced headlessly — but the _spin decisions_ can be. Bundled the real
+      `Globe.tsx` with esbuild and drove Playwright's cached Chromium over CDP,
+      using `Emulation.setEmulatedMedia` for Reduce Motion and
+      `setTouchEmulationEnabled` for `pointer: coarse`, then sampled the
+      `.borders` path `d` attribute 600ms apart to tell moving from still.
+      12/12: spins on desktop; does not under Reduce Motion; **drag still turns
+      it** under Reduce Motion; touch emulation really does give
+      `pointer: coarse`; spins on touch; a tap elsewhere parks it; the
+      `spinOnTouch={false}` globe stays still on touch; a desktop click does
+      _not_ park it (proving the listener is coarse-only); and
+      `DOMDebugger.getEventListeners` shows one `pointerdown` listener on
+      `document` after four remounts and zero after unmount, so the cleanup's
+      `capture: true` is right — without it removal silently no-ops.
+      One check failed first time and was **my harness, not the code**: a
+      synthetic `MouseEvent` with no `view`, which d3-drag reads to bind its
+      move/up listeners, so no drag ever started.
+      **Confirmed working on Android Chrome** on the `dev` preview (7 August
+      2026). **Still open: iOS Safari has not been tested**, which is the whole
+      reason the guard existed — emulated coarse pointers prove the branching,
+      not that WebKit's tap dispatch survives a spinning globe. Two things to
+      check before ticking this: the logged-out sign-in taps have not regressed,
+      and the logged-in home's pin list and bottom nav respond on the first tap
+      while the globe turns. If either is flaky, the fallback is one line —
+      `spinOnTouch={false}` on `LoggedInHome` too.
 
 ### Tier 4 — hygiene / post-PMF
 
@@ -911,8 +1268,10 @@ blocking Tier 2 work:
       defaults to `.prettierignore` alone, making that line the only thing
       stopping format-on-save reflowing the book chapters. Don't delete it.
 - [ ] **20. Feasibility study — Mapbox GL globe vs the current custom globe**
-      _(RESEARCH)_. Evaluate replacing the in-house Three.js globe
-      (`src/components/globe/Globe.tsx`) with a Mapbox GL JS globe-projection
+      _(RESEARCH)_. Evaluate replacing the in-house globe
+      (`src/components/globe/Globe.tsx` — d3-geo drawing an orthographic
+      projection into SVG; there is no Three.js in this project, only in the
+      design mocks) with a Mapbox GL JS globe-projection
       map. Study only — no swap, and the full-bleed globe stays exactly as-is
       until the study says otherwise. Weigh: bundle size and runtime cost vs
       the current renderer; Mapbox pricing at expected map-load volume (free
@@ -933,6 +1292,197 @@ blocking Tier 2 work:
       phone. Pass forward only the cheap results (sniffed format and
       `takenAt`) so `processImage` can skip `readPhotoExif` while still
       reading the bytes it needs to decode. Low urgency.
+- [x] **28. Refactor `TripForm.tsx` — 688 lines against the repo's 300-line
+      rule** _(6 August 2026)_. One file held the whole add/edit memory flow: a
+      root component
+      with 14 `useState` and 3 `useRef`, plus `PhotoSeed`, `PlaceSearch` and
+      `Field` defined below it. It splits along seams that already exist.
+      `PlaceSearch` (~75 lines) is self-contained — its own query state,
+      debounce and result list, talking to the parent through one `onPick`.
+      `Field` is presentational. The seed-photo flow is the big one (~300
+      lines across `readSeedPhoto`, `fillFromPhoto`, `useSeedLocation`,
+      `clearSeedPhoto`, the `seedPick`/`seedOwned` refs and the `PhotoSeed`
+      view) and wants to be a hook plus a component, not more sub-components in
+      the same file. What is left is a form that submits.
+      **The risk is the provenance rules, not the line count.** `seedOwned`
+      tracks which fields the photo filled versus which the user typed, so a
+      later edit releases the right ones — those rules are written up under
+      task 10 and are exactly the kind of thing a mechanical extraction
+      silently inverts. `readSeedPhoto`'s `isStale()` guard against a second
+      pick landing first is the same shape of hazard.
+      **There is not one test on this file** (`src/components/trips/` has no
+      test at all) and both `/trip/new` and `/trip/[id]/edit` render it, so
+      characterisation tests over the provenance and staleness behaviour came
+      first — extract second.
+      **Done as a pure-logic extraction, no new dependencies.** The provenance
+      rules became a reducer (`seed-fields.ts`) and the photo read became an
+      async sequence with its collaborators injected (`seed-photo.ts`), both
+      plain modules testable under the existing node vitest setup — the same
+      shape as `src/components/home/format.ts`. `vitest.config.ts` and
+      `package.json` are untouched. The alternative, jsdom plus Testing
+      Library, would have stood up a whole component-test stack for one file
+      when the risk we actually named is pure logic.
+      **The reducer is what retired the refs.** `fillFromPhoto`'s functional
+      `setValue((current) => …)` existed only to read fresh state after an
+      await, and `coordsRef` mirrored `coords` for the same reason; a reducer
+      gets both for free, so `shouldOfferSwap(state)` is now an exported
+      predicate. `seedPick` stays a ref in the component and reaches the
+      sequence as an injected `isStale()`, which is what makes the
+      abandoned-pick path assertable — including that a preview belonging to a
+      superseded pick is revoked, since state never reached it and the cleanup
+      effect will never see it.
+      **34 new tests** (367 → 401, 59 → 61 files) over both the rules and every
+      branch of the read. The one they exist for: a photo read defers to a
+      hand-typed place name, but "Use the photo's place" deliberately overwrites
+      it — one action away from each other and easy to collapse by accident.
+      **One behaviour changed, deliberately.** Picking an over-50MB file while
+      an earlier read was still in flight used to leave `seedBusy` true, so
+      "Reading the photo…" hung there forever; the size-check branch cleared
+      the file and note but never the busy flag. It was not a targeted fix: the
+      old code had two rejection branches clearing different subsets of the same
+      four fields, and collapsing them into one `photoRejected` action means
+      deciding what "rejected" is as a state, which is all four cleared. A test
+      starting from a mid-read state pins it, and was checked by reverting the
+      one word and watching it — and only it — fail. Everything else is
+      byte-for-byte the same behaviour, note strings included.
+      **Result**: `TripForm.tsx` 688 → 287 lines, and six files beside it, all
+      under 300. `PlaceFields.tsx` was not in the plan — the extraction alone
+      landed at 340 because inline `dispatch` objects are longer than the old
+      setters, so the search box, place name, country and pin row moved out
+      together as the one place a location gets set. Gates green: format, lint,
+      typecheck, 400 tests, build, and `/trip/new` serving 200 in dev.
+      **Not verified by a human in a browser** — the photo-pick flows in the
+      plan's manual pass need a real device and a logged-in session.
+- [ ] **30. Optimise for AI answer engines and search (GEO/SEO).** Task 9 built
+      the base layer — `/guides` hub-and-spoke, branded OG cards, per-page
+      `metadata`, sitemap, robots. This is the layer above it, aimed at being
+      **quoted** by ChatGPT, Claude, Perplexity and AI Overviews rather than
+      just ranked. Audited the current state and scoped it to three phases.
+      **Deliberately excluded, after scoping**: new `/guides` spokes (the only
+      item with an ongoing content cost, and speculative), and rewriting the
+      existing statement-shaped H2s into questions (marginal gain, and it makes
+      good prose worse — "Why private, and not a public feed" beats "Why should
+      a travel map be private?"). An `llms.txt` rides along as an optional
+      passenger, never as a deliverable — no engine commits to honouring it.
+      **Phase A — decisions and hygiene, one sitting.** The crawler policy comes
+      first and nothing else ships before it. `robots.ts` names no AI crawler,
+      so the catch-all allows every one. Split them by purpose rather than
+      treating "AI crawler" as one switch: the **citation** bots
+      (`OAI-SearchBot`, `PerplexityBot`, `Claude-SearchBot`) are the entire
+      point of this task, while the **training** bots (`GPTBot`, `ClaudeBot`,
+      `CCBot`, `Google-Extended`, `Applebot-Extended`) cost approximately
+      nothing measurable to refuse. Note that `Google-Extended` gates Gemini
+      training **only, not Google Search indexing** — the usual mistake is
+      leaving it open believing SEO depends on it. Decision: allow citation
+      bots, refuse training bots, and close `/u/[username]` to both. That is
+      on-message for a privacy product — cite us, do not train on our users —
+      and `/u/` being opt-in public meant "someone can visit my globe", not "my
+      travel history is in a training corpus". **Do not oversell it**:
+      robots.txt is advisory and stops only the compliant. Bot names rot, so
+      verify each against its vendor's docs at implementation time.
+      Also in phase A: `alternates.canonical` per page, since only
+      `metadataBase` is set (`layout.tsx:22`) and the home page takes
+      `?invite=` and `?signup=`, so signals split today. And `sitemap.ts` sets
+      `lastModified: new Date()` on all nine routes, so every deploy claims
+      every page changed, which trains crawlers to distrust the field entirely.
+      Drop the blanket value; hardcode real dates on the guides only, where
+      freshness actually means something.
+      **Phase B — JSON-LD, the largest single gap.** `grep schema.org` returns
+      nothing. This is how an answer engine learns what the product is, what it
+      costs and who publishes it. Wants `Organization` plus `WebSite` at the
+      root, `SoftwareApplication` with `offers` on `/pricing`, and `Article`
+      plus `BreadcrumbList` on the guides. No dependency — a `<script>` tag in
+      the existing layouts. **Generate the offers from `pricingTiers()`**
+      (`src/lib/billing/pricing.ts`), already the single source of truth for
+      free, $39 annual, $5 monthly and $99 lifetime, so the schema cannot drift
+      from the page — and mismatched JSON-LD is worse than none, since Google
+      reads it as a quality signal. `PricingTier.price` holds a display string
+      with a currency symbol, so add numeric amount and currency fields to the
+      tier rather than parsing that string, which would be exactly the
+      fragility worth avoiding.
+      Builders are pure functions, so they test under the existing node vitest
+      setup the way `src/lib/globe/spin.ts` does.
+      **Phase C — two bounded edits to pages that already exist.** Not a content
+      programme. (a) A comparison **table** on
+      `/guides/polarsteps-alternative`, which already makes the comparison in
+      prose — tables get extracted verbatim, so this is the highest-yield hour
+      in the task. Competitor claims must stay factually current; they age
+      badly and cost trust when they do. (b) An FAQ section on `/pricing`,
+      roughly six questions already answered in support, with claims consistent
+      with `/privacy` and `/terms` per task 9's house rule. **Note on
+      `FAQPage` schema**: Google restricted FAQ rich results to government and
+      health sites in 2023, so it will not produce snippets here. The FAQ earns
+      its place as content answer engines parse, not as markup — do not add the
+      schema expecting rich results.
+      **Expectation setting.** A and B make the site _eligible_ to be quoted; C
+      is what gives an engine something to quote. AI citations have no reliable
+      measurement yet, so no dashboard will confirm any of this worked. Same
+      6–12 month clock task 9 noted. Static build only, no schema or migration.
+      **Found while auditing, deliberately not in scope**: `/pricing` and both
+      guides are `export const dynamic = 'force-dynamic'`, because they call
+      `getServerSessionUser()` for the nav — so every crawler hit does a DB
+      session lookup and nothing is CDN-cached. That hurts TTFB and crawl
+      budget, but fixing it means splitting the viewer-dependent nav out so the
+      shell can be static. Real refactor risk for a performance win, not a GEO
+      one. Its own task if it is worth doing.
+- [ ] **31. Analytics — measure the product without breaking the promise.**
+      **The constraint comes first, because it rules out most of the market.**
+      The site publishes "no analytics" in six places, and `/privacy` makes it
+      specific and checkable: "There is no Google Analytics, no pixel, no
+      session recorder. The only third-party code that ever loads is Cloudflare
+      Turnstile on the signup form and Paddle on the checkout." `/about` says
+      privacy is "the reason the product is shaped the way it is", and
+      `/guides/polarsteps-alternative` leans on it against a named competitor.
+      **Any client-side analytics script breaks that literally**, however
+      privacy-respecting the vendor. Google Analytics is named as absent, so it
+      is not a candidate at all.
+      **What that leaves is better than it sounds**, because most of what is
+      worth knowing is already in Postgres and needs no new collection.
+      **Part 1 — product metrics from data we already hold.** Activation (share
+      of signups adding a first trip within 24h), how many users reach the
+      `FREE_TRIP_LIMIT` of 15 and what share of those upgrade, free-to-paid
+      conversion and time to convert, median trips and photos per user, 30-day
+      retention. All of it is SQL over `users`, `sessions`, `trips` and
+      `photos`, joined to `users.plan` for revenue. Advantages a hosted tool
+      cannot match: exact rather than sampled, **retrospective** — the rows were
+      always there, so a question asked today can look at last March, where a
+      tracker only answers what it was configured for in advance — and
+      identity-resolved without sending anyone's identity anywhere. Ship it as
+      saved SQL first; a card in `/admin` (which already has the owner gate and
+      `InviteManager` to copy) only if it earns the upkeep.
+      **Part 2 — Google Search Console for acquisition.** Free, verified by DNS
+      record or HTML file, and it runs **no code on the site** — it reports
+      Google's own index data rather than watching visitors, so the published
+      claim stays true. Gives search queries, impressions, clicks, average
+      position and index coverage per page. This is the feedback loop task 30
+      needs; without it the JSON-LD and the guides ship with no way to tell
+      whether they worked.
+      **The blind spot, stated honestly.** Neither part can see anyone who
+      visited and left without signing up, which is most people. Non-search
+      referrals — Reddit, a newsletter, an AI engine's citation link — are
+      invisible. That is the real price of the privacy claim, and it is
+      accepted deliberately rather than overlooked.
+      **Rejected**: Umami, Plausible, Cloudflare's beacon and Vercel Web
+      Analytics. All are decent and some are free, but every one injects a
+      script and would force rewriting the claim across six pages including the
+      privacy policy — a weaker, less checkable claim on a product whose pitch
+      is that it does not do this. Not worth a page-view count.
+      **Worth a look if acquisition data ever becomes urgent**: Cloudflare Web
+      Analytics is server-side and needs no beacon when the domain is proxied
+      through Cloudflare. We already hold a Cloudflare account for Turnstile and
+      R2, so the only question is whether DNS routes through their proxy.
+      Free, zero code, and it would not touch the claim.
+- Globe auto-spin as a `/settings` toggle _(BACKLOG, idea)_. Task 27 makes the
+  spin follow the OS `prefers-reduced-motion` preference, which is the right
+  default. An in-app toggle would go further: stop the spin without changing an
+  OS-wide setting, or keep it while reducing motion everywhere else. Undecided,
+  and not free — it needs a `users` column beside `globe_public`
+  (`src/db/schema.ts:38`) and a card on `/settings` following
+  `GlobeVisibility`, and a new `users` column downs every logged-in request
+  until Migrate Neon runs. Revisit once the media query has shipped and we know
+  whether anyone actually wants the override. The settings row is also the only
+  place a "following your system Reduce Motion setting" explanation belongs —
+  task 27 deliberately keeps it off the globe itself.
 - Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
   opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
   real usage data exists.

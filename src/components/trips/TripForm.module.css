@@ -85,32 +85,62 @@
   color: var(--muted);
 }
 
+/* Carries the negative top margin the two lines below used to own, so the
+   block sits where it always did. */
+.pinRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -6px 0 0;
+}
+
 .coords {
   font-size: 12px;
   color: var(--forest);
-  margin: -6px 0 0;
+  margin: 0;
 }
 
 .coordsPrompt {
   font-size: 12px;
   color: var(--muted);
-  margin: -6px 0 0;
+  margin: 0;
 }
 
 .seed {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 12px;
   padding: 14px 16px;
   border: 1px dashed rgba(28, 25, 23, 0.14);
   border-radius: 12px;
   background: var(--accent-soft);
 }
 
+/* Holds everything the card had before the thumbnail was added; with no
+   thumbnail beside it the row collapses and the card looks unchanged. */
+.seedBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seedPreview {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 8px;
+  background: rgba(28, 25, 23, 0.06);
+}
+
 .seedPick {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   font-size: 14px;
   font-weight: 600;
   color: var(--forest);

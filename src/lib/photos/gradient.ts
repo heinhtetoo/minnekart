@@ -16,8 +16,14 @@ function hashSeed(seed: string): number {
   return Math.abs(hash);
 }
 
+// The two stops on their own, for callers that cannot use a CSS string —
+// SVG wants <linearGradient> stops, not `linear-gradient(...)`.
+export function coverGradientPair(seed: string): [string, string] {
+  return GRAD_PAIRS[hashSeed(seed) % GRAD_PAIRS.length];
+}
+
 export function coverGradient(seed: string, index = 0): string {
-  const pair = GRAD_PAIRS[hashSeed(seed) % GRAD_PAIRS.length];
+  const [from, to] = coverGradientPair(seed);
   const angle = ANGLES[index % ANGLES.length];
-  return `linear-gradient(${angle}deg, ${pair[0]}, ${pair[1]})`;
+  return `linear-gradient(${angle}deg, ${from}, ${to})`;
 }
