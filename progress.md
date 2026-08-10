@@ -1472,24 +1472,42 @@ blocking Tier 2 work:
       through Cloudflare. We already hold a Cloudflare account for Turnstile and
       R2, so the only question is whether DNS routes through their proxy.
       Free, zero code, and it would not touch the claim.
-- [ ] **32. Presigned photo uploads have no size ceiling and no orphan
-      cleanup.** `R2Storage.presignPut` (`src/lib/storage/r2.ts:38`) signs no
-      `Content-Length` condition, so a verified user can `PUT` an arbitrarily
-      large object straight to R2. The 8MB/1MB caps
-      (`src/app/api/trips/[id]/photos/route.ts:25`) only get checked when — and
-      if — the client calls back to `POST /photos` to record it; an oversized
-      object is deleted then, but the bytes were already fully uploaded and
-      billed. Worse: if the client never calls that route (crash, or
-      deliberately), the object sits in R2 **forever** with no DB row pointing
-      at it — there is no lifecycle policy and no reconciliation job. The
-      60/min presign rate limit bounds request rate, not per-request size, so
-      it does not close this. Low severity while signup is invite-gated; stops
-      being low severity once task 6's `OPEN_SIGNUP` flag actually flips.
-      Standard fix: a staged upload key (`uploads/<uuid>` promoted to
-      `photos/...` only on record creation) with an R2 lifecycle rule expiring
-      anything left in the staging prefix after ~24h — closes both the cost
-      exposure and the orphan problem via one Cloudflare-side rule, no app
-      code needed on the read/write path.
+- [x] **32. Presigned photo uploads have no size ceiling and no orphan
+      cleanup** _(10 August 2026)_. `R2Storage.presignPut` signed no
+      `Content-Length` condition, so a verified user could `PUT` an
+      arbitrarily large object straight to R2; the 8MB/1MB caps only got
+      checked after the fact, and only if the client ever called back to
+      `POST /photos` to record it. An object from a client that never called
+      back — crash, or deliberately — had no DB row pointing at it and sat in
+      R2 forever, with no lifecycle policy and no reconciliation.
+      Shipped as two independent fixes rather than the staged-key +
+      lifecycle-rule idea first sketched here. **Size binding**: the client
+      already knows both blob sizes before requesting a presign; it now sends
+      them, the server rejects anything over cap before a single byte moves,
+      and the accepted size is bound into the R2 signature via
+      `unhoistableHeaders: new Set(['content-length'])` — a real upload whose
+      `Content-Length` diverges from what was declared gets
+      `SignatureDoesNotMatch` from R2 itself, verified live against the real
+      `dev` bucket (matching-size PUT succeeds, mismatched-size PUT rejected).
+      **Orphan reaping**: new `scripts/reap-orphaned-photos.sh`, matching the
+      existing two OCI-box cron scripts' style exactly, diffs R2's object
+      listing under `photos/` against every `display_key`/`thumb_key` the
+      `photos` table references and removes whatever's unreferenced and old
+      enough that no legitimate upload could still be mid-flight;
+      `DRY_RUN=true` by default since it runs unattended against real user
+      data. A pure R2 lifecycle rule was rejected — it can't tell an orphan
+      from a real photo under the current (unstaged) key layout — and so was
+      restructuring the key scheme, which would add a Copy+Delete to every
+      successful upload to solve what the cron already solves without
+      touching the hot path. `docs/OPS.md` documents the script and gives it
+      its **own** R2 token, separate from the backup job's read-only one, per
+      task 33's least-privilege finding. Verified: gates green (410 tests),
+      `shellcheck` clean, the diff/delete logic proven against the real local
+      DB and a local filesystem standing in for R2 (seeded one real photo row
+      plus matching files, added an unreferenced third file, confirmed only
+      the true orphan was flagged and then removed), and a real upload
+      through `/trip/new` on the `dev` preview confirmed the happy path is
+      unchanged.
 - [ ] **33. R2 API token scope isn't documented or asserted.** `docs/OPS.md`'s
       R2 section (§ Object storage) covers the CORS policy and the SDK
       checksum footgun but never states the token must be scoped to **Object
