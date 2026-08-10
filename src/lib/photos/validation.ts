@@ -4,8 +4,13 @@ import { MAX_PHOTOS_PER_TRIP } from '@/lib/billing/limits';
 
 import { PHOTO_CONTENT_TYPES } from './content-type';
 
+export const MAX_DISPLAY_BYTES = 8 * 1024 * 1024;
+export const MAX_THUMB_BYTES = 1 * 1024 * 1024;
+
 export const presignSchema = z.object({
   contentType: z.enum(PHOTO_CONTENT_TYPES),
+  displaySize: z.number().int().min(1).max(MAX_DISPLAY_BYTES),
+  thumbSize: z.number().int().min(1).max(MAX_THUMB_BYTES),
 });
 
 export const createPhotoSchema = z.object({

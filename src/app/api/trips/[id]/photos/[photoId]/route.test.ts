@@ -35,8 +35,8 @@ async function insertTripFor(userId: string) {
 async function insertPhoto(userId: string, tripId: string, position = 0) {
   const keys = newPhotoKeys(userId, tripId);
   const store = getMemoryStorage();
-  await store.presignPut(keys.displayKey, 'image/webp');
-  await store.presignPut(keys.thumbKey, 'image/webp');
+  await store.presignPut(keys.displayKey, 'image/webp', 500_000);
+  await store.presignPut(keys.thumbKey, 'image/webp', 50_000);
   const [photo] = await db
     .insert(photos)
     .values({

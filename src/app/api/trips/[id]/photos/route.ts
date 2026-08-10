@@ -13,6 +13,8 @@ import { isKeyUnderPrefix, photoPrefix } from '@/lib/photos/keys';
 import { writePositions } from '@/lib/photos/ordering';
 import { signPhoto, signPhotos } from '@/lib/photos/sign';
 import {
+  MAX_DISPLAY_BYTES,
+  MAX_THUMB_BYTES,
   createPhotoSchema,
   reorderPhotosSchema,
 } from '@/lib/photos/validation';
@@ -21,9 +23,6 @@ import { StoredObject } from '@/lib/storage/types';
 import { getOwnedTrip } from '@/lib/trips/access';
 
 type Context = { params: Promise<{ id: string }> };
-
-const MAX_DISPLAY_BYTES = 8 * 1024 * 1024;
-const MAX_THUMB_BYTES = 1 * 1024 * 1024;
 
 export async function POST(
   request: Request,

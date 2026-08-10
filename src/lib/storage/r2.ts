@@ -39,15 +39,22 @@ export class R2Storage implements ObjectStorage {
   presignPut(
     key: string,
     contentType: string,
+    contentLength: number,
     expiresInSeconds = DEFAULT_PUT_EXPIRY,
   ): Promise<string> {
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: key,
       ContentType: contentType,
+      ContentLength: contentLength,
     });
+    // Content-Length would otherwise be hoisted into the query string like
+    // any other header, leaving the actual PUT free to send a different
+    // byte count. Keeping it unhoistable forces R2 to reject a mismatched
+    // upload with SignatureDoesNotMatch instead of accepting it.
     return getSignedUrl(this.client, command, {
       expiresIn: expiresInSeconds,
+      unhoistableHeaders: new Set(['content-length']),
     });
   }
 

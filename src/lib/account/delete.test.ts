@@ -26,8 +26,8 @@ async function seedTripWithPhoto(userId: string) {
     .returning();
   const keys = newPhotoKeys(userId, trip.id);
   const store = getMemoryStorage();
-  await store.presignPut(keys.displayKey, 'image/webp');
-  await store.presignPut(keys.thumbKey, 'image/webp');
+  await store.presignPut(keys.displayKey, 'image/webp', 500_000);
+  await store.presignPut(keys.thumbKey, 'image/webp', 50_000);
   await db.insert(photos).values({
     tripId: trip.id,
     userId,

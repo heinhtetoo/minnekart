@@ -52,7 +52,7 @@ describe('POST /api/trips/[id]/photos/presign', () => {
       jsonRequest(
         'POST',
         urlFor(trip.id),
-        { contentType: 'image/webp' },
+        { contentType: 'image/webp', displaySize: 500_000, thumbSize: 50_000 },
         cookieHeader(sessionToken),
       ),
       context(trip.id),
@@ -77,7 +77,7 @@ describe('POST /api/trips/[id]/photos/presign', () => {
       jsonRequest(
         'POST',
         urlFor(trip.id),
-        { contentType: 'image/jpeg' },
+        { contentType: 'image/jpeg', displaySize: 500_000, thumbSize: 50_000 },
         cookieHeader(sessionToken),
       ),
       context(trip.id),
@@ -99,7 +99,53 @@ describe('POST /api/trips/[id]/photos/presign', () => {
       jsonRequest(
         'POST',
         urlFor(trip.id),
-        { contentType: 'image/png' },
+        { contentType: 'image/png', displaySize: 500_000, thumbSize: 50_000 },
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id),
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  it('rejects a declared display size over the cap', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+
+    const response = await POST(
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        {
+          contentType: 'image/webp',
+          displaySize: 8 * 1024 * 1024 + 1,
+          thumbSize: 50_000,
+        },
+        cookieHeader(sessionToken),
+      ),
+      context(trip.id),
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  it('rejects a declared thumb size over the cap', async () => {
+    const { user, sessionToken } = await createMemberWithSession({
+      verified: true,
+    });
+    const trip = await insertTripFor(user.id);
+
+    const response = await POST(
+      jsonRequest(
+        'POST',
+        urlFor(trip.id),
+        {
+          contentType: 'image/webp',
+          displaySize: 500_000,
+          thumbSize: 1024 * 1024 + 1,
+        },
         cookieHeader(sessionToken),
       ),
       context(trip.id),
@@ -121,7 +167,7 @@ describe('POST /api/trips/[id]/photos/presign', () => {
       jsonRequest(
         'POST',
         urlFor(trip.id),
-        { contentType: 'image/webp' },
+        { contentType: 'image/webp', displaySize: 500_000, thumbSize: 50_000 },
         cookieHeader(sessionToken),
       ),
       context(trip.id),
@@ -140,7 +186,7 @@ describe('POST /api/trips/[id]/photos/presign', () => {
       jsonRequest(
         'POST',
         urlFor(trip.id),
-        { contentType: 'image/webp' },
+        { contentType: 'image/webp', displaySize: 500_000, thumbSize: 50_000 },
         cookieHeader(sessionToken),
       ),
       context(trip.id),
