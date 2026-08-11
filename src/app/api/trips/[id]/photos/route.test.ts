@@ -56,8 +56,8 @@ async function uploadedKeys(
 ) {
   const keys = newPhotoKeys(userId, tripId, contentType);
   const store = getMemoryStorage();
-  await store.presignPut(keys.displayKey, contentType);
-  await store.presignPut(keys.thumbKey, contentType);
+  await store.presignPut(keys.displayKey, contentType, 500_000);
+  await store.presignPut(keys.thumbKey, contentType, 50_000);
   return keys;
 }
 
@@ -174,8 +174,8 @@ describe('POST /api/trips/[id]/photos', () => {
     const trip = await insertTripFor(user.id);
     const foreign = newPhotoKeys('someone-else', trip.id);
     const store = getMemoryStorage();
-    await store.presignPut(foreign.displayKey, 'image/webp');
-    await store.presignPut(foreign.thumbKey, 'image/webp');
+    await store.presignPut(foreign.displayKey, 'image/webp', 500_000);
+    await store.presignPut(foreign.thumbKey, 'image/webp', 50_000);
 
     const response = await POST(
       jsonRequest(

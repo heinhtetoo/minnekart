@@ -9,13 +9,16 @@ beforeEach(() => {
 });
 
 describe('MemoryStorage', () => {
-  it('registers a key on presignPut and reports it via stat', async () => {
-    const url = await storage.presignPut('photos/a/b/c.webp', 'image/webp');
+  it('registers a key on presignPut and reports its declared size via stat', async () => {
+    const url = await storage.presignPut(
+      'photos/a/b/c.webp',
+      'image/webp',
+      500_000,
+    );
 
     expect(url).toContain('photos/a/b/c.webp');
     const stat = await storage.stat('photos/a/b/c.webp');
-    expect(stat).toMatchObject({ contentType: 'image/webp' });
-    expect(stat?.size).toBeGreaterThan(0);
+    expect(stat).toMatchObject({ contentType: 'image/webp', size: 500_000 });
   });
 
   it('returns null stat for an unknown key', async () => {
@@ -23,7 +26,7 @@ describe('MemoryStorage', () => {
   });
 
   it('signs a get url for the key', async () => {
-    await storage.presignPut('photos/a/b/c.webp', 'image/webp');
+    await storage.presignPut('photos/a/b/c.webp', 'image/webp', 500_000);
 
     const url = await storage.presignGet('photos/a/b/c.webp', 3600);
 
@@ -31,7 +34,7 @@ describe('MemoryStorage', () => {
   });
 
   it('deletes an object so stat becomes null', async () => {
-    await storage.presignPut('photos/a/b/c.webp', 'image/webp');
+    await storage.presignPut('photos/a/b/c.webp', 'image/webp', 500_000);
 
     await storage.delete('photos/a/b/c.webp');
 

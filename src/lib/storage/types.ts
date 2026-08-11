@@ -7,6 +7,7 @@ export interface ObjectStorage {
   presignPut(
     key: string,
     contentType: string,
+    contentLength: number,
     expiresInSeconds?: number,
   ): Promise<string>;
   presignGet(key: string, expiresInSeconds: number): Promise<string>;

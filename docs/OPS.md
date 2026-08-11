@@ -300,8 +300,8 @@ manage, so they see no controls.
 
 ## Backups (OCI box)
 
-Both backups run on the OCI box (Tailscale-only, no inbound ports; never in the
-request path) on a nightly user cron. The box clones the repo and runs the two
+All three jobs run on the OCI box (Tailscale-only, no inbound ports; never in
+the request path) on a nightly user cron. The box clones the repo and runs the
 scripts from it. On-box layout:
 
 ```
@@ -314,16 +314,23 @@ scripts from it. On-box layout:
 ```
 
 `~/minnekart/backup.env` (chmod 600) holds the shared secrets and is sourced by
-both cron lines, so nothing sensitive sits in the crontab itself:
+every cron line, so nothing sensitive sits in the crontab itself:
 
 ```sh
 export DATABASE_URL="postgres://…@…neon.tech/minnekart?sslmode=require"  # DIRECT (non-pooler)
 export R2_ACCOUNT_ID="…"
-export R2_ACCESS_KEY_ID="…"        # read-only R2 token
+export R2_ACCESS_KEY_ID="…"        # read-only R2 token — backup only
 export R2_SECRET_ACCESS_KEY="…"
 export R2_BUCKET="…"               # prod bucket
 export RETENTION_DAYS=14
+export R2_REAP_ACCESS_KEY_ID="…"       # separate token, Object Read & Write —
+export R2_REAP_SECRET_ACCESS_KEY="…"   # the reap job has to delete, the backup job never does
 ```
+
+The reap job gets its **own** token rather than reusing the backup one on
+purpose: task 33 flagged that an R2 token should be scoped to exactly what a
+job needs on exactly one bucket, and "can delete objects" is a materially
+bigger grant than "can read them" — worth keeping revocable on its own.
 
 Replace `/home/ubuntu` in the cron lines below with your real home, and
 `1000:1000` with your `id -u`:`id -g` (cron won't expand `$(id -u)`).
@@ -410,6 +417,40 @@ the contents of the `photos/` prefix, so a key looks like
 `<userId>/<tripId>/<uuid>.webp`:
 `rclone copyto ~/minnekart/backups/photos/current/<userId>/<tripId>/<uuid>.webp
 "R2:$R2_BUCKET/photos/<userId>/<tripId>/<uuid>.webp"`.
+
+### Orphaned photos (R2 cleanup, task 32)
+
+A presigned PUT can succeed with no photo record ever following it — a
+crashed upload, or (once `OPEN_SIGNUP` is on) a client that hits the presign
+endpoint and never calls back on purpose. `scripts/reap-orphaned-photos.sh`
+finds objects under `photos/` old enough (`ORPHAN_MIN_AGE_HOURS`, default 24)
+that no legitimate in-flight upload could still be mid-sequence, diffs them
+against every `display_key`/`thumb_key` the `photos` table actually
+references, and removes whatever's left over.
+
+**Defaults to `DRY_RUN=true`** — it lists candidates and changes nothing
+unless you explicitly set `DRY_RUN=false`. This runs unattended on a cron
+against real user data; report-only is the safe default, and the first few
+runs are worth reading before trusting it to delete anything.
+
+```sh
+source ~/minnekart/backup.env
+R2_ACCESS_KEY_ID="$R2_REAP_ACCESS_KEY_ID" \
+  R2_SECRET_ACCESS_KEY="$R2_REAP_SECRET_ACCESS_KEY" \
+  bash ~/minnekart/repo/scripts/reap-orphaned-photos.sh
+```
+
+Cron (daily 03:45 — staggered after both backups):
+
+```cron
+45 3 * * * . /home/ubuntu/minnekart/backup.env; R2_ACCESS_KEY_ID="$R2_REAP_ACCESS_KEY_ID" R2_SECRET_ACCESS_KEY="$R2_REAP_SECRET_ACCESS_KEY" DRY_RUN=false /home/ubuntu/minnekart/repo/scripts/reap-orphaned-photos.sh >> /home/ubuntu/minnekart/logs/reap.log 2>&1
+```
+
+Watch `logs/reap.log` for the first week or so after installing this —
+zero orphans found every night is the expected steady state; a nonzero count
+every single night (rather than the occasional crashed upload) means
+something upstream is generating them faster than expected and is worth
+tracing before it's just a cron job quietly deleting things.
 
 ## Open signup (Turnstile)
 

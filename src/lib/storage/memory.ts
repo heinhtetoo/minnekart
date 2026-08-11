@@ -1,12 +1,14 @@
 import { ObjectStorage, StoredObject } from './types';
 
-const DEFAULT_OBJECT_SIZE = 120_000;
-
 export class MemoryStorage implements ObjectStorage {
   private objects = new Map<string, StoredObject>();
 
-  async presignPut(key: string, contentType: string): Promise<string> {
-    this.objects.set(key, { size: DEFAULT_OBJECT_SIZE, contentType });
+  async presignPut(
+    key: string,
+    contentType: string,
+    contentLength: number,
+  ): Promise<string> {
+    this.objects.set(key, { size: contentLength, contentType });
     return `memory://put/${key}`;
   }
 

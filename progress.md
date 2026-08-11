@@ -1472,6 +1472,51 @@ blocking Tier 2 work:
       through Cloudflare. We already hold a Cloudflare account for Turnstile and
       R2, so the only question is whether DNS routes through their proxy.
       Free, zero code, and it would not touch the claim.
+- [x] **32. Presigned photo uploads have no size ceiling and no orphan
+      cleanup** _(10 August 2026)_. `R2Storage.presignPut` signed no
+      `Content-Length` condition, so a verified user could `PUT` an
+      arbitrarily large object straight to R2; the 8MB/1MB caps only got
+      checked after the fact, and only if the client ever called back to
+      `POST /photos` to record it. An object from a client that never called
+      back — crash, or deliberately — had no DB row pointing at it and sat in
+      R2 forever, with no lifecycle policy and no reconciliation.
+      Shipped as two independent fixes rather than the staged-key +
+      lifecycle-rule idea first sketched here. **Size binding**: the client
+      already knows both blob sizes before requesting a presign; it now sends
+      them, the server rejects anything over cap before a single byte moves,
+      and the accepted size is bound into the R2 signature via
+      `unhoistableHeaders: new Set(['content-length'])` — a real upload whose
+      `Content-Length` diverges from what was declared gets
+      `SignatureDoesNotMatch` from R2 itself, verified live against the real
+      `dev` bucket (matching-size PUT succeeds, mismatched-size PUT rejected).
+      **Orphan reaping**: new `scripts/reap-orphaned-photos.sh`, matching the
+      existing two OCI-box cron scripts' style exactly, diffs R2's object
+      listing under `photos/` against every `display_key`/`thumb_key` the
+      `photos` table references and removes whatever's unreferenced and old
+      enough that no legitimate upload could still be mid-flight;
+      `DRY_RUN=true` by default since it runs unattended against real user
+      data. A pure R2 lifecycle rule was rejected — it can't tell an orphan
+      from a real photo under the current (unstaged) key layout — and so was
+      restructuring the key scheme, which would add a Copy+Delete to every
+      successful upload to solve what the cron already solves without
+      touching the hot path. `docs/OPS.md` documents the script and gives it
+      its **own** R2 token, separate from the backup job's read-only one, per
+      task 33's least-privilege finding. Verified: gates green (410 tests),
+      `shellcheck` clean, the diff/delete logic proven against the real local
+      DB and a local filesystem standing in for R2 (seeded one real photo row
+      plus matching files, added an unreferenced third file, confirmed only
+      the true orphan was flagged and then removed), and a real upload
+      through `/trip/new` on the `dev` preview confirmed the happy path is
+      unchanged.
+- [ ] **33. R2 API token scope isn't documented or asserted.** `docs/OPS.md`'s
+      R2 section (§ Object storage) covers the CORS policy and the SDK
+      checksum footgun but never states the token must be scoped to **Object
+      Read & Write on the one bucket**, not account-wide R2 access. Cloudflare's
+      token UI does not default to least privilege, so a token minted without
+      reading this carefully can end up with reach beyond the app's own bucket.
+      Add the scoping instruction to the setup checklist and verify the
+      currently-live prod and dev tokens against it in the Cloudflare
+      dashboard — a docs + ops check, no code change.
 - Globe auto-spin as a `/settings` toggle _(BACKLOG, idea)_. Task 27 makes the
   spin follow the OS `prefers-reduced-motion` preference, which is the right
   default. An in-app toggle would go further: stop the spin without changing an

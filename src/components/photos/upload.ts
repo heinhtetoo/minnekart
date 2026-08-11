@@ -26,7 +26,12 @@ export async function uploadPhoto(
   }
 
   onStage('uploading');
-  const presign = await photosApi.presign(tripId, processed.contentType);
+  const presign = await photosApi.presign(
+    tripId,
+    processed.contentType,
+    processed.displayBlob.size,
+    processed.thumbBlob.size,
+  );
   if (!presign.ok || !presign.data) {
     return failed(presign.error ?? 'upload_failed');
   }

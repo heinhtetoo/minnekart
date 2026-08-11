@@ -28,10 +28,15 @@ export const photosApi = {
     }
     return apiRequest<LibraryPage>(`/api/account/photos?${params}`);
   },
-  presign: (tripId: string, contentType: PhotoContentType) =>
+  presign: (
+    tripId: string,
+    contentType: PhotoContentType,
+    displaySize: number,
+    thumbSize: number,
+  ) =>
     apiRequest<PresignResult>(
       `/api/trips/${tripId}/photos/presign`,
-      jsonBody('POST', { contentType }),
+      jsonBody('POST', { contentType, displaySize, thumbSize }),
     ),
   createRecord: (tripId: string, body: CreatePhotoInput) =>
     apiRequest<{ photo: SignedPhoto }>(

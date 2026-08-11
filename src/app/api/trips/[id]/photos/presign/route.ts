@@ -44,7 +44,7 @@ export async function POST(
     return jsonResponse({ error: 'rate_limited' }, 429);
   }
 
-  const { contentType } = parsed.data;
+  const { contentType, displaySize, thumbSize } = parsed.data;
   const { displayKey, thumbKey } = newPhotoKeys(
     guard.user.id,
     trip.id,
@@ -52,8 +52,13 @@ export async function POST(
   );
   const store = storage();
   const [displayUploadUrl, thumbUploadUrl] = await Promise.all([
-    store.presignPut(displayKey, contentType, UPLOAD_EXPIRY_SECONDS),
-    store.presignPut(thumbKey, contentType, UPLOAD_EXPIRY_SECONDS),
+    store.presignPut(
+      displayKey,
+      contentType,
+      displaySize,
+      UPLOAD_EXPIRY_SECONDS,
+    ),
+    store.presignPut(thumbKey, contentType, thumbSize, UPLOAD_EXPIRY_SECONDS),
   ]);
 
   return jsonResponse(
