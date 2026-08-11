@@ -13,6 +13,7 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: 'Privacy · Minnekart',
   description: DESCRIPTION,
+  alternates: { canonical: '/privacy' },
   openGraph: {
     title: 'Privacy · Minnekart',
     description: DESCRIPTION,
@@ -30,7 +31,7 @@ export default async function PrivacyPage() {
       viewer={viewer}
       eyebrow="Legal"
       title="Privacy"
-      updated="13 July 2026"
+      updated="11 August 2026"
     >
       <p>
         Minnekart is a service of {entity.name} ({entity.abn}), based in{' '}
@@ -74,9 +75,13 @@ export default async function PrivacyPage() {
         <li>
           <strong>No photo metadata. </strong>Your photos are re-encoded in your
           browser before they&apos;re uploaded, which strips the embedded EXIF
-          data — including any GPS coordinates your camera recorded. The one
-          thing we read from it is the date the photo was taken, so your
-          memories can sort themselves.
+          data — including any GPS coordinates your camera recorded. Two things
+          are read from it before it&apos;s stripped, both to save you typing:
+          the date the photo was taken, so your memories can sort themselves,
+          and — if the photo carries GPS — the coordinates, to suggest which
+          place the memory belongs to. That suggestion is only saved if you
+          accept it, and it becomes an ordinary pin, exactly like one you
+          searched for by hand.
         </li>
       </ul>
 
@@ -91,12 +96,26 @@ export default async function PrivacyPage() {
       <h2>Where your photos live</h2>
       <p>
         Photos are stored in a private Cloudflare R2 bucket that isn&apos;t
-        publicly readable. When you or someone with your share link views a
-        photo, we mint a signed URL that expires after about an hour. Your globe
-        and your memories are private by default — nothing is visible to anyone
-        else until you create a share link, and you can revoke a share link at
-        any time.
+        publicly readable. When you or someone with a link you&apos;ve shared
+        views a photo, we mint a signed URL that expires after about an hour.
       </p>
+      <p>
+        Your globe and your memories are <strong>private by default</strong>.
+        There are exactly two ways anything becomes visible to someone else, and
+        both are off until you turn them on:
+      </p>
+      <ul>
+        <li>
+          <strong>A share link for one memory</strong> — an unguessable link you
+          create per trip, and can revoke at any time.
+        </li>
+        <li>
+          <strong>Your public globe</strong> — this needs two deliberate
+          switches: making your globe public in Settings, <em>and</em> marking
+          an individual memory as shown on it. A memory you haven&apos;t marked
+          stays private even when your globe is public.
+        </li>
+      </ul>
 
       <h2>Who else touches your data</h2>
       <p>

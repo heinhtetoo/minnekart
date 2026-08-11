@@ -12,6 +12,7 @@ const DESCRIPTION = 'The terms you agree to when you use Minnekart.';
 export const metadata: Metadata = {
   title: 'Terms · Minnekart',
   description: DESCRIPTION,
+  alternates: { canonical: '/terms' },
   openGraph: {
     title: 'Terms · Minnekart',
     description: DESCRIPTION,
@@ -29,7 +30,7 @@ export default async function TermsPage() {
       viewer={viewer}
       eyebrow="Legal"
       title="Terms of service"
-      updated="13 July 2026"
+      updated="11 August 2026"
     >
       <p>
         Minnekart is a service of {entity.name} ({entity.abn}), based in{' '}
@@ -104,12 +105,13 @@ export default async function TermsPage() {
 
       <h2>Suspension and closing accounts</h2>
       <p>
-        You can ask us to delete your account at any time by emailing{' '}
-        <a href={`mailto:${support}`}>{support}</a>. We may suspend or close an
-        account that breaks these terms, is being used illegally, or is putting
-        the service at risk. If we do that and you&apos;ve paid for time you
-        can&apos;t use, we&apos;ll refund the unused part unless the account was
-        closed for serious misuse.
+        You can delete your account yourself at any time from{' '}
+        <strong>Settings → Delete account</strong>, or ask us to do it by
+        emailing <a href={`mailto:${support}`}>{support}</a>. We may suspend or
+        close an account that breaks these terms, is being used illegally, or is
+        putting the service at risk. If we do that and you&apos;ve paid for time
+        you can&apos;t use, we&apos;ll refund the unused part unless the account
+        was closed for serious misuse.
       </p>
 
       <h2>Availability</h2>
