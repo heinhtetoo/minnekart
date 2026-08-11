@@ -14,6 +14,7 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: 'Refunds · Minnekart',
   description: DESCRIPTION,
+  alternates: { canonical: '/refunds' },
   openGraph: {
     title: 'Refunds · Minnekart',
     description: DESCRIPTION,
