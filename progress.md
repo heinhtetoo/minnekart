@@ -1608,6 +1608,33 @@ blocking Tier 2 work:
       Neon `dev` branch is copy-on-write off prod and carries photo rows whose
       objects only exist in the prod bucket. No code change: token scope is a
       Cloudflare-side property, invisible to `src/lib/storage/r2.ts`.
+- [ ] **34. Public pages are all `force-dynamic`, so nothing is CDN-cached.**
+      Noted while auditing for task 30 and deliberately left out of it. **Eight
+      public pages** carry `export const dynamic = 'force-dynamic'`:
+      `/about`, `/pricing`, `/privacy`, `/terms`, `/refunds`, `/guides` and
+      both guide articles. (`/profile` has it too, but that one is
+      logged-in-only and legitimately dynamic — not part of this.)
+      **Why they're dynamic**: each calls `getServerSessionUser()` to decide
+      whether `ContentPage` renders `TopNav` or `PublicChrome`. That reads
+      cookies, which forces dynamic rendering whether or not the export is
+      there — so deleting the line alone changes nothing.
+      **What it costs**: every crawler hit does a DB session lookup for a page
+      whose content is identical for every signed-out visitor, and nothing sits
+      on the CDN. That is worst exactly where it matters most now — these are
+      the pages task 30 just spent its effort making quotable, and they are the
+      slowest ones we serve. Bad for TTFB, and crawl budget is finite.
+      **The fix is a real refactor, which is why it isn't a one-liner**: the
+      viewer-dependent chrome has to come out of the static shell. Either the
+      nav becomes a client component hydrating from `/api/auth/me`, or it sits
+      behind a Suspense boundary so the shell prerenders and only the nav
+      streams. Next 16's Partial Prerendering is the obvious thing to evaluate
+      first, since it is built for this exact shape. Watch the logged-out flash
+      of the wrong nav in either approach — that trade is the whole design
+      question.
+      Worth measuring before committing to it: check the actual TTFB difference
+      on the `dev` preview rather than assuming, since Neon's pooled connection
+      may already make the session lookup cheap enough not to matter.
+      Performance work, not GEO work — ranking does not depend on it.
 - Globe auto-spin as a `/settings` toggle _(BACKLOG, idea)_. Task 27 makes the
   spin follow the OS `prefers-reduced-motion` preference, which is the right
   default. An in-app toggle would go further: stop the spin without changing an
