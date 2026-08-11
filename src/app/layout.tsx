@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import { DM_Sans, EB_Garamond } from 'next/font/google';
 import './globals.css';
 
+import JsonLd from '@/components/seo/JsonLd';
 import { env } from '@/lib/env';
+import { organizationSchema, webSiteSchema } from '@/lib/seo/schema';
 
 const dmSans = DM_Sans({
   variable: '--font-sans',
@@ -32,9 +34,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const base = env().APP_URL;
+
   return (
     <html lang="en" className={`${dmSans.variable} ${ebGaramond.variable}`}>
-      <body>{children}</body>
+      <body>
+        <JsonLd data={[organizationSchema(base), webSiteSchema(base)]} />
+        {children}
+      </body>
     </html>
   );
 }
