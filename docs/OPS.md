@@ -428,6 +428,13 @@ that no legitimate in-flight upload could still be mid-sequence, diffs them
 against every `display_key`/`thumb_key` the `photos` table actually
 references, and removes whatever's left over.
 
+Reads the database via a disposable `postgres:18` container rather than a
+native `psql` — same reasoning as the Neon backup job above: no client
+version to keep matched to whatever Neon runs. Needs `rclone` (already
+required by the R2 mirror job) and Docker (already required by the Neon
+dump job) on the box; nothing new to install if both other crons are
+already set up.
+
 **Defaults to `DRY_RUN=true`** — it lists candidates and changes nothing
 unless you explicitly set `DRY_RUN=false`. This runs unattended on a cron
 against real user data; report-only is the safe default, and the first few
