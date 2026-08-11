@@ -71,8 +71,8 @@ Full reference for every var:
 | `SMTP_PASS`             | when smtp    | SMTP key (not an account password).                                                                                                                                                                                                                                                                          |
 | `STORAGE_DRIVER`        | yes in prod  | `r2` \| `memory`. **Defaults to `r2`.**                                                                                                                                                                                                                                                                      |
 | `R2_ACCOUNT_ID`         | when r2      | Cloudflare account id.                                                                                                                                                                                                                                                                                       |
-| `R2_ACCESS_KEY_ID`      | when r2      | R2 token key id.                                                                                                                                                                                                                                                                                             |
-| `R2_SECRET_ACCESS_KEY`  | when r2      | R2 token secret.                                                                                                                                                                                                                                                                                             |
+| `R2_ACCESS_KEY_ID`      | when r2      | R2 token key id. **Prod and Preview take different tokens**, each scoped to its own bucket — see § Object storage. A shared token lets a preview deploy delete production photos.                                                                                                                            |
+| `R2_SECRET_ACCESS_KEY`  | when r2      | R2 token secret. Pairs with the key id above; a mismatched pair gives `403 SignatureDoesNotMatch` on every upload.                                                                                                                                                                                           |
 | `R2_BUCKET`             | when r2      | Private bucket name.                                                                                                                                                                                                                                                                                         |
 | `PADDLE_ENV`            | no           | `sandbox` \| `production`. **Defaults to `sandbox`** — set `production` when going live.                                                                                                                                                                                                                     |
 | `PADDLE_WEBHOOK_SECRET` | for billing  | Notification destination secret (`pdl_ntfset_…`). Without it the webhook returns 503 and no plan changes apply.                                                                                                                                                                                              |
@@ -123,6 +123,12 @@ production and CI applies unreleased migrations to it.
 - [ ] `STORAGE_DRIVER=r2` + all four `R2_*` set in prod (or `memory` on purpose),
       and `R2_BUCKET` is the **dev bucket** in Preview — a shared bucket lets a
       preview delete production photos.
+- [ ] `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY` are a **different token** in
+      Preview than in Production, each scoped to that environment's bucket only
+      (§ Object storage). Pointing `R2_BUCKET` at the dev bucket is the
+      convention; a bucket-scoped token is what actually enforces it. Verify
+      with the negative `rclone` checks — the preview token must fail to list
+      the prod bucket.
 - [ ] The dev bucket has its own CORS policy naming the `dev` alias as an
       allowed origin, or uploads fail preflight there.
 - [ ] `PADDLE_ENV=production` + prod webhook secret/client token/price ids in
@@ -182,8 +188,9 @@ transport just logs the message, so dev works with no provider at all.)
 ## Object storage (R2)
 
 Photos are stored in a private R2 bucket; the browser uploads directly to R2 via
-a presigned `PUT`. Two settings are required beyond the `R2_*` env vars, and
-both bit us at launch — check them when creating a new bucket or adding a domain:
+a presigned `PUT`. Three settings are required beyond the `R2_*` env vars — the
+first two bit us at launch; check all of them when creating a new bucket, adding
+a domain, or minting a token:
 
 1. **Bucket CORS policy.** The upload is a cross-origin `PUT` from the site to
    `…r2.cloudflarestorage.com`, so the browser sends a CORS preflight. Without a
@@ -220,9 +227,71 @@ both bit us at launch — check them when creating a new bucket or adding a doma
    headers, which the browser can't reproduce → `SignatureDoesNotMatch`. Leave
    this in place; removing it breaks uploads.
 
+3. **API token scope.** Cloudflare → R2 → **Manage API tokens**. The UI does not
+   default to least privilege — "Admin Read & Write" across every bucket is two
+   clicks away and looks unremarkable — so this is easy to get wrong and hard to
+   notice afterwards. Four consumers, four tokens, each **scoped to one bucket**:
+
+   | Token                   | Permission          | Bucket          | Used by                   |
+   | ----------------------- | ------------------- | --------------- | ------------------------- |
+   | `minnekart-app-prod`    | Object Read & Write | `minnekart`     | Vercel, Production scope  |
+   | `minnekart-app-preview` | Object Read & Write | `minnekart-dev` | Vercel, Preview scope     |
+   | `minnekart-backup-ro`   | Object Read only    | `minnekart`     | `backup-r2.sh` on the box |
+   | `minnekart-reap-rw`     | Object Read & Write | `minnekart`     | `reap-orphaned-photos.sh` |
+
+   Always pick **"Apply to specific buckets only"** and name the single bucket;
+   never "all buckets in this account". **No app operation needs Admin** —
+   `R2Storage` only ever issues `PutObject`, `GetObject`, `HeadObject` and
+   `DeleteObject`, all of which Object-level permission covers. Admin adds
+   bucket creation and deletion, which nothing here does.
+
+   The one that matters most is `minnekart-app-preview`. A Preview deploy
+   holding a prod-capable token can delete production photos — the same
+   env-scoping landmine the audit checklist calls out for `DATABASE_URL`, one
+   layer down. Separate tokens make that impossible at the credential level
+   rather than by convention.
+
+   The backup token being **read-only** is deliberate: `backup-r2.sh` is a
+   one-way pull, and a backup job that can write is a backup job that can
+   destroy the thing it is backing up. The reap job needs write purely because
+   deleting is its whole purpose — hence its own token, revocable alone.
+
+**Rotating a token** invalidates every presigned URL signed with the old key.
+Display URLs live 1h and are cached ~30 min in `src/lib/photos/sign.ts`, so
+already-rendered pages lose their images until reload; new signatures are issued
+immediately and the rest self-heals. Harmless when traffic is low, visible when
+it isn't — rotate deliberately, and do the box and Preview before Production so
+a mistake surfaces somewhere cheap.
+
 If an upload fails: status `—`/no response = CORS; `403 SignatureDoesNotMatch`
 with a body = credentials (`R2_SECRET_ACCESS_KEY` not matching the key id) or the
-checksum setting.
+checksum setting; `403 AccessDenied` on an operation that used to work = token
+scope (wrong bucket, or read-only where write was needed).
+
+### Verifying token scope
+
+The dashboard shows what you _selected_; these show what a token can actually
+**do**. Most are negative tests — the pass condition is a failure. Same
+`RCLONE_CONFIG_R2_*` env-var pattern the cron scripts use, so no secret touches
+a config file or argv:
+
+```sh
+export RCLONE_CONFIG_R2_TYPE=s3 RCLONE_CONFIG_R2_PROVIDER=Cloudflare
+export RCLONE_CONFIG_R2_ENDPOINT="https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com"
+export RCLONE_CONFIG_R2_REGION=auto
+export RCLONE_CONFIG_R2_ACCESS_KEY_ID="<token key id>"
+export RCLONE_CONFIG_R2_SECRET_ACCESS_KEY="<token secret>"
+
+rclone lsf R2:minnekart          # preview token → must fail AccessDenied
+rclone lsf R2:minnekart-dev      # prod token    → must fail AccessDenied
+rclone lsd R2:                   # any token     → must not list the account
+rclone touch R2:minnekart/scope-probe.txt   # backup token → must fail
+                                            # reap token   → must succeed,
+                                            # then: rclone delete R2:minnekart/scope-probe.txt
+```
+
+If `lsf` against the other environment's bucket **succeeds**, that token is
+over-scoped — remint it before going further.
 
 ## Billing (Paddle)
 
@@ -319,18 +388,20 @@ every cron line, so nothing sensitive sits in the crontab itself:
 ```sh
 export DATABASE_URL="postgres://…@…neon.tech/minnekart?sslmode=require"  # DIRECT (non-pooler)
 export R2_ACCOUNT_ID="…"
-export R2_ACCESS_KEY_ID="…"        # read-only R2 token — backup only
+export R2_ACCESS_KEY_ID="…"        # minnekart-backup-ro — Object Read only, prod bucket
 export R2_SECRET_ACCESS_KEY="…"
 export R2_BUCKET="…"               # prod bucket
 export RETENTION_DAYS=14
-export R2_REAP_ACCESS_KEY_ID="…"       # separate token, Object Read & Write —
-export R2_REAP_SECRET_ACCESS_KEY="…"   # the reap job has to delete, the backup job never does
+export R2_REAP_ACCESS_KEY_ID="…"       # minnekart-reap-rw — Object Read & Write,
+export R2_REAP_SECRET_ACCESS_KEY="…"   # prod bucket; the reap job deletes, the backup job never does
 ```
 
-The reap job gets its **own** token rather than reusing the backup one on
-purpose: task 33 flagged that an R2 token should be scoped to exactly what a
-job needs on exactly one bucket, and "can delete objects" is a materially
-bigger grant than "can read them" — worth keeping revocable on its own.
+Two R2 tokens, not one, and the backup job's is **read-only** on purpose: a
+backup job that can write is a backup job that can destroy the thing it is
+backing up. The reap job needs write because deleting is its entire purpose, so
+it gets its own token, revocable on its own without touching backups. Both are
+scoped to the prod bucket alone — see § Object storage for the full four-token
+table and the commands to verify a token's real reach.
 
 Replace `/home/ubuntu` in the cron lines below with your real home, and
 `1000:1000` with your `id -u`:`id -g` (cron won't expand `$(id -u)`).
