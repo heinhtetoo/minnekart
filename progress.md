@@ -1353,7 +1353,8 @@ blocking Tier 2 work:
       typecheck, 400 tests, build, and `/trip/new` serving 200 in dev.
       **Not verified by a human in a browser** — the photo-pick flows in the
       plan's manual pass need a real device and a logged-in session.
-- [ ] **30. Optimise for AI answer engines and search (GEO/SEO).** Task 9 built
+- [x] **30. Optimise for AI answer engines and search (GEO/SEO)**
+      _(11 August 2026)_. Task 9 built
       the base layer — `/guides` hub-and-spoke, branded OG cards, per-page
       `metadata`, sitemap, robots. This is the layer above it, aimed at being
       **quoted** by ChatGPT, Claude, Perplexity and AI Overviews rather than
@@ -1425,6 +1426,55 @@ blocking Tier 2 work:
       budget, but fixing it means splitting the viewer-dependent nav out so the
       shell can be static. Real refactor risk for a performance win, not a GEO
       one. Its own task if it is worth doing.
+      **Shipped as four commits** (`07cccd1`, `76a30e2`, `c457ba3`,
+      `210f07c`), 437 tests green, no schema or migration.
+      **A.** `robots.ts` now splits crawlers by purpose. The trap worth
+      remembering: a crawler obeys exactly one group — its most specific
+      `User-agent` match — and inherits nothing from `*`, so the citation group
+      has to repeat the private-route disallow list or naming those bots
+      _grants_ them what the catch-all keeps out. Tests pin that inversion, and
+      the rendered `robots.txt` was read group by group rather than trusted
+      from source. Canonicals added everywhere (the home page's `?invite=` /
+      `?signup=` were splitting signals); `sitemap.ts` stopped claiming every
+      page changed on every deploy, with the two guide dates moved into a new
+      `src/lib/seo/guides.ts` so the sitemap and `Article` schema read one
+      source.
+      **B.** JSON-LD via pure builders in `src/lib/seo/schema.ts`. `offers`
+      generate from the same `pricingTiers()` the page renders — verified both
+      ways, with and without `PADDLE_PRICE_LIFETIME`, so schema can never
+      advertise a tier the page hides.
+      **The bug worth recording**: the first version emitted a bare top-level
+      array where a page had several entities. Valid JSON-LD, badly supported —
+      a consumer reading `parsed['@context']` gets `undefined` on an array and
+      throws, which it did, in the browser console on a dev run. The `curl`
+      checks had confirmed the content was correct and never that it was
+      _consumable_; reading valid-looking JSON is not the same as checking
+      something can parse it. Now `jsonLdDocument()` builds a real document —
+      one top-level `@context`, `@graph` for several entities, a lone entity
+      inlined.
+      **C — verification first, and it found more than expected.** Four
+      inaccuracies on live pages, three of them corrected in `07cccd1`:
+      `/privacy` claimed the capture date was "the one thing we read" from EXIF
+      (untrue since task 10 added GPS pin suggestions); `/privacy` and both
+      guides described the share link as the only path to visibility, omitting
+      the two-switch public globe; `/terms` still said deletion was email-only,
+      contradicting `/privacy`, which task 12b had already updated.
+      **And we had mischaracterised Polarsteps.** The guide called them "a
+      public trip profile"; their own support docs say the default is
+      **Followers**, with "Only me" and "Public" as the alternatives, and the
+      live dot is hideable. Overstating a competitor's publicness on a page
+      whose entire argument is a privacy contrast is the one claim a reader
+      would check. Reframed to social-vs-solitary — accurate, and a sharper
+      contrast anyway, since the real difference is that they are built around
+      an audience and we have no social graph at all.
+      Then the content: a five-row table (each row traceable to their docs,
+      with a dated "checked on" note, and the planned EXIF row **dropped**
+      because their EXIF handling was never verified and an unsourced
+      competitor claim is not worth a row), and six FAQ answers cross-checked
+      against `/terms`, `/privacy` and `/refunds`. `ContentPage.module.css` had
+      no table styles; the table scrolls in its own wrapper, verified in
+      headless Chromium at 360px — 520px table in a 320px container, document
+      still 360 and not scrolling sideways.
 - [ ] **31. Analytics — measure the product without breaking the promise.**
       **The constraint comes first, because it rules out most of the market.**
       The site publishes "no analytics" in six places, and `/privacy` makes it
