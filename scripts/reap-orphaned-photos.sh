@@ -17,9 +17,12 @@
 #   ORPHAN_MIN_AGE_HOURS   Only consider objects at least this old (default: 24)
 #   DRY_RUN                "true" lists candidates without deleting (default: true)
 #
-# Needs rclone and the postgres client (psql) installed on the box — both
-# already required by the other two scripts. A read-only Neon connection and
-# a read+write R2 token are sufficient (deletion needs the write scope).
+# Needs rclone installed natively (already required by backup-r2.sh) and
+# Docker (already required by backup-neon.sh, which runs pg_dump inside the
+# official postgres image rather than installing a client on the box — this
+# script does the same for psql, for the same reason: no client version to
+# keep matched to whatever Neon runs). A read-only Neon connection and a
+# read+write R2 token are sufficient (deletion needs the write scope).
 
 set -euo pipefail
 
@@ -27,8 +30,8 @@ command -v rclone >/dev/null 2>&1 || {
   echo "rclone is not installed" >&2
   exit 1
 }
-command -v psql >/dev/null 2>&1 || {
-  echo "psql is not installed" >&2
+command -v docker >/dev/null 2>&1 || {
+  echo "docker is not installed" >&2
   exit 1
 }
 
@@ -60,9 +63,13 @@ rclone lsf "R2:${R2_BUCKET}/photos" --recursive --files-only \
   sed 's#^#photos/#' | sort >"$work_dir/r2_keys.txt"
 
 # Keys the app actually references — every displayKey and thumbKey any
-# photo row points at.
-psql "$DATABASE_URL" -tAc \
-  'SELECT display_key FROM photos UNION SELECT thumb_key FROM photos' |
+# photo row points at. Run via a disposable postgres:18 container rather
+# than a native psql — same reasoning as backup-neon.sh. -e (no =value)
+# forwards DATABASE_URL by reference; the single-quoted sh -c defers its
+# expansion to the container, so the secret never appears in this host's
+# own process list.
+docker run --rm -e DATABASE_URL postgres:18 \
+  sh -c 'psql "$DATABASE_URL" -tAc "SELECT display_key FROM photos UNION SELECT thumb_key FROM photos"' |
   sort >"$work_dir/db_keys.txt"
 
 comm -23 "$work_dir/r2_keys.txt" "$work_dir/db_keys.txt" \
