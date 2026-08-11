@@ -1508,15 +1508,56 @@ blocking Tier 2 work:
       the true orphan was flagged and then removed), and a real upload
       through `/trip/new` on the `dev` preview confirmed the happy path is
       unchanged.
-- [ ] **33. R2 API token scope isn't documented or asserted.** `docs/OPS.md`'s
-      R2 section (§ Object storage) covers the CORS policy and the SDK
-      checksum footgun but never states the token must be scoped to **Object
-      Read & Write on the one bucket**, not account-wide R2 access. Cloudflare's
-      token UI does not default to least privilege, so a token minted without
-      reading this carefully can end up with reach beyond the app's own bucket.
-      Add the scoping instruction to the setup checklist and verify the
-      currently-live prod and dev tokens against it in the Cloudflare
-      dashboard — a docs + ops check, no code change.
+      **Correction, found running it on the real box (11 August 2026).** The
+      script claimed psql was "already required by the other two scripts" —
+      true of `rclone`, not psql; the OCI box has no native postgres client.
+      Fixed to match `backup-neon.sh`'s own pattern instead of assuming a
+      dependency that wasn't there: the DB query now runs inside a disposable
+      `postgres:18` container (`DATABASE_URL` forwarded by reference via `-e`,
+      expanded inside the container by a single-quoted `sh -c` so the secret
+      never touches the host's own process list), rather than requiring a
+      native client install. First real run on the box came back clean —
+      connected to the real bucket and the real Neon database, reported "no
+      orphaned photos found". Installed on the OCI cron at 03:45
+      (`DRY_RUN=true`, staggered after both backups) — staying in dry-run for
+      a few nights and watching `logs/reap.log` before flipping to
+      `DRY_RUN=false`, rather than trusting unattended deletion against real
+      data on the first pass.
+- [x] **33. R2 API token scope isn't documented or
+      asserted** _(11 August 2026)_. The R2 section of `docs/OPS.md` covered
+      the CORS policy and the SDK checksum footgun but never said what
+      **permissions** a token should carry. Cloudflare's token UI does not default to least privilege —
+      "Admin Read & Write" across every bucket is two clicks away and looks
+      unremarkable — so a token minted without guidance can reach far beyond
+      the one bucket the app needs.
+      **Split into four scoped tokens**, one per consumer, each Object-level
+      (never Admin — `R2Storage` only issues `PutObject`, `GetObject`,
+      `HeadObject`, `DeleteObject`) and each applied to a single bucket:
+      `minnekart-app-prod` (RW, prod) and `minnekart-app-preview` (RW,
+      `minnekart-dev`) in the matching Vercel scopes, `minnekart-backup-ro`
+      (**read only**, prod) and `minnekart-reap-rw` (RW, prod) on the OCI box.
+      The one that matters is app-preview: a Preview deploy holding a
+      prod-capable token can delete production photos — the same env-scoping
+      landmine the audit checklist already flags for `DATABASE_URL`, one layer
+      down. Separate tokens make it impossible at the credential level rather
+      than by convention. The backup token is read-only deliberately: a backup
+      job that can write is a backup job that can destroy what it backs up.
+      **Docs**: § Object storage gained an "API token scope" item with the
+      four-token table, a new § Verifying token scope with negative `rclone`
+      probes, and a note that rotating invalidates outstanding presigned URLs
+      (1h signature, ~30min cache in `src/lib/photos/sign.ts`) so already-
+      rendered pages lose images until reload — done now precisely because
+      that costs nothing pre-launch. Env-var rows, the prod-vs-preview audit
+      checklist and the `backup.env` comments all updated to match.
+      **Verified on the real credentials**: prod key cannot reach the dev
+      bucket and the preview key cannot reach prod, each confirmed by hand;
+      backup token read-only and both box tokens prod-scoped, confirmed at
+      mint time; Vercel redeployed after each env change. Surfaced en route
+      that preview photos for rows copied from prod now fail to load — the
+      expected and correct consequence of real bucket isolation, since the
+      Neon `dev` branch is copy-on-write off prod and carries photo rows whose
+      objects only exist in the prod bucket. No code change: token scope is a
+      Cloudflare-side property, invisible to `src/lib/storage/r2.ts`.
 - Globe auto-spin as a `/settings` toggle _(BACKLOG, idea)_. Task 27 makes the
   spin follow the OS `prefers-reduced-motion` preference, which is the right
   default. An in-app toggle would go further: stop the spin without changing an
