@@ -50,6 +50,13 @@
       "when": 1784697512630,
       "tag": "0006_stormy_rage",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786448102986,
+      "tag": "0007_clumsy_ultimates",
+      "breakpoints": true
     }
   ]
 }

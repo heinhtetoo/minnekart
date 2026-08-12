@@ -1475,7 +1475,8 @@ blocking Tier 2 work:
       no table styles; the table scrolls in its own wrapper, verified in
       headless Chromium at 360px — 520px table in a 320px container, document
       still 360 and not scrolling sideways.
-- [ ] **31. Analytics — measure the product without breaking the promise.**
+- [x] **31. Analytics — measure the product without breaking the promise**
+      _(12 August 2026)_.
       **The constraint comes first, because it rules out most of the market.**
       The site publishes "no analytics" in six places, and `/privacy` makes it
       specific and checkable: "There is no Google Analytics, no pixel, no
@@ -1488,25 +1489,62 @@ blocking Tier 2 work:
       is not a candidate at all.
       **What that leaves is better than it sounds**, because most of what is
       worth knowing is already in Postgres and needs no new collection.
-      **Part 1 — product metrics from data we already hold.** Activation (share
-      of signups adding a first trip within 24h), how many users reach the
-      `FREE_TRIP_LIMIT` of 15 and what share of those upgrade, free-to-paid
-      conversion and time to convert, median trips and photos per user, 30-day
-      retention. All of it is SQL over `users`, `sessions`, `trips` and
-      `photos`, joined to `users.plan` for revenue. Advantages a hosted tool
-      cannot match: exact rather than sampled, **retrospective** — the rows were
-      always there, so a question asked today can look at last March, where a
-      tracker only answers what it was configured for in advance — and
-      identity-resolved without sending anyone's identity anywhere. Ship it as
-      saved SQL first; a card in `/admin` (which already has the owner gate and
-      `InviteManager` to copy) only if it earns the upkeep.
-      **Part 2 — Google Search Console for acquisition.** Free, verified by DNS
-      record or HTML file, and it runs **no code on the site** — it reports
-      Google's own index data rather than watching visitors, so the published
-      claim stays true. Gives search queries, impressions, clicks, average
-      position and index coverage per page. This is the feedback loop task 30
-      needs; without it the JSON-LD and the guides ship with no way to tell
-      whether they worked.
+      **Part 1 — product metrics, shipped as a tested library, not saved SQL.**
+      The task originally said "ship it as saved SQL first" — deviated on
+      purpose, because a metric nobody can verify is worse than none, and the
+      repo already has the integration-test harness to prove each one against
+      seeded rows. `src/lib/metrics/queries.ts` + `npm run metrics`
+      (`scripts/metrics.ts`, following `create-invite.ts`'s pattern). Reports
+      plan mix, activation (first memory within 24h), free-ceiling pressure,
+      median trips/photos per user, activity retention, and conversion.
+      **A real bug the tests caught, not just exercised.** Three metrics
+      (`depth`, `activityRetention`) failed on first run with medians and
+      counts of zero. Cause: Drizzle qualifies column names for tables in the
+      query's FROM/JOIN graph, but a table referenced only inside a raw `sql`
+      subquery gets **bare** names — so `trips.userId = users.id` rendered as
+      `"user_id" = "id"`, both resolving to `trips`, silently comparing the
+      table to itself. No error, just a confidently wrong number. Fixed by
+      rewriting both as joined derived tables instead of correlated
+      subqueries; `activation`, `capPressure`, `planMix` and `conversion` were
+      checked and were already correctly qualified. This is the argument for
+      tested code over a `.sql` file settled in code, not in principle — a
+      plain script would have shipped the bug.
+      **Conversion needed a schema addition the task hadn't scoped**:
+      `users.plan` is current state only, so "time to convert" was
+      uncomputable from anything stored. New `plan_events` table
+      (`id, user_id, from_plan, to_plan, reason, created_at`), appended by
+      `updateBilling` in `src/lib/billing/webhook.ts` — **only on an actual
+      plan change**, tested explicitly: `past_due` keeps a user paid and must
+      not manufacture a conversion, `canceled` does record one. A table, not a
+      `users` column: nothing in the session path selects it, so a deploy
+      landing before the migration degrades to "the webhook can't append" for
+      a moment rather than the outage a new `users` column causes. `user_id`
+      is `ON DELETE CASCADE`, with a dedicated test — this is task 12b's
+      `invites.used_by` bug, and a new FK referencing `users` is exactly where
+      it would come back.
+      **Migration `0002`'s grandfathered cohort would have flattered every
+      number computed carelessly.** It backfilled every pre-existing user to
+      `paid`; they never made a decision. `planMix` reports them as their own
+      segment, and `conversion`'s denominator excludes them explicitly, with a
+      test asserting the exclusion.
+      **Three places the report refuses to print a misleading number.**
+      Grandfathered accounts are labelled, not folded into "paid". Retention is
+      labelled activity, not logins — `sessions` renews in place on a sliding
+      30-day expiry and deletes logged-out rows, so it cannot answer "did they
+      come back"; creating a memory or photo can. And an empty `plan_events`
+      prints "no plan changes recorded yet", never `0%` — a confident wrong
+      number is the actual failure mode for a metrics tool, more than a
+      missing one.
+      **Part 2 — Google Search Console, verified 12 August 2026.** DNS TXT
+      record on a Domain property (covers apex, `www`, and both protocols in
+      one verification; also the only method a Domain property offers, which
+      is the point — no token committed to the public repo, no route to
+      serve it). Sitemap submitted. This is the feedback loop task 30 needed —
+      without it the JSON-LD and the guides ship with no way to tell whether
+      they worked.
+      Docs in `docs/OPS.md` § Measuring the product. 455 tests green (18 new),
+      gates clean, no schema surprise: `plan_events` is additive, generated via
+      `drizzle-kit generate`, checked into `drizzle/0007_clumsy_ultimates.sql`.
       **The blind spot, stated honestly.** Neither part can see anyone who
       visited and left without signing up, which is most people. Non-search
       referrals — Reddit, a newsletter, an AI engine's citation link — are

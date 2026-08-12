@@ -576,3 +576,54 @@ npm run create-invite -- "note about who this is for"
 
 `create-invite` prints `${APP_URL}/signup?invite=<token>` — share that link.
 Watch first-signup deliverability in the Resend dashboard.
+
+## Measuring the product
+
+The site publishes "no analytics" in six places and `/privacy` makes it
+specific, so **no client-side analytics script is an option here** — not Google
+Analytics, not a privacy-respecting alternative. Measurement comes from two
+sources that don't touch that claim.
+
+### Product metrics (`npm run metrics`)
+
+Read-only queries over data the app already holds — no collection, nothing new
+stored for the sake of measuring. Run it with the **production**
+`DATABASE_URL` in the environment:
+
+```sh
+DATABASE_URL="postgres://…prod…" npm run metrics
+```
+
+Reports plan mix, activation, free-ceiling pressure, depth, retention and
+conversion. Three things to read carefully:
+
+- **Grandfathered accounts are not conversions.** Migration `0002` moved every
+  pre-existing user to `paid`. They're reported as their own segment and
+  excluded from the conversion denominator; a naive "share on paid" would look
+  spectacular and mean nothing.
+- **Retention is activity, not logins.** `sessions` carries a sliding 30-day
+  expiry renewed in place and logged-out rows are deleted, so sessions cannot
+  answer "did they come back". The number counts creating a memory or photo.
+- **Conversion only exists from the day `plan_events` shipped.** The webhook
+  appends to it on real plan transitions; there is no way to reconstruct
+  earlier changes, and the report says "none recorded yet" rather than 0%.
+
+### Google Search Console
+
+Free, and it runs **no code on the site** — it reports Google's own index data
+rather than watching visitors, so the claim stays true.
+
+Verify `minnekart.com` by **DNS TXT record**, not the HTML-file method: the
+file method means committing a verification token into a public repo and
+serving a route for it, where a DNS record touches no code and can't drift.
+Add the TXT record at the registrar, confirm in Search Console, then submit
+`https://minnekart.com/sitemap.xml`.
+
+**Do this before you need it.** Search Console only reports from the day you
+verify — there is no backfill. Every day unverified is a day of missing
+baseline for the GEO/SEO work.
+
+It answers what the database can't: which queries surface the site, impressions
+and clicks per page, average position, and index coverage. It still can't see
+non-search referrals (Reddit, a newsletter, an AI engine's citation link) —
+that gap is the accepted price of the no-analytics promise.

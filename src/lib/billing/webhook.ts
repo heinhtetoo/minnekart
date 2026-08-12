@@ -2,7 +2,12 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { DatabaseExecutor } from '@/db';
-import { subscriptionStatus, users, webhookEvents } from '@/db/schema';
+import {
+  planEvents,
+  subscriptionStatus,
+  users,
+  webhookEvents,
+} from '@/db/schema';
 
 type SubscriptionStatus = (typeof subscriptionStatus.enumValues)[number];
 
@@ -105,6 +110,15 @@ async function updateBilling(
     endsAt?: Date | null;
   },
 ): Promise<void> {
+  // Read the plan before writing so the history records what actually moved.
+  // Most events don't move it — past_due keeps a user paid, and a renewal
+  // repeats active — and an event for an unchanged plan would manufacture
+  // conversions that never happened.
+  const [before] = await database
+    .select({ plan: users.plan })
+    .from(users)
+    .where(eq(users.id, userId));
+
   await database
     .update(users)
     .set({
@@ -122,6 +136,15 @@ async function updateBilling(
         : { subscriptionEndsAt: fields.endsAt }),
     })
     .where(eq(users.id, userId));
+
+  if (before && before.plan !== fields.plan) {
+    await database.insert(planEvents).values({
+      userId,
+      fromPlan: before.plan,
+      toPlan: fields.plan,
+      reason: 'webhook',
+    });
+  }
 }
 
 // Paddle schedules a cancellation rather than applying it, so the plan stays
