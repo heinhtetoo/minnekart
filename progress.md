@@ -1684,6 +1684,38 @@ blocking Tier 2 work:
   whether anyone actually wants the override. The settings row is also the only
   place a "following your system Reduce Motion setting" explanation belongs —
   task 27 deliberately keeps it off the globe itself.
+- Metrics dashboard on `/admin` _(BACKLOG, idea — parked 12 August 2026)_.
+  Task 31 shipped `collectMetrics()` and `npm run metrics`, and deliberately
+  stopped short of a UI. Rendering today's numbers as a card is genuinely
+  small — the data layer is done and tested, `/admin` already has the owner
+  gate and `AppPage`, and `StatCell` is close to the display pattern. Call it
+  half a day.
+  **The cost is not in the card, it is in trends.** Every query returns a
+  point-in-time scalar, so a card would show "27% activation" with no sense of
+  direction — barely better than the CLI. Charting means bucketed
+  (`date_trunc`) queries, each needing its own tests, a date-range concept
+  threaded through, and rendering: there is **no chart library** in the
+  project and only `d3-geo`/`d3-drag`/`d3-selection` (no `d3-scale`,
+  no `d3-shape`), so it is either a new dependency in a repo that is
+  deliberately spare about them, or hand-rolled SVG. Several days, not hours.
+  **Two frictions worth knowing before starting.** The repo has no component
+  tests (`environment: 'node'`, no jsdom), so only extracted pure formatting
+  would be testable — the same trade every UI here already makes. And the
+  queries would move onto a request path: `collectMetrics()` currently awaits
+  six queries **sequentially**, so that is six Neon round trips per render,
+  and the percentile and group-by queries do full table scans. Trivial to fix
+  with `Promise.all` and irrelevant at current size, but it becomes a problem
+  quietly rather than loudly.
+  **The trigger for revisiting**: once `plan_events` has enough rows that
+  conversion and time-to-convert stop returning null. That is the point trends
+  exist, which is the point a UI beats a text report. Before then a dashboard
+  is a nicer-looking way to read the same zeros, and it invites daily checking
+  of numbers that cannot move yet.
+  **Cheap thing to consider first**: have the CLI append each run's numbers to
+  a snapshot table or JSON file. Costs almost nothing and means charts have
+  history to plot on day one — the same reasoning that made shipping
+  `plan_events` early worth it, since data only accumulates from the day you
+  start collecting it.
 - Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
   opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
   real usage data exists.
