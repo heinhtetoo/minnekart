@@ -1133,8 +1133,8 @@ blocking Tier 2 work:
       looked conspicuously modern. Against the dark sea they read as a crisp
       highlight — the terracotta pops where before it competed with a mid-tone
       sea. The pin redesign no longer has to fight the palette.
-- [ ] **27. Globe does not auto-spin on Android Chrome** _(fix shipped to `dev`
-      7 August 2026; OPEN pending iOS)_. The
+- [x] **27. Globe does not auto-spin on Android Chrome**
+      _(13 August 2026)_. The
       globe sat still on a phone until you dragged it. Not a
       mystery — `Globe.tsx:428` skipped the idle spin whenever
       `matchMedia('(pointer: coarse)')` matches, so it is off on **every** touch
@@ -1222,13 +1222,20 @@ blocking Tier 2 work:
       synthetic `MouseEvent` with no `view`, which d3-drag reads to bind its
       move/up listeners, so no drag ever started.
       **Confirmed working on Android Chrome** on the `dev` preview (7 August
-      2026). **Still open: iOS Safari has not been tested**, which is the whole
-      reason the guard existed — emulated coarse pointers prove the branching,
-      not that WebKit's tap dispatch survives a spinning globe. Two things to
-      check before ticking this: the logged-out sign-in taps have not regressed,
-      and the logged-in home's pin list and bottom nav respond on the first tap
-      while the globe turns. If either is flaky, the fallback is one line —
-      `spinOnTouch={false}` on `LoggedInHome` too.
+      2026).
+      **Closed on iOS Safari, 13 August 2026.** This was the check that
+      mattered, because it is the one thing emulation could not stand in for:
+      coarse-pointer emulation proves the branching, not that WebKit's tap
+      dispatch survives a globe actually spinning. Verified in three parts, and
+      the first two are separate cases that are easy to conflate — the
+      logged-out home is the page carrying `spinOnTouch={false}`, so its globe
+      is **still**, and taps working there only proves the original
+      tap-starvation bug has not returned. What the change actually did was
+      switch the spin back **on** for the other two pages, so those had to be
+      tested under a turning globe: the logged-in home's pin list and bottom
+      nav, and `/u/<username>` including tapping a pin to open the peek panel.
+      All three first-touch, no repeats. The `spinOnTouch={false}` fallback on
+      `LoggedInHome` is not needed.
 
 ### Tier 4 — hygiene / post-PMF
 
