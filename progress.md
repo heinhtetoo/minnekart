@@ -1680,6 +1680,37 @@ blocking Tier 2 work:
       on the `dev` preview rather than assuming, since Neon's pooled connection
       may already make the session lookup cheap enough not to matter.
       Performance work, not GEO work — ranking does not depend on it.
+- [ ] **35. Apply the Phase 2 redesign (P0 + P1)** _(13 October 2026)_.
+      The Dusk rebrand and the screen-by-screen redesign, built and locked in a
+      private copy of this repo (baseline `dev` at `261eaa9`), move here. P0 is
+      the token layer (Haze light, Nightfall dark), the Rune M wordmark,
+      favicon and social cards, and the themed globe. P1 is all 13 screens, plus a
+      tidy-up into shared `components/ui/Form.module.css` and
+      `components/globe/GlobeStage.module.css`. **Visual only**, except
+      for the behaviour and wording changes approved screen by screen: the
+      back link names where you came from; the lightbox gets a caption,
+      counter and focus trap and opens above the top bar; styled confirm
+      dialogs replace `window.confirm`; timeline year groups; "1 photo";
+      Sign up goes to `/?signup=1`; and a malformed trip id gives 404 on the
+      owner page, the public page and the social image. Also fixed: two
+      email-check bugs, two missing spaces ("6photos", the empty-globe line)
+      and the table-note size. **No migration, package, env var or font
+      change.** About 90 files changed, 17 new, `Home.module.css` deleted.
+      The copy's testing-only files stay out: `app/audit-*` and the
+      sample-photo shim in `lib/storage/memory.ts`.
+      Plan: three commits, each from its locked snapshot: P0; P1 screens
+      1–13; the tidy-up.
+  - [x] Pre-flight: `dev` still at `261eaa9`; `main` matches `dev`
+  - [ ] Branch `redesign/p1` from `dev`; commit P0, P1, tidy-up
+  - [ ] Prove the port: branch `src` equals the locked snapshot apart from
+        the excluded files; lint, format, typecheck and tests green
+  - [ ] Local production build (`next build`); style comparison and the 13
+        screen checks against it
+  - [ ] PR into `dev`, then preview QA. Photos copied from prod don't load on
+        the preview (bucket isolation, task 33), so the photo checks use a
+        test account's own uploads
+  - [ ] Safari (macOS, iOS), Firefox and Android Chrome checks, in both themes
+  - [ ] Release `dev → main`; production smoke test
 - Globe auto-spin as a `/settings` toggle _(BACKLOG, idea)_. Task 27 makes the
   spin follow the OS `prefers-reduced-motion` preference, which is the right
   default. An in-app toggle would go further: stop the spin without changing an
