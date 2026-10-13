@@ -1,16 +1,21 @@
+/* Public header (screen 10): the signed-in top bar's look — 72 px, a hairline,
+   see-through with a blur — with the visitor's own items. It also tops
+   Pricing, About, Guides and the legal pages for visitors. At .9 the text stays
+   AA when the zoomed globe passes behind it. */
 .header {
   position: sticky;
   top: 0;
   z-index: 50;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr minmax(0, auto) 1fr;
   align-items: center;
-  gap: 20px;
-  height: 66px;
-  padding: 0 clamp(20px, 5vw, 64px);
-  background: rgba(244, 239, 230, 0.82);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(28, 25, 23, 0.08);
+  gap: 24px;
+  height: 72px;
+  padding: 0 clamp(20px, 3.2vw, 40px);
+  background: rgb(var(--bg-rgb) / 0.9);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border-bottom: 1px solid var(--rule);
 }
 
 .brand {
@@ -21,9 +26,11 @@
 .attribution {
   grid-column: 2;
   justify-self: center;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--muted);
+  min-width: 0;
+  margin: 0;
+  font-size: 19px;
+  font-style: italic;
+  color: var(--foreground-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -34,34 +41,65 @@
   justify-self: end;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 22px;
 }
 
 .signIn {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
   white-space: nowrap;
-  transition: color 0.15s;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--ink-rgb) / 0.35);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  transition: text-decoration-color 0.15s;
 }
 
 .signIn:hover {
-  color: var(--foreground);
+  text-decoration-color: currentColor;
 }
 
 .signUp {
-  font-size: 13px;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 14px;
   font-weight: 600;
-  color: #f4efe6;
-  background: var(--forest);
-  padding: 9px 18px;
-  border-radius: 22px;
   white-space: nowrap;
   transition: background 0.15s;
 }
 
 .signUp:hover {
-  background: #24403a;
+  background: var(--primary-hover);
+}
+
+/* Header logo: 28px desktop, 26px mobile. */
+.brand svg {
+  height: 28px;
+  width: auto;
+}
+
+@media (max-width: 720px) {
+  .header {
+    height: 60px;
+    padding: 0 16px;
+    gap: 12px;
+  }
+  .brand svg {
+    height: 26px;
+  }
+  .actions {
+    gap: 16px;
+  }
+  .signUp {
+    height: 38px;
+    padding: 0 16px;
+  }
 }
 
 @media (max-width: 560px) {

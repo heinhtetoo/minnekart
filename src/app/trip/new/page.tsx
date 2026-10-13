@@ -1,6 +1,5 @@
-import Link from 'next/link';
-
 import AppPage from '@/components/layout/AppPage';
+import BackLink from '@/components/trips/BackLink';
 import TripForm from '@/components/trips/TripForm';
 import { requireVerifiedPageUser } from '@/lib/auth/session-server';
 
@@ -14,27 +13,12 @@ export default async function NewTripPage() {
         email: user.email,
         isOwner: user.role === 'owner',
       }}
-      width="narrow"
     >
-      <Link
-        href="/"
-        style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}
-      >
-        ← Back to globe
-      </Link>
-      <h1
-        className="serif"
-        style={{
-          fontSize: 'clamp(39px,5.7vw,55px)',
-          fontWeight: 700,
-          color: 'var(--foreground)',
-          letterSpacing: '-1.2px',
-          margin: '14px 0 24px',
-        }}
-      >
-        Add a memory
-      </h1>
-      <TripForm mode="create" />
+      <TripForm
+        mode="create"
+        title="Add a memory"
+        back={<BackLink fallbackHref="/" fallbackLabel="← Back to globe" />}
+      />
     </AppPage>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatTripDates } from './format';
+import { formatPhotoCount, formatTripDates } from './format';
 
 describe('formatTripDates', () => {
   it('formats a single date as month and year', () => {
@@ -21,5 +21,19 @@ describe('formatTripDates', () => {
     expect(formatTripDates('2023-12-28', '2024-01-03')).toBe(
       'Dec 2023 – Jan 2024',
     );
+  });
+});
+
+describe('formatPhotoCount', () => {
+  it('is empty when there are no photos', () => {
+    expect(formatPhotoCount(0)).toBe('');
+  });
+
+  it('is singular for one photo', () => {
+    expect(formatPhotoCount(1)).toBe('1 photo');
+  });
+
+  it('is plural for more', () => {
+    expect(formatPhotoCount(5)).toBe('5 photos');
   });
 });

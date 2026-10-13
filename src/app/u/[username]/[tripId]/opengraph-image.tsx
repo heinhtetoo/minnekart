@@ -2,6 +2,7 @@ import { db } from '@/db';
 import { formatTripDates } from '@/components/home/format';
 import { OG_SIZE, renderOgCard, tripCard } from '@/lib/og/card';
 import { firstPhotoDataUri } from '@/lib/og/photo';
+import { isTripId } from '@/lib/trips/ids';
 import { getPublicTrip, getPublicUser } from '@/lib/trips/sharing';
 
 export const alt = 'A travel memory on Minnekart';
@@ -14,6 +15,9 @@ interface ImageProps {
 
 export default async function Image({ params }: ImageProps) {
   const { username, tripId } = await params;
+  if (!isTripId(tripId)) {
+    return new Response('Not found', { status: 404 });
+  }
   const owner = await getPublicUser(db(), username);
   const trip = owner ? await getPublicTrip(db(), owner.id, tripId) : null;
   if (!trip) {

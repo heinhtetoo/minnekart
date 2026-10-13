@@ -29,3 +29,10 @@ export function formatTripDates(
   const end = label(dateEnd);
   return start === end ? start : `${start} – ${end}`;
 }
+
+// "1 photo", "5 photos" — and nothing at all when there are none, so a trip
+// without photos doesn't announce "0 photos".
+export function formatPhotoCount(count: number): string {
+  if (count <= 0) return '';
+  return count === 1 ? '1 photo' : `${count} photos`;
+}

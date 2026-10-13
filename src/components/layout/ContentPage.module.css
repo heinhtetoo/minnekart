@@ -1,77 +1,163 @@
+/* Every content page has 1,152 px of content, as the Atlas pages
+   (screen 12; Pricing's wide page already had it). */
 .page {
-  max-width: 1000px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: clamp(32px, 6vw, 72px) clamp(20px, 5vw, 64px);
+  padding: clamp(34px, 6vw, 76px) clamp(20px, 5vw, 64px);
 }
 
+/* Pricing. Its heading keeps 16 characters a line (below). */
 .pageWide {
-  max-width: 1180px;
+  max-width: 1280px;
 }
 
+/* The heading block, Atlas (screen 11): a ruled eyebrow and a weight-500
+   serif heading, as on every locked page. */
 .header {
-  margin-bottom: clamp(28px, 4vw, 44px);
+  margin-bottom: clamp(20px, 2.6vw, 28px);
 }
 
 .eyebrow {
-  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  font-size: 12.5px;
   font-weight: 600;
-  letter-spacing: 4px;
-  color: var(--accent);
+  letter-spacing: 0.32em;
   text-transform: uppercase;
-  margin: 0 0 14px;
+  color: var(--accent);
 }
 
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: currentColor;
+}
+
+/* Long guide titles may run to 20 characters a line (three lines, not
+   four). */
 .title {
-  font-size: clamp(39px, 5.7vw, 57px);
-  font-weight: 700;
-  color: var(--foreground);
+  max-width: 20ch;
   margin: 0;
-  letter-spacing: -1.5px;
-  line-height: 1.05;
+  font-size: clamp(48px, 6.4vw, 76px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  color: var(--foreground);
+}
+
+.pageWide .title {
+  max-width: 16ch;
 }
 
 .updated {
-  font-size: 12px;
-  letter-spacing: 1px;
+  margin: 18px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--muted);
-  margin: 16px 0 0;
 }
 
 .wide {
   max-width: 100%;
 }
 
+/* The body, Atlas "Margin" (screen 12). ContentPage groups it into one
+   section per h2: the heading sits in a left margin, where it stays in view
+   while its section is read, and the text keeps a 68-character column. */
 .prose {
-  max-width: 68ch;
+  --margin-col: 248px;
+  --margin-gap: 56px;
+  margin-top: 16px;
 }
 
-.prose h2 {
+.intro,
+.section {
+  display: grid;
+  grid-template-columns: var(--margin-col) minmax(0, 744px);
+  column-gap: var(--margin-gap);
+}
+
+.intro > * {
+  grid-column: 2;
+}
+
+.section {
+  padding: 34px 0 16px;
+  border-top: 1px solid var(--rule);
+}
+
+.intro + .section {
+  margin-top: 16px;
+}
+
+.sectionLabel h2 {
+  position: sticky;
+  top: 104px;
+  margin: -3px 0 0;
+  padding-left: 20px;
   font-family: var(--font-serif), serif;
-  font-size: 26px;
-  font-weight: 600;
+  font-size: 25px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
   color: var(--foreground);
-  letter-spacing: -0.4px;
-  margin: 36px 0 12px;
+}
+
+.sectionLabel h2::before {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: 0.5em;
+  width: 7px;
+  height: 7px;
+  background: var(--spot);
+  transform: rotate(45deg);
 }
 
 .prose p {
-  font-size: 16px;
-  color: #4a4540;
+  font-size: 16.5px;
+  color: var(--foreground-2);
   line-height: 1.75;
-  margin: 0 0 16px;
+  margin: 0 0 18px;
+}
+
+/* The opening paragraph reads as the page's lead. */
+.intro p:first-of-type {
+  font-size: 19px;
+  line-height: 1.65;
+  color: var(--foreground);
 }
 
 .prose ul {
-  margin: 0 0 16px;
-  padding-left: 20px;
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
 }
 
 .prose li {
-  font-size: 16px;
-  color: #4a4540;
-  line-height: 1.75;
-  margin-bottom: 8px;
+  position: relative;
+  padding-left: 24px;
+  margin: 0 0 12px;
+  font-size: 16.5px;
+  color: var(--foreground-2);
+  line-height: 1.7;
+}
+
+.prose li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.62em;
+  width: 7px;
+  height: 7px;
+  background: var(--spot);
+  transform: rotate(45deg);
 }
 
 .prose strong {
@@ -80,21 +166,60 @@
 }
 
 .prose a {
-  color: var(--forest);
+  color: var(--foreground);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-color: rgb(var(--ink-rgb) / 0.4);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition:
+    color 0.15s,
+    text-decoration-color 0.15s;
 }
 
 .prose a:hover {
   color: var(--accent);
+  text-decoration-color: currentColor;
 }
 
-/* The table scrolls inside this wrapper rather than widening the page — at
-   360px a three-column comparison cannot fit, and the body must never scroll
-   sideways. */
+.prose code {
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgb(var(--ink-rgb) / 0.07);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.88em;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+/* The page's closing call to action (ProseCta): a pill button. */
+.prose .cta {
+  margin: 28px 0 18px;
+}
+
+.prose .cta a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 50px;
+  padding: 0 26px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 15.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+.prose .cta a:hover {
+  background: var(--primary-hover);
+  color: var(--on-primary);
+}
+
+/* The comparison table (ProseTable). It scrolls inside this wrapper rather
+   than widening the page; on phones it becomes one block per row (below). */
 .tableWrap {
   overflow-x: auto;
-  margin: 0 0 20px;
+  margin: 8px 0 0;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -111,36 +236,185 @@
 .prose td {
   text-align: left;
   vertical-align: top;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(28, 25, 23, 0.1);
-  line-height: 1.6;
-  color: #4a4540;
+  border-bottom: 1px solid var(--rule);
 }
 
-.prose th {
-  font-weight: 600;
-  color: var(--foreground);
-  border-bottom-color: rgba(28, 25, 23, 0.2);
+.prose thead th {
+  padding: 12px 18px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1.5px solid rgb(var(--ink-rgb) / 0.25);
 }
 
 /* The row label reads as a heading for its row, not as data. */
 .prose tbody th {
-  font-weight: 600;
-  white-space: nowrap;
+  width: 200px;
+  padding: 16px 18px 16px 0;
+  font-family: var(--font-serif), serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--foreground);
 }
 
-.tableNote {
+.prose td {
+  padding: 16px 18px;
+  line-height: 1.55;
+  color: var(--foreground-2);
+}
+
+/* The last column is Minnekart's: tinted, its header marked with the spot
+   diamond. */
+.tableWrap thead th:last-child,
+.tableWrap td:last-child {
+  background: rgb(var(--accent-rgb) / 0.07);
+  color: var(--foreground);
+}
+
+.tableWrap thead th:last-child {
+  border-radius: 6px 6px 0 0;
+}
+
+.tableWrap thead th:last-child::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 9px 1px 0;
+  background: var(--spot);
+  transform: rotate(45deg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme='light'])) .tableWrap thead th:last-child,
+  :global(:root:not([data-theme='light'])) .tableWrap td:last-child {
+    background: rgb(var(--accent-rgb) / 0.1);
+  }
+}
+
+:global(:root[data-theme='dark']) .tableWrap thead th:last-child,
+:global(:root[data-theme='dark']) .tableWrap td:last-child {
+  background: rgb(var(--accent-rgb) / 0.1);
+}
+
+/* `.prose p` outranks a single class, so the note names both. */
+.prose .tableNote {
+  margin: 14px 0 30px;
   font-size: 13px;
-  color: var(--muted);
-  margin: -8px 0 24px;
+  line-height: 1.6;
   font-style: italic;
+  color: var(--muted);
 }
 
 .footerHolder {
-  background: #1c1917;
+  background: var(--footer);
+}
+
+@media (max-width: 1000px) {
+  .prose {
+    --margin-col: 200px;
+    --margin-gap: 40px;
+  }
+}
+
+/* Tablets and phones: each heading sits above its text. */
+@media (max-width: 860px) {
+  .intro,
+  .section {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .intro > * {
+    grid-column: 1;
+  }
+  .section {
+    row-gap: 12px;
+    padding: 28px 0 8px;
+  }
+  .sectionLabel h2 {
+    position: relative;
+    top: auto;
+    margin-top: 0;
+  }
 }
 
 @media (max-width: 720px) {
+  .eyebrow {
+    margin-bottom: 14px;
+    font-size: 11.5px;
+  }
+  .title {
+    font-size: 44px;
+    line-height: 1.04;
+  }
+  .prose p,
+  .prose li {
+    font-size: 16px;
+  }
+  .intro p:first-of-type {
+    font-size: 17.5px;
+  }
+
+  /* The comparison table: one block per row, each cell labelled with its
+     column (data-label), so nothing sits off-screen. The header row stays
+     for screen readers only. */
+  .tableWrap {
+    overflow: visible;
+  }
+  .prose table,
+  .prose tbody,
+  .prose tr,
+  .prose tbody th,
+  .prose td {
+    display: block;
+    width: auto;
+    min-width: 0;
+  }
+  .prose thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .prose tbody tr {
+    padding: 18px 0 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .prose tbody tr:first-child {
+    border-top: 1.5px solid rgb(var(--ink-rgb) / 0.25);
+  }
+  .prose tbody th {
+    padding: 0 0 10px;
+    border: 0;
+    font-size: 20px;
+  }
+  .prose td {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 10px;
+    padding: 8px 12px;
+    border: 0;
+  }
+  .prose td::before {
+    content: attr(data-label);
+    padding-top: 3px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .tableWrap td:last-child {
+    border-radius: 4px;
+  }
+  .tableWrap td:last-child::before {
+    color: var(--foreground);
+  }
+
   .footerHolderApp {
     padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }

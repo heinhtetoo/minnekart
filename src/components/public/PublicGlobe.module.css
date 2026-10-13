@@ -1,0 +1,203 @@
+/* Public globe, Atlas direction. The globe stage (heading, globe and panel)
+   comes from components/globe/GlobeStage.module.css; this file holds the
+   page's own layout, the postcard slot and the places list. */
+.hero {
+  position: relative;
+  max-width: 1280px;
+  margin: 0 auto;
+  min-height: calc(2 * var(--radius) + 430px);
+}
+
+/* A long owner name steps down a size, so the heading stays on one line
+   above the globe. */
+.title[data-long='true'] {
+  font-size: clamp(44px, 5.6vw, 72px);
+}
+
+/* Chosen place ------------------------------------------------------------ */
+/* Desktop: a slot over the globe from where the heading was down to 70 px
+   above the globe's centre, where the chosen pin always lands (choosing a
+   place turns it there). The postcard sits at the slot's bottom, so it stays
+   just above the pin; a taller one grows upwards, but never higher than the
+   slot's top ("safe" keeps it from rising past it). Only the postcard takes
+   the pointer, so the globe around it still drags. Stacked, the slot steps
+   aside and the postcard sits in the flow (PeekPanel.module.css). */
+.cardSlot {
+  position: absolute;
+  z-index: 30;
+  left: 56px;
+  top: 40px;
+  height: calc(288px + var(--radius) - 70px - 40px);
+  /* Never under the places panel (420 px at 64 px from the right). */
+  width: min(584px, calc(100% - 564px));
+  display: flex;
+  flex-direction: column;
+  justify-content: safe flex-end;
+  pointer-events: none;
+}
+
+.cardSlot > * {
+  pointer-events: auto;
+}
+
+.places {
+  padding: 20px 0 8px;
+}
+
+.panelTitle {
+  margin: 0;
+  padding: 0 24px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.placesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 420px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.placeRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 13px 24px;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.placeRow:hover {
+  background: rgb(var(--ink-rgb) / 0.03);
+}
+
+.placeRow[data-active='true'] {
+  background: rgb(var(--ink-rgb) / 0.045);
+}
+
+.placeRow[data-active='true']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--spot);
+}
+
+.placeThumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 3px;
+}
+
+.placeInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.placeName {
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+.placeMeta {
+  font-size: 13.5px;
+  color: var(--foreground-2);
+}
+
+.placeDates {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Empty globe ------------------------------------------------------------ */
+.emptyState {
+  padding: 34px 28px;
+  text-align: center;
+}
+
+.ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.ornament::before,
+.ornament::after {
+  content: '';
+  width: 40px;
+  height: 1px;
+  background: var(--rule);
+}
+
+.ornament i {
+  width: 7px;
+  height: 7px;
+  background: var(--spot);
+  transform: rotate(45deg);
+}
+
+.emptyTitle {
+  margin: 16px 0 0;
+  font-size: 28px;
+  font-style: italic;
+  line-height: 1.15;
+  color: var(--foreground);
+}
+
+.emptyBody {
+  max-width: 30ch;
+  margin: 10px auto 0;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--foreground-2);
+}
+
+/* Stacked: tablets and phones ---------------------------------------------- */
+@media (max-width: 1100px) {
+  .hero {
+    min-height: 0;
+    padding-bottom: 48px;
+  }
+  .cardSlot {
+    display: contents;
+  }
+}
+
+@media (max-width: 720px) {
+  .hero .title {
+    font-size: 48px;
+  }
+  .panelTitle {
+    padding: 0 18px 12px;
+  }
+  .placeRow {
+    gap: 14px;
+    padding: 12px 18px;
+  }
+  .placeName {
+    font-size: 20px;
+  }
+}

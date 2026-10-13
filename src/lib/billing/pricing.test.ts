@@ -24,8 +24,8 @@ describe('pricingTiers', () => {
   it('describes the free tier with the enforced limits', () => {
     const [free] = pricingTiers({ lifetime: false });
     expect(free.price).toBe('$0');
-    expect(free.summary).toContain(String(FREE_TRIP_LIMIT));
-    expect(free.summary).toContain(String(FREE_PHOTOS_PER_TRIP));
+    expect(free.features[0]).toContain(String(FREE_TRIP_LIMIT));
+    expect(free.features[0]).toContain(String(FREE_PHOTOS_PER_TRIP));
   });
 
   it('prices the paid tiers as advertised', () => {

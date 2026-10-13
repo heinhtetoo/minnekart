@@ -1,3 +1,5 @@
+/* Atlas frame: a quiet bar with a hairline. The bar keeps enough tint that its
+   text stays AA over the globe, which can pass behind it at high zoom. */
 .topNav {
   position: sticky;
   top: 0;
@@ -6,11 +8,11 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 20px;
-  height: 66px;
-  padding: 0 clamp(20px, 5vw, 64px);
-  background: rgba(244, 239, 230, 0.82);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(28, 25, 23, 0.08);
+  height: 72px;
+  padding: 0 clamp(20px, 3.2vw, 40px);
+  background: rgb(var(--bg-rgb) / 0.86);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border-bottom: 1px solid var(--rule);
 }
 
 .brand {
@@ -23,22 +25,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(16px, 3vw, 34px);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.topLinks::-webkit-scrollbar {
-  display: none;
+  gap: clamp(20px, 2.8vw, 34px);
 }
 
 .topLink {
-  font-size: 13.5px;
-  font-weight: 500;
+  position: relative;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   white-space: nowrap;
   padding: 6px 0;
-  color: var(--muted);
-  border-bottom: 2px solid transparent;
+  color: var(--foreground-2);
   transition: color 0.15s;
 }
 
@@ -48,30 +46,44 @@
 
 .topLink[data-active='true'] {
   color: var(--foreground);
-  border-bottom-color: var(--accent);
+}
+
+/* The logo's diamond marks where you are. */
+.topLink[data-active='true']::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 7px;
+  height: 7px;
+  background: var(--spot);
+  transform: translateX(-50%) rotate(45deg);
 }
 
 .topNavRight {
   grid-column: 3;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   justify-self: end;
 }
 
 .newMemory {
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 18px;
+  font-size: 14px;
   font-weight: 600;
-  color: #f4efe6;
-  background: var(--forest);
-  padding: 9px 18px;
-  border-radius: 22px;
+  color: var(--on-primary);
+  background: var(--primary);
+  border-radius: 999px;
   white-space: nowrap;
   transition: background 0.15s;
 }
 
 .newMemory:hover {
-  background: #24403a;
+  background: var(--primary-hover);
 }
 
 .account {
@@ -80,46 +92,54 @@
 }
 
 .avatar {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: none;
-  background: var(--forest);
-  color: #f4efe6;
-  font-size: 16px;
+  border: 1.5px solid var(--foreground);
+  background: transparent;
+  color: var(--foreground);
+  font-size: 18px;
   font-weight: 600;
   font-family: var(--font-serif), serif;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.15s;
+}
+
+.avatar:hover,
+.avatar[aria-expanded='true'] {
+  background: rgb(var(--ink-rgb) / 0.06);
 }
 
 .menu {
   position: absolute;
   right: 0;
-  top: 48px;
-  width: 216px;
-  background: #fff;
-  border-radius: 14px;
-  border: 1px solid rgba(28, 25, 23, 0.09);
-  box-shadow: 0 16px 40px rgba(28, 25, 23, 0.16);
+  top: 52px;
+  width: 250px;
+  background: var(--surface);
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+  box-shadow: 0 18px 40px rgb(var(--shadow-rgb) / 0.16);
   overflow: hidden;
 }
 
 .menuHead {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(28, 25, 23, 0.07);
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--rule);
 }
 
 .menuName {
-  font-size: 13.5px;
+  font-family: var(--font-serif), serif;
+  font-size: 19px;
   font-weight: 600;
   color: var(--foreground);
 }
 
 .menuEmail {
-  font-size: 12px;
+  margin-top: 2px;
+  font-size: 13px;
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
@@ -128,35 +148,35 @@
 
 .menuLink {
   display: block;
-  padding: 11px 16px;
-  font-size: 13px;
+  padding: 12px 18px;
+  font-size: 14.5px;
   font-weight: 500;
   color: var(--foreground);
-  border-bottom: 1px solid rgba(28, 25, 23, 0.07);
   transition: background 0.12s;
 }
 
 .menuLink:hover {
-  background: rgba(28, 25, 23, 0.04);
+  background: rgb(var(--ink-rgb) / 0.04);
 }
 
 .menuSignOut {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 11px 16px;
-  font-size: 13px;
+  padding: 12px 18px;
+  font-size: 14.5px;
   font-weight: 500;
-  color: var(--danger);
+  color: var(--accent);
   background: none;
   border: none;
+  border-top: 1px solid var(--rule);
   cursor: pointer;
   font-family: inherit;
   transition: background 0.12s;
 }
 
 .menuSignOut:hover {
-  background: rgba(192, 57, 43, 0.07);
+  background: rgb(var(--ink-rgb) / 0.04);
 }
 
 .menuSignOut:disabled {
@@ -169,11 +189,23 @@
 }
 
 @media (max-width: 720px) {
+  .topNav {
+    height: 60px;
+    grid-template-columns: 1fr auto;
+  }
   .topLinks {
     display: none;
   }
   .newMemory {
     display: none;
+  }
+  .topNavRight {
+    grid-column: 2;
+  }
+  .avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
   }
   .bottomNav {
     position: fixed;
@@ -184,53 +216,71 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-around;
-    padding: 11px 6px calc(9px + env(safe-area-inset-bottom));
-    background: rgba(244, 239, 230, 0.94);
-    backdrop-filter: blur(14px);
-    border-top: 1px solid rgba(28, 25, 23, 0.08);
+    padding: 10px 6px calc(12px + env(safe-area-inset-bottom));
+    background: rgb(var(--bg-rgb) / 0.9);
+    backdrop-filter: blur(16px) saturate(1.2);
+    border-top: 1px solid var(--rule);
   }
-  .bottomItem {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.2px;
-    color: var(--muted);
-  }
-  .bottomItem[data-active='true'] {
-    color: var(--accent);
-  }
+  .bottomItem,
   .addFab {
+    position: relative;
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 5px;
-    font-size: 10px;
+    font-size: 11.5px;
     font-weight: 600;
-    letter-spacing: 0.2px;
-    color: var(--muted);
+    color: var(--foreground-2);
   }
+  .bottomItem[data-active='true'],
+  .addFab[data-active='true'] {
+    color: var(--foreground);
+  }
+  /* A short spot-coloured rule on the bar's edge, above the active item. */
+  .bottomItem[data-active='true']::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    width: 18px;
+    height: 2px;
+    background: var(--spot);
+  }
+  /* Add is the logo's diamond, raised out of the bar. */
   .addFabCircle {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 46px;
     height: 46px;
-    margin-top: -20px;
-    border-radius: 50%;
-    background: var(--forest);
-    color: #f4efe6;
-    box-shadow: 0 6px 16px rgba(28, 25, 23, 0.24);
+    margin-top: -22px;
+    margin-bottom: 2px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: var(--on-primary);
+    transform: rotate(45deg);
+    box-shadow: 0 8px 20px rgb(var(--shadow-rgb) / 0.25);
     border: 3px solid var(--background);
   }
+  .addFabCircle svg {
+    transform: rotate(-45deg);
+  }
   .addFab:active .addFabCircle {
-    transform: scale(0.96);
+    transform: rotate(45deg) scale(0.96);
   }
   .addFabLabel {
     display: block;
+  }
+}
+
+/* Header logo: 28px desktop, 26px mobile. */
+.brand svg {
+  height: 28px;
+  width: auto;
+}
+
+@media (max-width: 720px) {
+  .brand svg {
+    height: 26px;
   }
 }

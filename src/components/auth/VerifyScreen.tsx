@@ -1,16 +1,21 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Wordmark from '@/components/brand/Wordmark';
+import form from '@/components/ui/Form.module.css';
 
 import { authApi } from './api';
+import styles from './auth.module.css';
 
 const CODE_LENGTH = 6;
 const RESEND_COOLDOWN_SECONDS = 30;
 
+// The API answers a wrong code with `invalid` (OtpResult in lib/auth/otp.ts);
+// `invalid_code` is kept for any older reply.
 const VERIFY_ERRORS: Record<string, string> = {
+  invalid: 'That code is incorrect. Check it and try again.',
   invalid_code: 'That code is incorrect. Check it and try again.',
   expired: 'That code has expired. Send a fresh one below.',
   not_found: 'That code has expired. Send a fresh one below.',
@@ -32,10 +37,21 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [cooldown, setCooldown] = useState(0);
+  const refocusRef = useRef(false);
 
   function focusCell(index: number) {
     inputsRef.current[index]?.focus();
   }
+
+  // After a failed check, focus the first box once the boxes are enabled
+  // again: they are still disabled in the same tick the error arrives, and a
+  // disabled input cannot take focus.
+  useEffect(() => {
+    if (!busy && refocusRef.current) {
+      refocusRef.current = false;
+      focusCell(0);
+    }
+  }, [busy]);
 
   async function submit(code: string) {
     setBusy(true);
@@ -48,7 +64,7 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
     }
     setError(VERIFY_ERRORS[result.error ?? ''] ?? 'Could not verify the code.');
     setDigits(Array(CODE_LENGTH).fill(''));
-    focusCell(0);
+    refocusRef.current = true;
   }
 
   function setDigitAt(index: number, value: string) {
@@ -129,127 +145,67 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
   }
 
   return (
-    <main
-      className="fade"
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '32px 20px',
-      }}
-    >
-      <div
-        style={{
-          width: 'min(100%, 440px)',
-          background: '#fff',
-          borderRadius: 18,
-          padding: 'clamp(28px, 5vw, 40px)',
-          border: '1px solid rgba(28,25,23,.07)',
-          boxShadow: '0 12px 40px rgba(28,25,23,.10)',
-          textAlign: 'center',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            marginBottom: 26,
-          }}
-        >
-          <Wordmark />
-        </div>
-        <h1
-          className="serif"
-          style={{
-            fontSize: 30,
-            fontWeight: 600,
-            color: 'var(--foreground)',
-            margin: '0 0 8px',
-            letterSpacing: '-0.5px',
-          }}
-        >
-          Confirm your email
-        </h1>
-        <p
-          style={{
-            fontSize: 14,
-            color: 'var(--muted)',
-            lineHeight: 1.6,
-            margin: '0 0 24px',
-          }}
-        >
-          We sent a six-digit code to <b>{maskEmail(email)}</b>. Enter it to
-          open your globe.
-        </p>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${CODE_LENGTH}, 1fr)`,
-            gap: 8,
-            marginBottom: 8,
-          }}
-        >
-          {digits.map((digit, index) => (
-            <input
-              key={index}
-              ref={(element) => {
-                inputsRef.current[index] = element;
-              }}
-              className="otpCell"
-              inputMode="numeric"
-              autoComplete={index === 0 ? 'one-time-code' : 'off'}
-              maxLength={1}
-              value={digit}
-              disabled={busy}
-              onChange={(event) => onChange(index, event.target.value)}
-              onKeyDown={(event) => onKeyDown(index, event.key)}
-              onPaste={onPaste}
-              aria-label={`Digit ${index + 1}`}
-            />
-          ))}
-        </div>
-
-        <div className="fieldError" style={{ minHeight: 18 }}>
-          {error}
-        </div>
-        {notice && !error && (
-          <p
-            style={{
-              fontSize: 12.5,
-              color: 'var(--forest)',
-              margin: '0 0 4px',
-            }}
-          >
-            {notice}
+    <main className={`fade ${styles.verifyPage}`}>
+      <Wordmark />
+      <div className={`${styles.sheet} ${styles.standalone}`}>
+        <div className={`${styles.body} ${styles.verify}`}>
+          <h1 className={`serif ${styles.title}`}>Confirm your email</h1>
+          <p className={styles.subtitle}>
+            We sent a six-digit code to <b>{maskEmail(email)}</b>. Enter it to
+            open your globe.
           </p>
-        )}
 
-        <p style={{ fontSize: 13, color: 'var(--muted)', margin: '14px 0 0' }}>
-          Didn&apos;t get it?{' '}
-          <button
-            type="button"
-            className="authlink"
-            onClick={resend}
-            disabled={cooldown > 0}
-            style={
-              cooldown > 0
-                ? { opacity: 0.55, cursor: 'not-allowed' }
-                : undefined
-            }
-          >
-            {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
-          </button>
-        </p>
-        <p
-          style={{ fontSize: 12.5, color: 'var(--muted)', margin: '18px 0 0' }}
-        >
-          Not you?{' '}
-          <button type="button" className="authlink" onClick={signOut}>
-            Sign out
-          </button>
-        </p>
+          <div className={styles.otp}>
+            {digits.map((digit, index) => (
+              <input
+                key={index}
+                ref={(element) => {
+                  inputsRef.current[index] = element;
+                }}
+                className={styles.otpCell}
+                inputMode="numeric"
+                autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                maxLength={1}
+                value={digit}
+                disabled={busy}
+                onChange={(event) => onChange(index, event.target.value)}
+                onKeyDown={(event) => onKeyDown(index, event.key)}
+                onPaste={onPaste}
+                aria-label={`Digit ${index + 1}`}
+              />
+            ))}
+          </div>
+
+          <div className={`${form.error} ${styles.error}`}>{error}</div>
+          {notice && !error && (
+            <p className={styles.notice}>
+              <span className={styles.diamond} aria-hidden="true" />
+              {notice}
+            </p>
+          )}
+
+          <p className={styles.small}>
+            Didn&apos;t get it?{' '}
+            <button
+              type="button"
+              className={`${form.link} ${styles.link}`}
+              onClick={resend}
+              disabled={cooldown > 0}
+            >
+              {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
+            </button>
+          </p>
+          <p className={styles.small}>
+            Not you?{' '}
+            <button
+              type="button"
+              className={`${form.link} ${styles.link}`}
+              onClick={signOut}
+            >
+              Sign out
+            </button>
+          </p>
+        </div>
       </div>
     </main>
   );

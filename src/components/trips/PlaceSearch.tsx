@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import form from '@/components/ui/Form.module.css';
 import { PlaceResult } from '@/lib/geocode';
 
 import Field from './Field';
@@ -55,7 +56,7 @@ export default function PlaceSearch({
     <div className={styles.search}>
       <Field label="Search for a place">
         <input
-          className="field"
+          className={form.field}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => results.length > 0 && setOpen(true)}

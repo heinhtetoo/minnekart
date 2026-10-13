@@ -1,7 +1,128 @@
+/* Add / edit a memory, Journal direction: a side column with the title, the
+   globe and the seed photo; the form as a notebook — underlined fields, serif
+   for the words that matter, the story on ruled lines. Edit's Photos and
+   Sharing follow in the main column as their own parts. */
+.journal {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 80px;
+  padding-top: 8px;
+}
+
+.aside {
+  position: sticky;
+  top: 104px;
+  align-self: start;
+}
+
+.back a {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--foreground);
+}
+
+.back a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--spot);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+.title {
+  margin: 26px 0 28px;
+  font-size: clamp(42px, 4.6vw, 58px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+.pinRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.pinRow svg {
+  width: 240px;
+  height: auto;
+}
+
+.coords,
+.coordsPrompt {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.coords {
+  font-variant-numeric: tabular-nums;
+}
+
+.main {
+  min-width: 0;
+}
+
+/* The form: a notebook ------------------------------------------------------ */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 30px;
+}
+
+/* The fields are the shared Journal ones (components/ui/Form.module.css);
+   only this form's differences are here. */
+.form .date {
+  color-scheme: light;
+  font-variant-numeric: tabular-nums;
+}
+
+/* An empty date shows the browser's dd/mm/yyyy: style it as a prompt too. */
+.form .date[value=''] {
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* The single error line sits tight between the story and the buttons. */
+.form > .formError {
+  margin: -16px 0 -14px;
+  font-size: 14px;
+}
+
+.form .big {
+  font-family: var(--font-serif), serif;
+  font-size: 34px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.form .highlight {
+  font-family: var(--font-serif), serif;
+  font-size: 24px;
+  font-style: italic;
+}
+
+/* The story is written on ruled lines. */
+.form .story {
+  padding: 0;
+  border-bottom: 0;
+  font-family: var(--font-serif), serif;
+  font-size: 19px;
+  line-height: 32px;
+  min-height: 224px;
+  background: repeating-linear-gradient(
+    transparent 0 31px,
+    rgb(var(--ink-rgb) / 0.16) 31px 32px
+  );
+  background-attachment: local;
+}
+
+.form .story:focus {
+  border-bottom: 0;
+  box-shadow: inset 0 -2px 0 0 var(--spot);
 }
 
 .search {
@@ -15,14 +136,14 @@
   left: 0;
   right: 0;
   margin-top: 6px;
+  padding: 6px;
   list-style: none;
-  background: #fff;
-  border: 1px solid rgba(28, 25, 23, 0.14);
-  border-radius: 12px;
-  box-shadow: 0 12px 34px rgba(28, 25, 23, 0.12);
-  overflow: hidden;
-  max-height: 300px;
+  max-height: 320px;
   overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow: 0 18px 40px rgb(var(--shadow-rgb) / 0.14);
 }
 
 .result {
@@ -30,8 +151,9 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 10px 14px;
+  padding: 10px 12px;
   border: none;
+  border-radius: 4px;
   background: none;
   text-align: left;
   cursor: pointer;
@@ -39,18 +161,21 @@
   transition: background 0.12s;
 }
 
-.result:hover {
-  background: #f4efe6;
+.result:hover,
+.result:focus-visible {
+  background: rgb(var(--ink-rgb) / 0.05);
+  box-shadow: inset 3px 0 0 var(--spot);
 }
 
 .resultName {
-  font-size: 14px;
-  font-weight: 600;
+  font-family: var(--font-serif), serif;
+  font-size: 18px;
+  font-weight: 500;
   color: var(--foreground);
 }
 
 .resultMeta {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -58,15 +183,16 @@
 }
 
 .resultEmpty {
-  padding: 12px 14px;
-  font-size: 13px;
+  padding: 12px;
+  font-size: 14px;
+  font-style: italic;
   color: var(--muted);
 }
 
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 20px;
 }
 
 .fieldWrap {
@@ -77,140 +203,158 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .hint {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-/* Carries the negative top margin the two lines below used to own, so the
-   block sits where it always did. */
-.pinRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: -6px 0 0;
-}
-
-.coords {
-  font-size: 12px;
-  color: var(--forest);
-  margin: 0;
-}
-
-.coordsPrompt {
   font-size: 12px;
   color: var(--muted);
-  margin: 0;
+  font-variant-numeric: tabular-nums;
 }
 
+/* Start from a photo: an empty print slot, then the photo as a print ------- */
 .seed {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
-  border: 1px dashed rgba(28, 25, 23, 0.14);
-  border-radius: 12px;
-  background: var(--accent-soft);
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  margin-top: 30px;
+  padding-top: 26px;
+  border-top: 1px solid var(--rule);
 }
 
-/* Holds everything the card had before the thumbnail was added; with no
-   thumbnail beside it the row collapses and the card looks unchanged. */
-.seedBody {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.seedSlot {
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed var(--rule);
+  color: var(--muted);
 }
 
 .seedPreview {
-  width: 72px;
-  height: 72px;
-  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
   object-fit: cover;
-  border-radius: 8px;
-  background: rgba(28, 25, 23, 0.06);
+  border: 6px solid var(--surface);
+  outline: 1px solid var(--rule);
+  box-shadow: 0 10px 24px rgb(var(--shadow-rgb) / 0.14);
+  transform: rotate(-2deg);
+}
+
+.seedBody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .seedPick {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   max-width: 100%;
+  min-height: 40px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--foreground);
   overflow-wrap: anywhere;
   font-size: 14px;
   font-weight: 600;
-  color: var(--forest);
+  color: var(--foreground);
   cursor: pointer;
 }
 
+.seed[data-picked='true'] .seedPick {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
 .seedHint {
-  font-size: 12px;
-  color: var(--muted);
   margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted);
 }
 
 .seedNote {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 12px;
-  color: var(--forest);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--foreground-2);
 }
 
-.seedSwap {
-  margin-left: 8px;
-  border: none;
-  background: none;
-  padding: 0;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-  text-decoration: underline;
-  cursor: pointer;
+.seedNote > span {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
 }
 
+.seedSwap,
 .seedClear {
   border: none;
   background: none;
   padding: 0;
   font-family: inherit;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--muted);
-  text-decoration: underline;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.savedNote {
-  font-size: 13px;
-  color: var(--danger);
-  margin: 0;
+.seedSwap {
+  margin-left: 0;
+  color: var(--accent);
 }
 
+.seedClear {
+  color: var(--muted);
+}
+
+.seedSwap:hover,
+.seedClear:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.savedNote {
+  margin: 0;
+  font-size: 14px;
+  color: var(--danger);
+}
+
+.savedNote a {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Save stays with the memory it saves ------------------------------------- */
 .actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.actions :global(.button) {
+.actions .save {
   flex: 1;
+  padding: 0 20px;
 }
 
 .deleteButton {
-  padding: 13px 20px;
-  border-radius: 10px;
-  border: 1px solid rgba(192, 57, 43, 0.4);
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: 1.5px solid rgb(var(--danger-rgb) / 0.55);
   background: none;
   color: var(--danger);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -218,7 +362,7 @@
 }
 
 .deleteButton:hover {
-  background: rgba(192, 57, 43, 0.08);
+  background: rgb(var(--danger-rgb) / 0.08);
 }
 
 .deleteButton:disabled {
@@ -226,8 +370,43 @@
   cursor: not-allowed;
 }
 
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme='light'])) .form .date {
+    color-scheme: dark;
+  }
+}
+
+:global(:root[data-theme='dark']) .form .date {
+  color-scheme: dark;
+}
+
+@media (max-width: 960px) {
+  .journal {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-top: 0;
+  }
+  .aside {
+    position: static;
+  }
+  .title {
+    margin: 16px 0 18px;
+    font-size: 44px;
+  }
+  .pinRow {
+    flex-direction: row;
+    align-items: center;
+  }
+  .pinRow svg {
+    width: 96px;
+  }
+}
+
 @media (max-width: 560px) {
   .row {
     grid-template-columns: 1fr;
+  }
+  .form .big {
+    font-size: 28px;
   }
 }

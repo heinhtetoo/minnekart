@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import type { InviteStatus } from '@/lib/auth/invites';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 
 import styles from './Admin.module.css';
 import { invitesApi } from './api';
@@ -27,9 +28,15 @@ const statusLabels: Record<InviteStatus, string> = {
 export default function InviteList({ invites }: { invites: InviteDTO[] }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [confirm, confirmDialog] = useConfirm();
 
   async function revoke(id: string) {
-    if (!window.confirm('Revoke this invite? The link will stop working.')) {
+    if (
+      !(await confirm(
+        'Revoke this invite? The link will stop working.',
+        'Revoke',
+      ))
+    ) {
       return;
     }
     setBusyId(id);
@@ -45,35 +52,45 @@ export default function InviteList({ invites }: { invites: InviteDTO[] }) {
   }
 
   return (
-    <ul className={styles.list}>
-      {invites.map((invite) => (
-        <li key={invite.id} className={styles.item}>
-          <div>
-            <p className={styles.itemNote}>
-              {invite.note || 'Untitled invite'}
-            </p>
-            <p className={styles.itemMeta}>
-              Created {invite.createdLabel} · expires {invite.expiresLabel}
-              {invite.usedByUsername && ` · used by @${invite.usedByUsername}`}
-            </p>
-          </div>
-          <div className={styles.itemRight}>
-            <span className={`${styles.badge} ${styles[invite.status]}`}>
-              {statusLabels[invite.status]}
-            </span>
-            {invite.status === 'unused' && (
-              <button
-                type="button"
-                className={styles.revokeButton}
-                onClick={() => revoke(invite.id)}
-                disabled={busyId === invite.id}
+    <>
+      <ul className={styles.list}>
+        {invites.map((invite) => (
+          <li key={invite.id} className={styles.item}>
+            <div className={styles.itemText}>
+              <p
+                className={
+                  invite.note
+                    ? styles.itemNote
+                    : `${styles.itemNote} ${styles.untitled}`
+                }
               >
-                Revoke
-              </button>
-            )}
-          </div>
-        </li>
-      ))}
-    </ul>
+                {invite.note || 'Untitled invite'}
+              </p>
+              <p className={styles.itemMeta}>
+                Created {invite.createdLabel} · expires {invite.expiresLabel}
+                {invite.usedByUsername &&
+                  ` · used by @${invite.usedByUsername}`}
+              </p>
+            </div>
+            <div className={styles.itemRight}>
+              <span className={`${styles.badge} ${styles[invite.status]}`}>
+                {statusLabels[invite.status]}
+              </span>
+              {invite.status === 'unused' && (
+                <button
+                  type="button"
+                  className={styles.revokeButton}
+                  onClick={() => revoke(invite.id)}
+                  disabled={busyId === invite.id}
+                >
+                  Revoke
+                </button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+      {confirmDialog}
+    </>
   );
 }

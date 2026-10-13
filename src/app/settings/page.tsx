@@ -11,6 +11,8 @@ import { requireVerifiedPageUser } from '@/lib/auth/session-server';
 import { env } from '@/lib/env';
 import { signedPhotoFor } from '@/lib/photos/library';
 
+import styles from './settings.module.css';
+
 function paddleCheckoutConfig(): PaddleCheckoutConfig | null {
   const {
     PADDLE_ENV,
@@ -69,53 +71,37 @@ export default async function SettingsPage() {
         email: user.email,
         isOwner: user.role === 'owner',
       }}
-      width="narrow"
+      width="wide"
     >
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: 3,
-          color: 'var(--accent)',
-          textTransform: 'uppercase',
-          margin: '0 0 12px',
-        }}
-      >
-        Your account
-      </p>
-      <h1
-        className="serif"
-        style={{
-          fontSize: 'clamp(39px,5.7vw,55px)',
-          fontWeight: 700,
-          color: 'var(--foreground)',
-          letterSpacing: '-1.2px',
-          margin: '0 0 24px',
-        }}
-      >
-        Settings
-      </h1>
-      <ProfileCard
-        initialName={user.name}
-        initialTagline={user.tagline ?? ''}
-        initialHeadline={user.headline ?? ''}
-        initialBio={user.bio ?? ''}
-        initialProfilePhotoId={user.profilePhotoId}
-        profilePhotoThumbUrl={profilePhoto?.thumbUrl ?? null}
-      />
-      <GlobeVisibility
-        initialPublic={user.globePublic}
-        username={user.username}
-      />
-      <BillingCard
-        plan={user.plan}
-        subscriptionStatus={user.subscriptionStatus}
-        userId={user.id}
-        email={user.email}
-        paddle={paddleCheckoutConfig()}
-        subscription={subscriptionView(user)}
-      />
-      {user.role !== 'owner' && <DeleteAccountCard username={user.username} />}
+      {/* Journal: one column of sections, each opened by a serif heading over
+          a hairline, as the trip form's Photos and Sharing parts. */}
+      <div className={styles.page}>
+        <p className={styles.eyebrow}>Your account</p>
+        <h1 className={`serif ${styles.title}`}>Settings</h1>
+        <ProfileCard
+          initialName={user.name}
+          initialTagline={user.tagline ?? ''}
+          initialHeadline={user.headline ?? ''}
+          initialBio={user.bio ?? ''}
+          initialProfilePhotoId={user.profilePhotoId}
+          profilePhotoThumbUrl={profilePhoto?.thumbUrl ?? null}
+        />
+        <GlobeVisibility
+          initialPublic={user.globePublic}
+          username={user.username}
+        />
+        <BillingCard
+          plan={user.plan}
+          subscriptionStatus={user.subscriptionStatus}
+          userId={user.id}
+          email={user.email}
+          paddle={paddleCheckoutConfig()}
+          subscription={subscriptionView(user)}
+        />
+        {user.role !== 'owner' && (
+          <DeleteAccountCard username={user.username} />
+        )}
+      </div>
     </AppPage>
   );
 }

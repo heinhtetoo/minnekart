@@ -2,9 +2,19 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FormEvent, useEffect, useReducer, useRef, useState } from 'react';
+import {
+  FormEvent,
+  ReactNode,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 
+import MiniGlobe from '@/components/globe/MiniGlobe';
 import { uploadPhoto } from '@/components/photos/upload';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import form from '@/components/ui/Form.module.css';
 import { readPhotoExif } from '@/lib/photos/exif';
 import { sniffImageFormat } from '@/lib/photos/format';
 import { createPreviewUrl } from '@/lib/photos/preview';
@@ -42,10 +52,24 @@ interface TripFormProps {
   mode: 'create' | 'edit';
   tripId?: string;
   initial?: TripDTO;
+  // Journal layout: the page's back link and title sit in the side column
+  // with the globe; anything passed as children (the edit page's Photos and
+  // Sharing) follows the memory fields in the main column.
+  back: ReactNode;
+  title: string;
+  children?: ReactNode;
 }
 
-export default function TripForm({ mode, tripId, initial }: TripFormProps) {
+export default function TripForm({
+  mode,
+  tripId,
+  initial,
+  back,
+  title,
+  children,
+}: TripFormProps) {
   const router = useRouter();
+  const [confirm, confirmDialog] = useConfirm();
 
   const [seed, dispatch] = useReducer(seedReducer, initial, initialSeedState);
   const [dateEnd, setDateEnd] = useState(initial?.dateEnd ?? '');
@@ -163,8 +187,9 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
 
   async function onDelete() {
     if (!tripId) return;
-    const confirmed = window.confirm(
+    const confirmed = await confirm(
       'Delete this memory and its photos? This cannot be undone.',
+      'Delete',
     );
     if (!confirmed) return;
     setBusy(true);
@@ -179,109 +204,143 @@ export default function TripForm({ mode, tripId, initial }: TripFormProps) {
   }
 
   return (
-    <form className={`fade ${styles.form}`} onSubmit={onSubmit}>
-      {mode === 'create' && (
-        <PhotoSeed
-          fileName={seed.file?.name ?? ''}
-          preview={seed.preview}
-          showNoPreview={Boolean(seed.file) && !seed.busy && !seed.preview}
-          note={seed.note}
-          busy={seed.busy}
-          canUseLocation={seed.offer !== null}
-          onPick={pickSeedPhoto}
-          onClear={clearSeedPhoto}
-          onUseLocation={() => takeSeedLocation(seedContext())}
-        />
-      )}
-
-      <PlaceFields
-        seed={seed}
-        dispatch={dispatch}
-        onPlacePicked={() => setError('')}
-      />
-
-      <div className={styles.row}>
-        <Field label="Start date">
-          <input
-            className="field"
-            type="date"
-            value={seed.dateStart}
-            onChange={(e) =>
-              dispatch({
-                type: 'userTyped',
-                field: 'dateStart',
-                value: e.target.value,
-              })
-            }
+    <div className={`fade ${styles.journal}`}>
+      <aside className={styles.aside}>
+        <div className={styles.back}>{back}</div>
+        <h1 className={`serif ${styles.title}`}>{title}</h1>
+        <div className={styles.pinRow}>
+          <MiniGlobe
+            lat={seed.coords?.lat ?? null}
+            lng={seed.coords?.lng ?? null}
+            size={240}
           />
-        </Field>
-        <Field label="End date (optional)">
-          <input
-            className="field"
-            type="date"
-            value={dateEnd}
-            min={seed.dateStart || undefined}
-            onChange={(e) => setDateEnd(e.target.value)}
+          {seed.coords ? (
+            <p className={styles.coords}>
+              Pin set · {seed.coords.lat.toFixed(3)},{' '}
+              {seed.coords.lng.toFixed(3)}
+            </p>
+          ) : (
+            <p className={styles.coordsPrompt}>
+              Search above to drop a pin on the globe.
+            </p>
+          )}
+        </div>
+        {mode === 'create' && (
+          <PhotoSeed
+            fileName={seed.file?.name ?? ''}
+            preview={seed.preview}
+            showNoPreview={Boolean(seed.file) && !seed.busy && !seed.preview}
+            note={seed.note}
+            busy={seed.busy}
+            canUseLocation={seed.offer !== null}
+            onPick={pickSeedPhoto}
+            onClear={clearSeedPhoto}
+            onUseLocation={() => takeSeedLocation(seedContext())}
           />
-        </Field>
-      </div>
-
-      <Field label="Highlight" hint={`${highlight.length}/200`}>
-        <input
-          className="field"
-          value={highlight}
-          onChange={(e) => setHighlight(e.target.value)}
-          placeholder="One line you never want to forget."
-          maxLength={200}
-        />
-      </Field>
-
-      <Field label="Story" hint={`${story.length}/5000`}>
-        <textarea
-          className="field"
-          value={story}
-          onChange={(e) => setStory(e.target.value)}
-          placeholder="What happened here?"
-          maxLength={5000}
-          rows={6}
-          style={{ resize: 'vertical', lineHeight: 1.6 }}
-        />
-      </Field>
-
-      <div className="fieldError" style={{ minHeight: 18 }}>
-        {error}
-      </div>
-
-      {savedWithoutPhoto && (
-        <p className={styles.savedNote}>
-          Memory saved, but the photo could not be uploaded.{' '}
-          <Link href={`/trip/${savedWithoutPhoto}/edit`}>
-            Add it on the edit page.
-          </Link>
-        </p>
-      )}
-
-      <div className={styles.actions}>
-        <button className="button" type="submit" disabled={busy}>
-          {busy
-            ? 'Saving…'
-            : savedWithoutPhoto
-              ? 'Go to this memory'
-              : mode === 'create'
-                ? 'Save memory'
-                : 'Save changes'}
-        </button>
-        {mode === 'edit' && (
-          <button
-            type="button"
-            className={styles.deleteButton}
-            onClick={onDelete}
-            disabled={busy}
-          >
-            Delete
-          </button>
         )}
+      </aside>
+
+      <div className={styles.main}>
+        <form className={styles.form} onSubmit={onSubmit}>
+          <PlaceFields
+            seed={seed}
+            dispatch={dispatch}
+            onPlacePicked={() => setError('')}
+          />
+
+          <div className={styles.row}>
+            <Field label="Start date">
+              <input
+                className={`${form.field} ${styles.date}`}
+                type="date"
+                value={seed.dateStart}
+                onChange={(e) =>
+                  dispatch({
+                    type: 'userTyped',
+                    field: 'dateStart',
+                    value: e.target.value,
+                  })
+                }
+              />
+            </Field>
+            <Field label="End date (optional)">
+              <input
+                className={`${form.field} ${styles.date}`}
+                type="date"
+                value={dateEnd}
+                min={seed.dateStart || undefined}
+                onChange={(e) => setDateEnd(e.target.value)}
+              />
+            </Field>
+          </div>
+
+          <Field label="Highlight" hint={`${highlight.length}/200`}>
+            <input
+              className={`${form.field} ${styles.highlight}`}
+              value={highlight}
+              onChange={(e) => setHighlight(e.target.value)}
+              placeholder="One line you never want to forget."
+              maxLength={200}
+            />
+          </Field>
+
+          <Field label="Story" hint={`${story.length}/5000`}>
+            <textarea
+              className={`${form.field} ${styles.story}`}
+              value={story}
+              onChange={(e) => setStory(e.target.value)}
+              placeholder="What happened here?"
+              maxLength={5000}
+              rows={7}
+              style={{ resize: 'vertical' }}
+            />
+          </Field>
+
+          <div
+            className={`${form.error} ${styles.formError}`}
+            style={{ minHeight: 18 }}
+          >
+            {error}
+          </div>
+
+          {savedWithoutPhoto && (
+            <p className={styles.savedNote}>
+              Memory saved, but the photo could not be uploaded.{' '}
+              <Link href={`/trip/${savedWithoutPhoto}/edit`}>
+                Add it on the edit page.
+              </Link>
+            </p>
+          )}
+
+          <div className={styles.actions}>
+            <button
+              className={`${form.button} ${styles.save}`}
+              type="submit"
+              disabled={busy}
+            >
+              {busy
+                ? 'Saving…'
+                : savedWithoutPhoto
+                  ? 'Go to this memory'
+                  : mode === 'create'
+                    ? 'Save memory'
+                    : 'Save changes'}
+            </button>
+            {mode === 'edit' && (
+              <button
+                type="button"
+                className={styles.deleteButton}
+                onClick={onDelete}
+                disabled={busy}
+              >
+                Delete
+              </button>
+            )}
+          </div>
+        </form>
+        {children}
       </div>
-    </form>
+      {confirmDialog}
+    </div>
   );
 }

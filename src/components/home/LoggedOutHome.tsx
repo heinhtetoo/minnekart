@@ -1,15 +1,17 @@
 'use client';
 
-import { ReactNode, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import demoTrips from '@/data/demo-trips.json';
 import { computeStats } from '@/lib/trips/stats';
 import AuthCard, { AuthCardHandle } from '@/components/auth/AuthCard';
-import Globe, { GlobePin } from '@/components/globe/Globe';
+import Globe, { GLOBE_MAX_ZOOM, GlobePin } from '@/components/globe/Globe';
+import stage from '@/components/globe/GlobeStage.module.css';
 import Wordmark from '@/components/brand/Wordmark';
 import Footer from '@/components/layout/Footer';
+import form from '@/components/ui/Form.module.css';
 
-import styles from './Home.module.css';
+import styles from './LoggedOutHome.module.css';
 import StatCell from './StatCell';
 
 const pins: GlobePin[] = demoTrips.map((trip, index) => ({
@@ -44,6 +46,18 @@ export default function LoggedOutHome({
 }: LoggedOutHomeProps) {
   const authRef = useRef<AuthCardHandle>(null);
   const getStartedRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const canvas = useGlobeCanvas();
+
+  // The page steps back as the globe grows, as on the signed-in home: 0 at
+  // rest, 1 fully zoomed in. Written straight to a CSS variable.
+  const onZoom = useCallback((zoom: number) => {
+    const progress = Math.min(
+      1,
+      Math.max(0, (zoom - 1) / (GLOBE_MAX_ZOOM - 1)),
+    );
+    mainRef.current?.style.setProperty('--zoom', progress.toFixed(3));
+  }, []);
 
   function scrollToAuth() {
     getStartedRef.current?.scrollIntoView({
@@ -63,7 +77,7 @@ export default function LoggedOutHome({
   }
 
   return (
-    <main className="fade" style={{ isolation: 'isolate' }}>
+    <main ref={mainRef} className={`fade ${stage.page}`}>
       <header className={styles.mobileAuthHeader}>
         <Wordmark />
         <div className={styles.mobileAuthActions}>
@@ -83,62 +97,41 @@ export default function LoggedOutHome({
           </button>
         </div>
       </header>
-      <section className={styles.intro}>
-        <div className={styles.introWordmark} style={{ marginBottom: 34 }}>
-          <Wordmark />
+
+      <section className={styles.hero}>
+        <div className={`${stage.stepBack} ${styles.head}`}>
+          <div className={styles.wordmark}>
+            <Wordmark />
+          </div>
+          <p className={stage.eyebrow}>The World, Tagged</p>
+          <h1 className={`serif ${stage.title}`}>
+            Your journeys, <em>mapped.</em>
+          </h1>
         </div>
-        <p
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: 4,
-            color: 'var(--accent)',
-            textTransform: 'uppercase',
-            margin: '0 0 14px',
-          }}
-        >
-          The World, Tagged
-        </p>
-        <h1
-          className="serif"
-          style={{
-            fontSize: 'clamp(48px,8.8vw,92px)',
-            fontWeight: 700,
-            color: 'var(--foreground)',
-            margin: 0,
-            lineHeight: 1.02,
-            letterSpacing: '-2px',
-            maxWidth: 760,
-          }}
-        >
-          Your journeys,{' '}
-          <em style={{ color: 'var(--accent)', fontWeight: 400 }}>mapped.</em>
-        </h1>
-        <p
-          style={{
-            fontSize: 16,
-            color: 'var(--muted)',
-            margin: '20px 0 0',
-            maxWidth: 440,
-            lineHeight: 1.6,
-            fontWeight: 300,
-          }}
-        >
+        <p className={`${stage.stepBack} ${styles.lede}`}>
           Every pin a story. Spin the globe, revisit the places that shaped you,
           and keep the memories close.
         </p>
-      </section>
 
-      <section className={styles.hero}>
-        <div className={styles.globeLayer}>
-          {/*
-            No idle spin on touch here: the auth card sits beside this globe,
-            and the spin's continuous redraw is what made its taps need
-            repeating on iOS. Every other globe keeps it.
-          */}
-          <Globe pins={pins} width={960} height={960} spinOnTouch={false} />
+        <div className={stage.globeSlot}>
+          <div className={`${stage.globeAnchor} ${styles.globeAnchor}`}>
+            {/*
+              No idle spin on touch here: the auth card sits beside this globe,
+              and the spin's continuous redraw is what made its taps need
+              repeating on iOS. Every other globe keeps it.
+            */}
+            <Globe
+              pins={pins}
+              accent="var(--spot)"
+              width={canvas}
+              height={canvas}
+              spinOnTouch={false}
+              onZoom={onZoom}
+            />
+          </div>
         </div>
-        <div ref={getStartedRef} id="get-started" className={styles.formWrap}>
+
+        <div ref={getStartedRef} id="get-started" className={styles.side}>
           <AuthCard
             ref={authRef}
             invite={invite}
@@ -146,169 +139,167 @@ export default function LoggedOutHome({
             turnstileSiteKey={turnstileSiteKey}
             startOnSignup={startOnSignup}
           />
-          <p
-            style={{
-              textAlign: 'center',
-              fontSize: 11,
-              color: 'var(--muted)',
-              margin: '14px 0 0',
-              fontStyle: 'italic',
-            }}
-          >
-            Drag the globe to spin it · click any pin to zoom in on a sample
+          <p className={styles.hint}>
+            Drag the globe to spin it · choose any pin to zoom in on a sample
             place.
           </p>
         </div>
       </section>
 
-      <section
-        className={styles.band}
-        style={{ position: 'relative', zIndex: 1 }}
-      >
-        <div className={styles.stats}>
-          <StatCell value={String(demoTrips.length)} label="Sample places" />
-          <StatCell
-            value={String(demoStats.countries)}
-            label="Countries"
-            bordered
-          />
-          <StatCell value={String(demoStats.years)} label="Years" bordered />
-          <StatCell value="$0" label="Free forever" bordered />
-        </div>
-      </section>
+      <div className={`${stage.after} ${styles.after}`}>
+        <div className={styles.wrap}>
+          <div className={styles.ledger}>
+            <StatCell value={String(demoTrips.length)} label="Sample places" />
+            <StatCell value={String(demoStats.countries)} label="Countries" />
+            <StatCell value={String(demoStats.years)} label="Years" />
+            <StatCell value="$0" label="Free forever" />
+          </div>
 
-      <section
-        className={styles.section}
-        style={{ position: 'relative', zIndex: 1 }}
-      >
-        <div
-          style={{ textAlign: 'center', maxWidth: 560, margin: '0 auto 44px' }}
-        >
-          <p
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: 4,
-              color: 'var(--accent)',
-              textTransform: 'uppercase',
-              margin: '0 0 12px',
-            }}
-          >
-            How it works
-          </p>
-          <h2
-            className="serif"
-            style={{
-              fontSize: 'clamp(30px,4.4vw,42px)',
-              fontWeight: 600,
-              color: 'var(--foreground)',
-              margin: '0 0 12px',
-              letterSpacing: '-0.8px',
-            }}
-          >
-            Everything your travels deserve
-          </h2>
-          <p
-            style={{
-              fontSize: 15,
-              color: 'var(--muted)',
-              lineHeight: 1.6,
-              margin: 0,
-            }}
-          >
-            A living globe that remembers every place you&apos;ve stood — and
-            every photograph you took there.
-          </p>
+          <section className={styles.how}>
+            <div className={styles.howHead}>
+              <p className={`${stage.eyebrow} ${styles.eyebrow}`}>
+                How it works
+              </p>
+              <h2 className={`serif ${styles.howTitle}`}>
+                Everything your travels deserve
+              </h2>
+              <p className={styles.howLine}>
+                A living globe that remembers every place you&apos;ve stood —
+                and every photograph you took there.
+              </p>
+            </div>
+            <div className={styles.cards3}>
+              <HowCard
+                icon={<PinIcon />}
+                title="Pin every place"
+                body="Drop a pin the moment you arrive. Your globe fills in as you go, spin it any time to see it all."
+              />
+              <HowCard
+                icon={<PhotoIcon />}
+                title="Relive the journey"
+                body="Every pin opens into the story, the dates, and the photographs — a gallery and timeline built as you travel."
+              />
+              <HowCard
+                icon={<LockIcon />}
+                title="Yours, kept close"
+                body="Private by default — no ad trackers, no analytics, and it never follows your live location. Just your places, kept close."
+              />
+            </div>
+            <div className={styles.cta}>
+              <button
+                type="button"
+                className={`${form.button} ${styles.ctaButton}`}
+                onClick={startSignup}
+              >
+                Create your Minnekart — it&apos;s free
+              </button>
+            </div>
+          </section>
         </div>
-        <div className={styles.cards3}>
-          <HowCard
-            icon={<PinIcon />}
-            title="Pin every place"
-            body="Drop a pin the moment you arrive. Your globe fills in as you go, spin it any time to see it all."
-          />
-          <HowCard
-            icon={<PhotoIcon />}
-            title="Relive the journey"
-            body="Every pin opens into the story, the dates, and the photographs — a gallery and timeline built as you travel."
-          />
-          <HowCard
-            icon={<LockIcon />}
-            title="Yours, kept close"
-            body="Private by default — no ad trackers, no analytics, and it never follows your live location. Just your places, kept close."
-          />
-        </div>
-        <div style={{ textAlign: 'center', marginTop: 36 }}>
-          <button
-            type="button"
-            className="button"
-            onClick={startSignup}
-            style={{ width: 'auto', padding: '13px 32px' }}
-          >
-            Create your Minnekart — it&apos;s free
-          </button>
-        </div>
-      </section>
+      </div>
 
       <Footer loggedIn={false} />
     </main>
   );
 }
 
+// The canvas is sized so the globe's resting radius matches the layout in
+// GlobeStage.module.css (--radius), exactly as on the signed-in home.
+function restingRadius(viewport: number): number {
+  return viewport > 1100
+    ? Math.min(292, (viewport - 520) / 2.6)
+    : Math.min(viewport * 0.44, 260);
+}
+
+function useGlobeCanvas(): number {
+  const [radius, setRadius] = useState(292);
+
+  useEffect(() => {
+    const measure = () =>
+      setRadius(Math.round(restingRadius(window.innerWidth)));
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  return Math.round(2 * (radius * GLOBE_MAX_ZOOM + 20));
+}
+
 function PinIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <svg
+      width="30"
+      height="30"
+      viewBox="0 0 28 28"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
-        d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"
-        stroke="var(--accent)"
-        strokeWidth="1.7"
+        d="M14 25s8-7.6 8-14a8 8 0 10-16 0c0 6.4 8 14 8 14z"
+        stroke="currentColor"
+        strokeWidth="1.5"
         strokeLinejoin="round"
       />
-      <circle cx="12" cy="9" r="2.4" stroke="var(--accent)" strokeWidth="1.7" />
+      <circle cx="14" cy="11" r="2.8" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
 }
 
 function PhotoIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <svg
+      width="30"
+      height="30"
+      viewBox="0 0 28 28"
+      fill="none"
+      aria-hidden="true"
+    >
       <rect
         x="4"
-        y="6"
-        width="16"
-        height="13"
-        rx="2.2"
-        stroke="var(--accent)"
-        strokeWidth="1.7"
+        y="6.5"
+        width="20"
+        height="16"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
       />
+      <circle cx="10" cy="12" r="1.8" stroke="currentColor" strokeWidth="1.5" />
       <path
-        d="M4 15l4.5-4 3.5 3 3-2.5L20 15.5"
-        stroke="var(--accent)"
-        strokeWidth="1.7"
+        d="M4.5 20l5.6-5 4.4 3.8 3-2.6 6 5"
+        stroke="currentColor"
+        strokeWidth="1.5"
         strokeLinejoin="round"
+        strokeLinecap="round"
       />
-      <circle cx="9" cy="10" r="1.5" fill="var(--accent)" />
     </svg>
   );
 }
 
 function LockIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <svg
+      width="30"
+      height="30"
+      viewBox="0 0 28 28"
+      fill="none"
+      aria-hidden="true"
+    >
       <rect
-        x="5"
-        y="10"
-        width="14"
-        height="10"
-        rx="2.2"
-        stroke="var(--accent)"
-        strokeWidth="1.7"
+        x="6"
+        y="12"
+        width="16"
+        height="12"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
       />
       <path
-        d="M8.5 10V7.5a3.5 3.5 0 017 0V10"
-        stroke="var(--accent)"
-        strokeWidth="1.7"
+        d="M9.5 12V9a4.5 4.5 0 019 0v3"
+        stroke="currentColor"
+        strokeWidth="1.5"
         strokeLinecap="round"
       />
+      <circle cx="14" cy="18" r="1.2" fill="currentColor" />
     </svg>
   );
 }
@@ -323,50 +314,10 @@ function HowCard({
   body: string;
 }) {
   return (
-    <div
-      style={{
-        background: '#fff',
-        borderRadius: 16,
-        padding: '28px 26px',
-        border: '1px solid rgba(28,25,23,.07)',
-        boxShadow: '0 2px 12px rgba(28,25,23,.05)',
-      }}
-    >
-      <div
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: 13,
-          background: 'var(--accent-soft)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 18,
-        }}
-      >
-        {icon}
-      </div>
-      <h3
-        className="serif"
-        style={{
-          fontSize: 24,
-          fontWeight: 600,
-          color: 'var(--foreground)',
-          margin: '0 0 8px',
-        }}
-      >
-        {title}
-      </h3>
-      <p
-        style={{
-          fontSize: 14,
-          color: 'var(--muted)',
-          lineHeight: 1.6,
-          margin: 0,
-        }}
-      >
-        {body}
-      </p>
+    <div className={styles.howCard}>
+      <span className={styles.howIcon}>{icon}</span>
+      <h3 className={`serif ${styles.howCardTitle}`}>{title}</h3>
+      <p className={styles.howBody}>{body}</p>
     </div>
   );
 }

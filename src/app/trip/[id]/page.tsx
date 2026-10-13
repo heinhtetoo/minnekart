@@ -3,12 +3,15 @@ import { notFound } from 'next/navigation';
 
 import { db } from '@/db';
 import { trips as tripsTable } from '@/db/schema';
+import pageStyles from '@/components/layout/AppPage.module.css';
+import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/nav/BottomNav';
 import TopNav from '@/components/nav/TopNav';
 import TripDetailBody from '@/components/trips/TripDetailBody';
 import { requireVerifiedPageUser } from '@/lib/auth/session-server';
 import { loadTripTiles } from '@/lib/photos/tiles';
 import { getOwnedTrip } from '@/lib/trips/access';
+import { isTripId } from '@/lib/trips/ids';
 
 interface TripDetailPageProps {
   params: Promise<{ id: string }>;
@@ -17,6 +20,10 @@ interface TripDetailPageProps {
 export default async function TripDetailPage({ params }: TripDetailPageProps) {
   const user = await requireVerifiedPageUser();
   const { id } = await params;
+  // A cut-off or malformed address: not found, before any query can fail.
+  if (!isTripId(id)) {
+    notFound();
+  }
 
   const [trip, tiles, neighbours] = await Promise.all([
     loadOwnedTrip(id, user.id),
@@ -45,10 +52,14 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
         tiles={tiles}
         backHref="/"
         backLabel="← Back to globe"
+        smartBack
         editHref={`/trip/${id}/edit`}
         galleryHref={`/gallery?country=${encodeURIComponent(trip.country)}`}
         neighbours={neighbours}
       />
+      <div className={pageStyles.footerHolder}>
+        <Footer loggedIn />
+      </div>
       <BottomNav />
     </>
   );

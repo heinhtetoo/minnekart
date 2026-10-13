@@ -19,7 +19,9 @@ export default function PublicChrome({
         <Wordmark />
       </Link>
       {ownerName && (
-        <p className={styles.attribution}>{ownerName}&apos;s memories</p>
+        <p className={`serif ${styles.attribution}`}>
+          {ownerName}&apos;s memories
+        </p>
       )}
       <div className={styles.actions}>
         {viewerLoggedIn ? (
@@ -31,7 +33,8 @@ export default function PublicChrome({
             <Link href="/" className={styles.signIn}>
               Sign in
             </Link>
-            <Link href="/" className={styles.signUp}>
+            {/* Opens the card on Create account (screen 10, answer 2). */}
+            <Link href="/?signup=1" className={styles.signUp}>
               Sign up
             </Link>
           </>

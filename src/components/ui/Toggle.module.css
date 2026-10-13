@@ -4,14 +4,14 @@
   height: 26px;
   border-radius: 999px;
   border: none;
-  background: rgba(28, 25, 23, 0.18);
+  background: rgb(var(--ink-rgb) / 0.18);
   cursor: pointer;
   padding: 3px;
   transition: background 0.15s;
 }
 
 .toggle[data-on='true'] {
-  background: var(--forest);
+  background: var(--primary);
 }
 
 .toggle:disabled {
@@ -24,7 +24,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--surface);
   transition: transform 0.15s;
 }
 
