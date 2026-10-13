@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import AppPage from '@/components/layout/AppPage';
+import form from '@/components/ui/Form.module.css';
 import GalleryView from '@/components/photos/GalleryView';
 import { requireVerifiedPageUser } from '@/lib/auth/session-server';
 import { userLibraryPage, userPhotoCountries } from '@/lib/photos/library';
@@ -37,7 +38,7 @@ export default async function GalleryPage({ searchParams }: GalleryPageProps) {
       {page.photos.length === 0 ? (
         <p className={styles.empty}>
           No photos yet.{' '}
-          <Link href="/trip/new" className="authlink">
+          <Link href="/trip/new" className={`${form.link} ${styles.link}`}>
             Add a memory
           </Link>{' '}
           and upload some.

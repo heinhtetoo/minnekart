@@ -6,8 +6,10 @@ import demoTrips from '@/data/demo-trips.json';
 import { computeStats } from '@/lib/trips/stats';
 import AuthCard, { AuthCardHandle } from '@/components/auth/AuthCard';
 import Globe, { GLOBE_MAX_ZOOM, GlobePin } from '@/components/globe/Globe';
+import stage from '@/components/globe/GlobeStage.module.css';
 import Wordmark from '@/components/brand/Wordmark';
 import Footer from '@/components/layout/Footer';
+import form from '@/components/ui/Form.module.css';
 
 import styles from './LoggedOutHome.module.css';
 import StatCell from './StatCell';
@@ -75,7 +77,7 @@ export default function LoggedOutHome({
   }
 
   return (
-    <main ref={mainRef} className={`fade ${styles.page}`}>
+    <main ref={mainRef} className={`fade ${stage.page}`}>
       <header className={styles.mobileAuthHeader}>
         <Wordmark />
         <div className={styles.mobileAuthActions}>
@@ -97,22 +99,22 @@ export default function LoggedOutHome({
       </header>
 
       <section className={styles.hero}>
-        <div className={styles.head}>
+        <div className={`${stage.stepBack} ${styles.head}`}>
           <div className={styles.wordmark}>
             <Wordmark />
           </div>
-          <p className={styles.eyebrow}>The World, Tagged</p>
-          <h1 className={`serif ${styles.title}`}>
+          <p className={stage.eyebrow}>The World, Tagged</p>
+          <h1 className={`serif ${stage.title}`}>
             Your journeys, <em>mapped.</em>
           </h1>
         </div>
-        <p className={styles.lede}>
+        <p className={`${stage.stepBack} ${styles.lede}`}>
           Every pin a story. Spin the globe, revisit the places that shaped you,
           and keep the memories close.
         </p>
 
-        <div className={styles.globeSlot}>
-          <div className={styles.globeAnchor}>
+        <div className={stage.globeSlot}>
+          <div className={`${stage.globeAnchor} ${styles.globeAnchor}`}>
             {/*
               No idle spin on touch here: the auth card sits beside this globe,
               and the spin's continuous redraw is what made its taps need
@@ -144,7 +146,7 @@ export default function LoggedOutHome({
         </div>
       </section>
 
-      <div className={styles.after}>
+      <div className={`${stage.after} ${styles.after}`}>
         <div className={styles.wrap}>
           <div className={styles.ledger}>
             <StatCell value={String(demoTrips.length)} label="Sample places" />
@@ -155,7 +157,9 @@ export default function LoggedOutHome({
 
           <section className={styles.how}>
             <div className={styles.howHead}>
-              <p className={styles.eyebrow}>How it works</p>
+              <p className={`${stage.eyebrow} ${styles.eyebrow}`}>
+                How it works
+              </p>
               <h2 className={`serif ${styles.howTitle}`}>
                 Everything your travels deserve
               </h2>
@@ -182,7 +186,11 @@ export default function LoggedOutHome({
               />
             </div>
             <div className={styles.cta}>
-              <button type="button" className="button" onClick={startSignup}>
+              <button
+                type="button"
+                className={`${form.button} ${styles.ctaButton}`}
+                onClick={startSignup}
+              >
                 Create your Minnekart — it&apos;s free
               </button>
             </div>
@@ -196,7 +204,7 @@ export default function LoggedOutHome({
 }
 
 // The canvas is sized so the globe's resting radius matches the layout in
-// LoggedOutHome.module.css (--radius), exactly as on the signed-in home.
+// GlobeStage.module.css (--radius), exactly as on the signed-in home.
 function restingRadius(viewport: number): number {
   return viewport > 1100
     ? Math.min(292, (viewport - 520) / 2.6)

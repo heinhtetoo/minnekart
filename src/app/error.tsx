@@ -3,6 +3,7 @@
 import Link from 'next/link';
 
 import Wordmark from '@/components/brand/Wordmark';
+import form from '@/components/ui/Form.module.css';
 
 import styles from './status.module.css';
 
@@ -25,7 +26,11 @@ export default function Error({ reset }: ErrorProps) {
           back to the globe.
         </p>
         <div className={styles.actions}>
-          <button type="button" className="button" onClick={reset}>
+          <button
+            type="button"
+            className={`${form.button} ${styles.button}`}
+            onClick={reset}
+          >
             Try again
           </button>
           <Link href="/" className={styles.homeLink}>

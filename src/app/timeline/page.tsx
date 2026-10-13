@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { trips as tripsTable } from '@/db/schema';
 import { formatPhotoCount, formatTripDates } from '@/components/home/format';
 import AppPage from '@/components/layout/AppPage';
+import form from '@/components/ui/Form.module.css';
 import NavIcon from '@/components/nav/navIcons';
 import { requireVerifiedPageUser } from '@/lib/auth/session-server';
 import { coverGradient } from '@/lib/photos/gradient';
@@ -46,7 +47,7 @@ export default async function TimelinePage() {
         {trips.length === 0 ? (
           <p className={styles.empty}>
             No memories yet.{' '}
-            <Link href="/trip/new" className="authlink">
+            <Link href="/trip/new" className={`${form.link} ${styles.link}`}>
               Add your first place
             </Link>
             .

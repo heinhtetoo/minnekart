@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import Wordmark from '@/components/brand/Wordmark';
+import form from '@/components/ui/Form.module.css';
 
 import styles from './status.module.css';
 
@@ -17,7 +18,7 @@ export default function NotFound() {
           The page you&apos;re looking for has wandered off the map.
         </p>
         <div className={styles.actions}>
-          <Link href="/" className="button">
+          <Link href="/" className={`${form.button} ${styles.button}`}>
             Back to the globe
           </Link>
         </div>

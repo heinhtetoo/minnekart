@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Globe, { GLOBE_MAX_ZOOM, GlobePin } from '@/components/globe/Globe';
+import stage from '@/components/globe/GlobeStage.module.css';
 import { formatTripDates } from '@/components/home/format';
 import { coverGradient } from '@/lib/photos/gradient';
 import { TripDTO } from '@/lib/trips/dto';
@@ -82,20 +83,20 @@ export default function PublicGlobe({
   }));
 
   return (
-    <main ref={mainRef} className={`fade ${styles.page}`}>
+    <main ref={mainRef} className={`fade ${stage.page}`}>
       <section className={styles.hero}>
-        <div className={styles.intro}>
-          <p className={styles.eyebrow}>A public globe</p>
+        <div className={stage.intro}>
+          <p className={stage.eyebrow}>A public globe</p>
           <h1
-            className={`serif ${styles.title}`}
+            className={`serif ${stage.title} ${styles.title}`}
             data-long={ownerName.length > 12}
           >
             {ownerName}&apos;s <em>world.</em>
           </h1>
         </div>
 
-        <div className={styles.globeSlot}>
-          <div ref={anchorRef} className={styles.globeAnchor}>
+        <div className={stage.globeSlot}>
+          <div ref={anchorRef} className={stage.globeAnchor}>
             <Globe
               pins={pins}
               accent="var(--spot)"
@@ -125,7 +126,7 @@ export default function PublicGlobe({
           </div>
         )}
 
-        <div className={styles.panel}>
+        <div className={stage.panel}>
           {trips.length === 0 ? (
             <div className={styles.emptyState}>
               <span className={styles.ornament} aria-hidden="true">
@@ -180,7 +181,7 @@ export default function PublicGlobe({
 }
 
 // The canvas is sized so the globe's resting radius matches --radius in
-// PublicGlobe.module.css, exactly as on both homes.
+// GlobeStage.module.css, exactly as on both homes.
 function restingRadius(viewport: number): number {
   return viewport > 1100
     ? Math.min(292, (viewport - 520) / 2.6)

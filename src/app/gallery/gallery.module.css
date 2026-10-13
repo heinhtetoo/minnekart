@@ -39,7 +39,7 @@
   color: var(--foreground-2);
 }
 
-.empty :global(.authlink) {
+.empty .link {
   font-family: var(--font-sans), sans-serif;
   font-size: 16px;
   font-style: normal;

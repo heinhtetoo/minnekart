@@ -18,48 +18,24 @@
   min-width: 0;
 }
 
-/* Journal field, as on the trip form and Settings. */
-.label {
-  display: block;
+/* Journal fields (components/ui/Form.module.css); only the differences. */
+.form .label {
   margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 
-.noteInput,
-.linkInput {
+.card .noteInput,
+.card .linkInput {
   display: block;
-  width: 100%;
   min-width: 0;
-  padding: 4px 0 8px;
-  border: 0;
-  border-bottom: 1.5px solid rgb(var(--ink-rgb) / 0.35);
-  border-radius: 0;
-  background: transparent;
   font-family: var(--font-serif), serif;
-  color: var(--foreground);
-  transition: border-color 0.15s;
 }
 
-.noteInput {
+.card .noteInput {
   font-size: 22px;
 }
 
-.noteInput::placeholder {
-  color: var(--muted);
-  font-style: italic;
-}
-
-.noteInput:focus,
-.noteInput:focus-visible,
-.linkInput:focus,
-.linkInput:focus-visible {
-  outline: none;
-  border-bottom-color: var(--spot);
-  box-shadow: 0 2px 0 0 var(--spot);
+.card .noteInput::placeholder {
+  opacity: 1;
 }
 
 .generateButton,
@@ -126,7 +102,7 @@
   gap: 14px;
 }
 
-.linkInput {
+.card .linkInput {
   flex: 1;
   font-size: 17px;
   color: var(--foreground-2);

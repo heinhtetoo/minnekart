@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Globe, { GLOBE_MAX_ZOOM, GlobePin } from '@/components/globe/Globe';
+import stage from '@/components/globe/GlobeStage.module.css';
 import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/nav/BottomNav';
 import NavIcon from '@/components/nav/navIcons';
@@ -69,17 +70,17 @@ export default function LoggedInHome({
   return (
     <>
       <TopNav name={user.name} email={user.email} isOwner={user.isOwner} />
-      <main ref={mainRef} className={`fade ${styles.page}`}>
+      <main ref={mainRef} className={`fade ${stage.page}`}>
         <section className={styles.hero}>
-          <div className={styles.intro}>
-            <p className={styles.eyebrow}>Your world so far</p>
-            <h1 className={`serif ${styles.title}`}>
+          <div className={stage.intro}>
+            <p className={stage.eyebrow}>Your world so far</p>
+            <h1 className={`serif ${stage.title}`}>
               Welcome back, <em>{firstName(user.name)}.</em>
             </h1>
           </div>
 
-          <div className={styles.globeSlot}>
-            <div className={styles.globeAnchor}>
+          <div className={stage.globeSlot}>
+            <div className={stage.globeAnchor}>
               <Globe
                 pins={pins}
                 accent="var(--spot)"
@@ -92,7 +93,7 @@ export default function LoggedInHome({
             </div>
           </div>
 
-          <div className={styles.panel}>
+          <div className={stage.panel}>
             {trips.length === 0 ? (
               <EmptyState />
             ) : (
@@ -112,7 +113,7 @@ export default function LoggedInHome({
           </div>
         </section>
 
-        <div className={styles.after}>
+        <div className={`${stage.after} ${styles.after}`}>
           <div className={styles.wrap}>
             <div className={styles.ledger}>
               <Stat value={stats.countries} label="Countries" />
@@ -134,7 +135,7 @@ export default function LoggedInHome({
 }
 
 // The canvas is sized so the globe's resting radius matches the layout in
-// LoggedInHome.module.css (--radius): side by side above 1100px, stacked and
+// GlobeStage.module.css (--radius): side by side above 1100px, stacked and
 // sized to the screen below. The globe only fills its canvas at full zoom.
 function restingRadius(viewport: number): number {
   return viewport > 1100

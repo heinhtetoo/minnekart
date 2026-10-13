@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import Wordmark from '@/components/brand/Wordmark';
+import form from '@/components/ui/Form.module.css';
 
 import { authApi } from './api';
 import styles from './auth.module.css';
@@ -161,7 +162,7 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
                 ref={(element) => {
                   inputsRef.current[index] = element;
                 }}
-                className="otpCell"
+                className={styles.otpCell}
                 inputMode="numeric"
                 autoComplete={index === 0 ? 'one-time-code' : 'off'}
                 maxLength={1}
@@ -175,7 +176,7 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
             ))}
           </div>
 
-          <div className={`fieldError ${styles.error}`}>{error}</div>
+          <div className={`${form.error} ${styles.error}`}>{error}</div>
           {notice && !error && (
             <p className={styles.notice}>
               <span className={styles.diamond} aria-hidden="true" />
@@ -187,7 +188,7 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
             Didn&apos;t get it?{' '}
             <button
               type="button"
-              className="authlink"
+              className={`${form.link} ${styles.link}`}
               onClick={resend}
               disabled={cooldown > 0}
             >
@@ -196,7 +197,11 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
           </p>
           <p className={styles.small}>
             Not you?{' '}
-            <button type="button" className="authlink" onClick={signOut}>
+            <button
+              type="button"
+              className={`${form.link} ${styles.link}`}
+              onClick={signOut}
+            >
               Sign out
             </button>
           </p>

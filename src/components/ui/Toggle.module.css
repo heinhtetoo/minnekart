@@ -11,7 +11,7 @@
 }
 
 .toggle[data-on='true'] {
-  background: var(--forest);
+  background: var(--primary);
 }
 
 .toggle:disabled {

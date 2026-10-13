@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { FormEvent, useId, useState } from 'react';
 
+import form from '@/components/ui/Form.module.css';
+
 import { authApi } from './api';
 import styles from './auth.module.css';
 
@@ -44,7 +46,7 @@ export default function ResetForm({ token }: { token: string | null }) {
             title="Password updated"
             subtitle="You can now sign in with your new password."
           />
-          <Link className="button" href="/">
+          <Link className={`${form.button} ${styles.button}`} href="/">
             Go to sign in
           </Link>
         </div>
@@ -94,8 +96,12 @@ export default function ResetForm({ token }: { token: string | null }) {
           onChange={setConfirm}
           placeholder="Re-enter password"
         />
-        <div className={`fieldError ${styles.error}`}>{error}</div>
-        <button className="button" type="submit" disabled={busy}>
+        <div className={`${form.error} ${styles.error}`}>{error}</div>
+        <button
+          className={`${form.button} ${styles.button}`}
+          type="submit"
+          disabled={busy}
+        >
           {busy ? 'Updating…' : 'Update password'}
         </button>
         <BackToSignIn />
@@ -128,13 +134,13 @@ function Field({
   return (
     <div className={styles.fieldWrap}>
       <div className={styles.fieldHead}>
-        <label className="label" htmlFor={id}>
+        <label className={`${form.label} ${styles.label}`} htmlFor={id}>
           {label}
         </label>
       </div>
       <input
         id={id}
-        className="field"
+        className={`${form.field} ${styles.field}`}
         type="password"
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -148,7 +154,7 @@ function Field({
 function BackToSignIn() {
   return (
     <p className={styles.back}>
-      <Link className="authlink" href="/">
+      <Link className={`${form.link} ${styles.link}`} href="/">
         Back to sign in
       </Link>
     </p>

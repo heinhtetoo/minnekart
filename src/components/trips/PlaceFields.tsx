@@ -1,5 +1,7 @@
 'use client';
 
+import form from '@/components/ui/Form.module.css';
+
 import Field from './Field';
 import PlaceSearch from './PlaceSearch';
 import styles from './TripForm.module.css';
@@ -37,7 +39,7 @@ export default function PlaceFields({
       <div className={styles.row}>
         <Field label="Place name">
           <input
-            className={`field ${styles.big}`}
+            className={`${form.field} ${styles.big}`}
             value={seed.placeName}
             onChange={typedInto('placeName')}
             placeholder="Kyoto"
@@ -46,7 +48,7 @@ export default function PlaceFields({
         </Field>
         <Field label="Country">
           <input
-            className={`field ${styles.big}`}
+            className={`${form.field} ${styles.big}`}
             value={seed.country}
             onChange={typedInto('country')}
             placeholder="Japan"

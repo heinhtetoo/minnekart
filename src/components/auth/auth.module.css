@@ -1,8 +1,7 @@
 /* Sign-in pages, Atlas direction "Sheet": the sign-in card, the reset form and
    the email check. Every form sits on a paper sheet like the signed-in home's
-   panel, with the trip form's Journal fields and pill buttons. The global
-   .field / .label / .button / .authlink / .fieldError / .otpCell classes are
-   restyled only inside .sheet, so other pages keep theirs. */
+   panel, with the shared Journal fields and pill buttons
+   (components/ui/Form.module.css); only the sheet's differences are here. */
 .sheet {
   background: var(--surface);
   border: 1px solid var(--rule);
@@ -127,74 +126,40 @@
   margin-bottom: 4px;
 }
 
-.sheet :global(.label) {
+.sheet .label {
   margin: 0;
   font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  color: var(--muted);
 }
 
-.sheet :global(.field) {
+.sheet .field {
   padding: 6px 0 6px;
-  border: 0;
-  border-bottom: 1.5px solid rgb(var(--ink-rgb) / 0.35);
-  border-radius: 0;
-  background: transparent;
   font-family: var(--font-serif), serif;
   font-size: 19px;
-  color: var(--foreground);
-  transition: border-color 0.15s;
-}
-
-.sheet :global(.field):focus,
-.sheet :global(.field):focus-visible {
-  outline: none;
-  border-bottom-color: var(--spot);
-  box-shadow: 0 2px 0 0 var(--spot);
-}
-
-.sheet :global(.field)::placeholder {
-  color: var(--muted);
-  font-style: italic;
-  opacity: 0.85;
 }
 
 /* "Forgot?" sits on the password label's row. */
-.sheet :global(.authlink).forgot {
+.sheet .forgot {
   font-size: 13.5px;
 }
 
-.error {
+.sheet .error {
   min-height: 22px;
   margin: 14px 0 6px;
-}
-
-.sheet :global(.fieldError) {
   font-size: 14px;
   line-height: 1.45;
-  color: var(--danger);
 }
 
 /* Pill buttons -------------------------------------------------------------- */
-.sheet :global(.button) {
+.sheet .button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 48px;
-  padding: 0 28px;
-  border-radius: 999px;
-  font-size: 15px;
-  background: var(--primary);
 }
 
-.sheet :global(.button):hover:not(:disabled) {
-  background: var(--primary-hover);
-}
-
-.sheet :global(.button):disabled {
+/* A disabled button keeps its colour under the pointer. */
+.sheet .button:disabled {
   opacity: 0.45;
+  background: var(--primary);
 }
 
 .back {
@@ -204,16 +169,15 @@
   color: var(--foreground-2);
 }
 
-.sheet :global(.authlink) {
-  color: var(--accent);
-  font-weight: 600;
+.sheet .link {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;
 }
 
-.sheet :global(.authlink):hover {
+.sheet .link:hover {
   text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
 }
 
 /* Turnstile (Cloudflare's own widget) keeps its own look; only spacing. */
@@ -266,24 +230,33 @@
   margin: 28px 0 4px;
 }
 
-/* Sans digits, not the serif: EB Garamond's figures hang below the line. */
-.sheet :global(.otpCell) {
+/* Sans, not the serif: EB Garamond ships oldstyle figures with no lining
+   alternate, so 3 5 7 9 hang below the baseline across seven distinct
+   heights — fine in running text, wrong in a row of boxed digits. One class
+   only, so the keyboard focus ring still shows. */
+.otpCell {
+  width: 100%;
   aspect-ratio: 0.86;
-  border: 1px solid rgb(var(--ink-rgb) / 0.28);
-  border-radius: 4px;
-  background: var(--background);
+  text-align: center;
   font-size: 26px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid rgb(var(--ink-rgb) / 0.28);
+  background: var(--background);
+  outline: none;
+  font-family: var(--font-sans), sans-serif;
+  color: var(--foreground);
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
 }
 
-.sheet :global(.otpCell):focus {
+.otpCell:focus {
   border-color: var(--foreground);
   box-shadow: inset 0 -2px 0 0 var(--spot);
 }
 
-.sheet :global(.otpCell):disabled {
+.otpCell:disabled {
   opacity: 0.6;
 }
 
@@ -293,7 +266,7 @@
   color: var(--foreground-2);
 }
 
-.sheet :global(.authlink):disabled {
+.sheet .link:disabled {
   color: var(--muted);
   text-decoration: none;
   cursor: not-allowed;

@@ -1,17 +1,8 @@
-/* Signed-out home, Atlas direction "Sheet". The globe stage follows the
-   signed-in home (LoggedInHome.module.css): the globe may outgrow its section
-   as it zooms, passing behind the card and the sections below, while the
-   heading steps back (--zoom: 0 at rest, 1 fully in, set by LoggedOutHome).
-   --radius is the resting radius and must match restingRadius() in
-   LoggedOutHome.tsx. Kept as its own copy for now; the two homes' stage styles
-   are to be combined once every screen is locked. */
-.page {
-  --radius: min(292px, calc((100vw - 520px) / 2.6));
-  --zoom: 0;
-  isolation: isolate;
-  overflow-x: clip;
-}
-
+/* Signed-out home, Atlas direction "Sheet". The globe stage (heading, globe
+   and the section after it) comes from components/globe/GlobeStage.module.css,
+   as on the signed-in home: the globe may outgrow its section as it zooms,
+   passing behind the card and the sections below, while the heading steps
+   back. This file holds the page's own layout, the card and How it works. */
 /* Phone header (≤720px only) --------------------------------------------- */
 .mobileAuthHeader {
   display: none;
@@ -32,57 +23,19 @@
   align-content: start;
 }
 
-.head,
-.lede {
-  position: relative;
-  z-index: 15;
-  /* Plain text over the globe: never in the way of a pin or a drag. */
-  pointer-events: none;
-  opacity: calc(1 - var(--zoom) * 1.6);
-  transform: translateY(calc(var(--zoom) * -24px));
-}
-
 .head {
   grid-column: 1 / -1;
+}
+
+/* The globe sits lower than on the other stages, under the wordmark. */
+.hero .globeAnchor {
+  top: calc(372px + var(--radius));
 }
 
 .wordmark {
   margin-bottom: 72px;
   pointer-events: auto;
   width: max-content;
-}
-
-.eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 0 18px;
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: 0.32em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.eyebrow::before {
-  content: '';
-  width: 28px;
-  height: 1px;
-  background: currentColor;
-}
-
-.title {
-  margin: 0;
-  font-size: clamp(48px, 7.2vw, 92px);
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: -0.025em;
-  color: var(--foreground);
-}
-
-.title em {
-  font-weight: 400;
-  color: var(--accent-display);
 }
 
 .lede {
@@ -93,46 +46,6 @@
   font-size: 17px;
   line-height: 1.6;
   color: var(--foreground-2);
-}
-
-/* Globe ------------------------------------------------------------------ */
-.globeSlot {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-/* A zero-size point at the globe's centre; the canvas centres on it. */
-.globeAnchor {
-  position: absolute;
-  z-index: 10;
-  left: calc(58px + var(--radius));
-  top: calc(372px + var(--radius));
-  width: 0;
-  height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: auto;
-}
-
-.globeAnchor > * {
-  flex: none;
-}
-
-/* Only the sphere itself takes the pointer; the empty canvas lets clicks
-   through to the page. */
-.globeAnchor svg {
-  pointer-events: none;
-}
-
-.globeAnchor svg :global(.water),
-.globeAnchor svg :global(.land) path {
-  pointer-events: auto;
-}
-
-.globeAnchor svg :global(.pins) circle[cursor='pointer'] {
-  pointer-events: all;
 }
 
 /* Card column ------------------------------------------------------------ */
@@ -155,24 +68,6 @@
   font-style: italic;
   line-height: 1.45;
   color: var(--muted);
-}
-
-/* Below the hero ---------------------------------------------------------- */
-.after {
-  position: relative;
-  z-index: 20;
-  background: var(--background);
-}
-
-.after::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: -140px;
-  height: 140px;
-  background: linear-gradient(rgb(var(--bg-rgb) / 0), var(--background));
-  pointer-events: none;
 }
 
 .wrap {
@@ -308,19 +203,12 @@
   margin-top: 56px;
 }
 
-.cta :global(.button) {
+.cta .ctaButton {
   width: auto;
-  height: 48px;
-  padding: 0 28px;
-  border-radius: 999px;
-  font-size: 15px;
 }
 
 /* Tablet: stacked, the globe above the card --------------------------------- */
 @media (max-width: 1100px) {
-  .page {
-    --radius: min(44vw, 260px);
-  }
   .hero {
     min-height: 0;
     grid-template-columns: 1fr;
@@ -331,13 +219,7 @@
     grid-column: 1;
     grid-row: auto;
   }
-  .globeSlot {
-    position: relative;
-    inset: auto;
-    height: calc(2 * var(--radius) + 40px);
-  }
-  .globeAnchor {
-    left: 50%;
+  .hero .globeAnchor {
     top: 50%;
   }
   .side {
@@ -416,14 +298,6 @@
   .lede {
     padding: 0 20px;
   }
-  .eyebrow {
-    font-size: 11.5px;
-    margin-bottom: 14px;
-  }
-  .title {
-    font-size: 50px;
-    line-height: 1.02;
-  }
   .lede {
     margin-top: 16px;
     font-size: 16px;
@@ -471,14 +345,7 @@
   .cta {
     margin-top: 32px;
   }
-  .cta :global(.button) {
+  .cta .ctaButton {
     width: 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .head,
-  .lede {
-    transform: none;
   }
 }

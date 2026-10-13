@@ -14,6 +14,7 @@ import {
 import MiniGlobe from '@/components/globe/MiniGlobe';
 import { uploadPhoto } from '@/components/photos/upload';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
+import form from '@/components/ui/Form.module.css';
 import { readPhotoExif } from '@/lib/photos/exif';
 import { sniffImageFormat } from '@/lib/photos/format';
 import { createPreviewUrl } from '@/lib/photos/preview';
@@ -250,7 +251,7 @@ export default function TripForm({
           <div className={styles.row}>
             <Field label="Start date">
               <input
-                className="field"
+                className={`${form.field} ${styles.date}`}
                 type="date"
                 value={seed.dateStart}
                 onChange={(e) =>
@@ -264,7 +265,7 @@ export default function TripForm({
             </Field>
             <Field label="End date (optional)">
               <input
-                className="field"
+                className={`${form.field} ${styles.date}`}
                 type="date"
                 value={dateEnd}
                 min={seed.dateStart || undefined}
@@ -275,7 +276,7 @@ export default function TripForm({
 
           <Field label="Highlight" hint={`${highlight.length}/200`}>
             <input
-              className={`field ${styles.highlight}`}
+              className={`${form.field} ${styles.highlight}`}
               value={highlight}
               onChange={(e) => setHighlight(e.target.value)}
               placeholder="One line you never want to forget."
@@ -285,7 +286,7 @@ export default function TripForm({
 
           <Field label="Story" hint={`${story.length}/5000`}>
             <textarea
-              className={`field ${styles.story}`}
+              className={`${form.field} ${styles.story}`}
               value={story}
               onChange={(e) => setStory(e.target.value)}
               placeholder="What happened here?"
@@ -295,7 +296,10 @@ export default function TripForm({
             />
           </Field>
 
-          <div className="fieldError" style={{ minHeight: 18 }}>
+          <div
+            className={`${form.error} ${styles.formError}`}
+            style={{ minHeight: 18 }}
+          >
             {error}
           </div>
 
@@ -309,7 +313,11 @@ export default function TripForm({
           )}
 
           <div className={styles.actions}>
-            <button className="button" type="submit" disabled={busy}>
+            <button
+              className={`${form.button} ${styles.save}`}
+              type="submit"
+              disabled={busy}
+            >
               {busy
                 ? 'Saving…'
                 : savedWithoutPhoto

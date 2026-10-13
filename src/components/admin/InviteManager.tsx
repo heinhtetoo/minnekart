@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useId, useState } from 'react';
 
+import form from '@/components/ui/Form.module.css';
+
 import styles from './Admin.module.css';
 import { invitesApi } from './api';
 
@@ -41,12 +43,12 @@ export default function InviteManager() {
     <section className={styles.card}>
       <div className={styles.form}>
         <div className={styles.noteField}>
-          <label className={styles.label} htmlFor={noteId}>
+          <label className={`${form.label} ${styles.label}`} htmlFor={noteId}>
             Note (optional)
           </label>
           <input
             id={noteId}
-            className={styles.noteInput}
+            className={`${form.field} ${styles.noteInput}`}
             placeholder="e.g. for Sofia"
             value={note}
             maxLength={100}
@@ -70,7 +72,7 @@ export default function InviteManager() {
           </p>
           <div className={styles.linkRow}>
             <input
-              className={styles.linkInput}
+              className={`${form.field} ${styles.linkInput}`}
               readOnly
               value={link}
               aria-label="Invite link"

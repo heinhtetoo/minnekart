@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import form from '@/components/ui/Form.module.css';
+
 import { accountApi } from './api';
 import styles from './ProfileCard.module.css';
 import ProfilePhotoPicker from './ProfilePhotoPicker';
@@ -69,7 +71,7 @@ export default function ProfileCard({
 
       <Field label="Name" hint={`${name.length}/80`}>
         <input
-          className={`field ${styles.name}`}
+          className={`${form.field} ${styles.name}`}
           value={name}
           onChange={(event) => setName(event.target.value)}
           maxLength={80}
@@ -78,7 +80,7 @@ export default function ProfileCard({
 
       <Field label="Tagline" hint={`${tagline.length}/80`}>
         <input
-          className={`field ${styles.tagline}`}
+          className={`${form.field} ${styles.tagline}`}
           value={tagline}
           onChange={(event) => setTagline(event.target.value)}
           placeholder="Cartographer of small moments"
@@ -88,7 +90,7 @@ export default function ProfileCard({
 
       <Field label="Headline" hint={`${headline.length}/120`}>
         <input
-          className={`field ${styles.headline}`}
+          className={`${form.field} ${styles.headline}`}
           value={headline}
           onChange={(event) => setHeadline(event.target.value)}
           placeholder="I collect places the way others collect stamps."
@@ -98,7 +100,7 @@ export default function ProfileCard({
 
       <Field label="Bio" hint={`${bio.length}/2000`}>
         <textarea
-          className={`field ${styles.bio}`}
+          className={`${form.field} ${styles.bio}`}
           value={bio}
           onChange={(event) => setBio(event.target.value)}
           placeholder="Tell the story behind your globe. Leave a blank line between paragraphs."
@@ -109,7 +111,7 @@ export default function ProfileCard({
 
       <div className={styles.fieldWrap}>
         <span className={styles.fieldHead}>
-          <span className="label" style={{ margin: 0 }}>
+          <span className={form.label} style={{ margin: 0 }}>
             Profile photo
           </span>
         </span>
@@ -121,7 +123,11 @@ export default function ProfileCard({
       </div>
 
       <div className={styles.actions}>
-        <button className="button" type="submit" disabled={busy}>
+        <button
+          className={`${form.button} ${styles.save}`}
+          type="submit"
+          disabled={busy}
+        >
           {busy ? 'Saving…' : 'Save profile'}
         </button>
         <Link href="/profile" className={styles.view}>
@@ -147,7 +153,7 @@ function Field({
   return (
     <label className={styles.fieldWrap}>
       <span className={styles.fieldHead}>
-        <span className="label" style={{ margin: 0 }}>
+        <span className={form.label} style={{ margin: 0 }}>
           {label}
         </span>
         <span className={styles.hint}>{hint}</span>

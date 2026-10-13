@@ -9,6 +9,8 @@ import {
   useState,
 } from 'react';
 
+import form from '@/components/ui/Form.module.css';
+
 import { authApi } from './api';
 import styles from './auth.module.css';
 import Turnstile from './Turnstile';
@@ -172,12 +174,15 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
           />
           <div className={styles.fieldWrap}>
             <div className={styles.fieldHead}>
-              <label className="label" htmlFor={passwordId}>
+              <label
+                className={`${form.label} ${styles.label}`}
+                htmlFor={passwordId}
+              >
                 Password
               </label>
               <button
                 type="button"
-                className={`authlink ${styles.forgot}`}
+                className={`${form.link} ${styles.link} ${styles.forgot}`}
                 onClick={() => {
                   setMode('forgot');
                   resetFeedback();
@@ -188,7 +193,7 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
             </div>
             <input
               id={passwordId}
-              className="field"
+              className={`${form.field} ${styles.field}`}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -197,7 +202,11 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
             />
           </div>
           <ErrorLine error={error} />
-          <button className="button" type="submit" disabled={busy}>
+          <button
+            className={`${form.button} ${styles.button}`}
+            type="submit"
+            disabled={busy}
+          >
             {busy ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
@@ -269,7 +278,7 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
           )}
           <ErrorLine error={error} />
           <button
-            className="button"
+            className={`${form.button} ${styles.button}`}
             type="submit"
             disabled={busy || !canSignup}
           >
@@ -293,7 +302,11 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
             autoComplete="email"
           />
           <ErrorLine error={error} />
-          <button className="button" type="submit" disabled={busy}>
+          <button
+            className={`${form.button} ${styles.button}`}
+            type="submit"
+            disabled={busy}
+          >
             {busy ? 'Sending…' : 'Send reset link'}
           </button>
           <BackToSignIn onClick={() => setMode('login')} />
@@ -366,13 +379,13 @@ function Field({
   return (
     <div className={styles.fieldWrap}>
       <div className={styles.fieldHead}>
-        <label className="label" htmlFor={id}>
+        <label className={`${form.label} ${styles.label}`} htmlFor={id}>
           {label}
         </label>
       </div>
       <input
         id={id}
-        className="field"
+        className={`${form.field} ${styles.field}`}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -384,13 +397,17 @@ function Field({
 }
 
 function ErrorLine({ error }: { error: string }) {
-  return <div className={`fieldError ${styles.error}`}>{error}</div>;
+  return <div className={`${form.error} ${styles.error}`}>{error}</div>;
 }
 
 function BackToSignIn({ onClick }: { onClick: () => void }) {
   return (
     <p className={styles.back}>
-      <button type="button" className="authlink" onClick={onClick}>
+      <button
+        type="button"
+        className={`${form.link} ${styles.link}`}
+        onClick={onClick}
+      >
         Back to sign in
       </button>
     </p>

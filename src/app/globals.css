@@ -55,9 +55,6 @@
   --rule: rgb(var(--ink-rgb) / 0.12);
   --atmo-1: rgb(208 102 47 / 0.2);
   --atmo-2: rgb(62 36 66 / 0.1);
-
-  /* legacy name, kept so untouched rules keep working */
-  --forest: var(--primary);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -181,118 +178,6 @@ a {
   font-family: var(--font-serif), serif;
 }
 
-.field {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid rgb(var(--ink-rgb) / 0.16);
-  background: var(--surface);
-  font-size: 16px;
-  font-family: var(--font-sans), sans-serif;
-  color: var(--foreground);
-  outline: none;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-}
-
-.field:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-.field::placeholder {
-  color: var(--muted);
-}
-
-.label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  color: var(--muted);
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.button {
-  width: 100%;
-  padding: 13px;
-  border-radius: 10px;
-  border: none;
-  background: var(--forest);
-  color: var(--on-primary);
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--font-sans), sans-serif;
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    transform 0.08s;
-}
-
-.button:hover {
-  background: var(--primary-hover);
-}
-
-.button:active {
-  transform: scale(0.99);
-}
-
-.button:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.authlink {
-  color: var(--accent);
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: none;
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: inherit;
-  font-family: inherit;
-}
-
-.authlink:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.fieldError {
-  min-height: 15px;
-  margin-top: 4px;
-  font-size: 11.5px;
-  color: var(--danger);
-}
-
-.otpCell {
-  width: 100%;
-  aspect-ratio: 1;
-  text-align: center;
-  font-size: 22px;
-  font-weight: 600;
-  border-radius: 11px;
-  border: 1px solid rgb(var(--ink-rgb) / 0.18);
-  background: var(--surface);
-  outline: none;
-  /* Sans, not the serif: EB Garamond ships oldstyle figures with no lining
-     alternate, so 3 5 7 9 hang below the baseline across seven distinct
-     heights — fine in running text, wrong in a row of boxed digits. */
-  font-family: var(--font-sans), sans-serif;
-  color: var(--foreground);
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-}
-
-.otpCell:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -326,26 +211,4 @@ select:focus-visible,
   .fade {
     animation: none;
   }
-}
-
-.placeholder {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-
-.placeholder h1 {
-  font-family: var(--font-serif), serif;
-  font-size: 53px;
-  font-weight: 700;
-  color: var(--brand-text);
-  letter-spacing: -1px;
-}
-
-.placeholder p {
-  font-size: 15px;
-  color: var(--muted);
 }
