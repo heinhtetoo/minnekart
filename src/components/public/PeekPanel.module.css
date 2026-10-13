@@ -1,17 +1,302 @@
-.peek {
+/* The chosen place, as the back of a postcard (screen 10, P1). It floats over
+   the globe: on desktop just above the chosen pin, in PublicGlobe's
+   .cardSlot (choosing a place zooms the globe all the way in, and the
+   heading has stepped back); stacked, it overlaps the lower half of the
+   globe, under the pin at the slot's centre, and the places list moves down.
+   --radius comes from PublicGlobe's .page. */
+.card {
+  position: relative;
+  flex: none;
+  padding: 24px 26px 20px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  box-shadow: 0 26px 60px rgb(var(--shadow-rgb) / 0.18);
+}
+
+/* Focus moves here when a place is chosen; show it for keyboard users only. */
+.card:focus {
+  outline: none;
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--spot);
+  outline-offset: 3px;
+}
+
+.close {
   position: absolute;
-  left: 50%;
-  bottom: 12%;
-  transform: translateX(-50%);
-  width: min(96%, 570px);
-  max-height: 62%;
-  overflow-y: auto;
-  z-index: 5;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--foreground-2);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.close:hover {
+  border-color: rgb(var(--ink-rgb) / 0.35);
+  color: var(--foreground);
+}
+
+/* Message | rule | address */
+.body {
+  display: grid;
+  grid-template-columns: 1fr 1px 218px;
+  gap: 0 24px;
+}
+
+.body[data-message='false'] {
+  grid-template-columns: 1fr;
+}
+
+.message {
+  padding: 4px 0 2px;
+  min-width: 0;
+}
+
+.quote {
+  margin: 0;
+  font-size: 21px;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--foreground);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.story {
+  margin: 12px 0 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--foreground-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.quote + .story {
+  margin-top: 12px;
+}
+
+.message > .story:first-child {
+  margin-top: 0;
+}
+
+.rule {
+  background: var(--rule);
+}
+
+.address {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  padding: 0 0 7px;
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 0.22);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+.line {
+  padding: 9px 0 6px;
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 0.22);
+  font-size: 14px;
+  color: var(--foreground-2);
+}
+
+/* Stamp and postmark ------------------------------------------------------ */
+/* A printed object, so the same Dusk colours in both themes. */
+.post {
+  position: relative;
+  display: block;
+  flex: none;
+  align-self: flex-end;
+  width: 172px;
+  height: 112px;
+  margin: -6px 34px 6px 0;
+}
+
+.stamp {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 86px;
+  height: 104px;
+  padding: 6px;
+  background: #f3e9e2;
+  transform: rotate(2deg);
+  /* Perforated edges: a ring of holes, with the middle kept solid. */
+  -webkit-mask:
+    radial-gradient(circle, #0000 2.4px, #000 2.8px) -4.5px -4.5px / 9px 9px,
+    linear-gradient(#000 0 0) content-box;
+  -webkit-mask-composite: source-over;
+  mask:
+    radial-gradient(circle, #0000 2.4px, #000 2.8px) -4.5px -4.5px / 9px 9px,
+    linear-gradient(#000 0 0) content-box;
+  mask-composite: add;
+  filter: drop-shadow(0 1px 2px rgb(var(--shadow-rgb) / 0.22));
+}
+
+.stampFace {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: #3e2442;
+}
+
+.postmark {
+  position: absolute;
+  left: 0;
+  top: 22px;
+  width: 132px;
+  height: 84px;
+  overflow: visible;
+  fill: none;
+  stroke: rgb(var(--ink-rgb) / 0.48);
+  color: rgb(var(--ink-rgb) / 0.48);
+  pointer-events: none;
+}
+
+.ringText,
+.year {
+  fill: currentColor;
+  stroke: none;
+  font-family: var(--font-sans), sans-serif;
+  font-weight: 600;
+}
+
+.ringText {
+  font-size: 8px;
+  letter-spacing: 0.18em;
+}
+
+.year {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+/* Where the cancel lines cross the plum stamp, pale ink so they still show. */
+.onStamp {
+  stroke: rgb(243 233 226 / 0.55);
+}
+
+/* Links ------------------------------------------------------------------- */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+}
+
+.view {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.hook {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.view:hover,
+.hook:hover {
+  text-decoration-thickness: 2px;
+}
+
+.hook:hover {
+  text-decoration-line: underline;
+  text-underline-offset: 4px;
+}
+
+/* Stacked: tablets and phones ---------------------------------------------- */
+@media (max-width: 1100px) {
+  .card {
+    max-width: 560px;
+    /* Overlaps the lower globe, just under the chosen pin at its centre. */
+    margin: calc(28px - var(--radius)) auto 24px;
+  }
 }
 
 @media (max-width: 720px) {
-  .peek {
-    bottom: 1%;
-    max-height: 46%;
+  .card {
+    margin: calc(28px - var(--radius)) 14px 24px;
+    padding: 18px 18px 16px;
+  }
+  .close {
+    top: 10px;
+    right: 10px;
+  }
+  .body {
+    grid-template-columns: 1fr;
+  }
+  .rule {
+    display: none;
+  }
+  /* The address and stamp first, side by side, then the message. */
+  .address {
+    order: -1;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 12px;
+    margin-bottom: 18px;
+  }
+  .name,
+  .line {
+    grid-column: 1;
+  }
+  .line {
+    padding: 7px 0 5px;
+  }
+  .post {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    align-self: start;
+    width: 138px;
+    height: 90px;
+    margin: 30px -4px 0 0;
+  }
+  .stamp {
+    transform: rotate(2deg) scale(0.8);
+    transform-origin: top right;
+  }
+  .postmark {
+    transform: scale(0.8);
+    transform-origin: top left;
+    top: 18px;
+  }
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 14px;
   }
 }

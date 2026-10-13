@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { LibraryPhoto } from '@/lib/photos/library';
 
@@ -19,6 +19,7 @@ function toTile(photo: GalleryPhoto): PhotoTile {
     height: photo.height,
     caption: photo.placeName,
     sublabel: photo.country,
+    href: `/trip/${photo.tripId}`,
   };
 }
 
@@ -50,6 +51,20 @@ export default function GalleryView({
   const [country, setCountry] = useState<string | null>(initialCountry);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Display only: which chip was pressed while its photos load (undefined when
+  // nothing is loading; null is "All").
+  const [pending, setPending] = useState<string | null | undefined>(undefined);
+  const chipsRef = useRef<HTMLDivElement>(null);
+
+  // On phones the chips scroll sideways; arriving with a country chosen (from
+  // a trip page) brings that chip into view. Only the chip row scrolls.
+  useEffect(() => {
+    const row = chipsRef.current;
+    const active = row?.querySelector<HTMLElement>('[data-active="true"]');
+    if (row && active && row.scrollWidth > row.clientWidth) {
+      row.scrollLeft = active.offsetLeft - row.offsetLeft - 20;
+    }
+  }, []);
 
   async function selectCountry(next: string | null) {
     if (next === country) {
@@ -57,8 +72,10 @@ export default function GalleryView({
     }
     setBusy(true);
     setError(null);
+    setPending(next);
     const result = await photosApi.listMine(0, next);
     setBusy(false);
+    setPending(undefined);
     if (!result.ok || !result.data) {
       setError('Could not load those photos.');
       return;
@@ -86,10 +103,11 @@ export default function GalleryView({
   return (
     <>
       {countries.length > 1 && (
-        <div className={styles.chips}>
+        <div className={styles.chips} ref={chipsRef}>
           <Chip
             label="All"
             active={country === null}
+            loading={pending === null}
             onClick={() => selectCountry(null)}
           />
           {countries.map((name) => (
@@ -97,17 +115,23 @@ export default function GalleryView({
               key={name}
               label={name}
               active={country === name}
+              loading={pending === name}
               onClick={() => selectCountry(name)}
             />
           ))}
         </div>
       )}
-      <PhotoGrid
-        photos={photos.map(toTile)}
-        variant="masonry"
-        hasMore={hasMore}
-        onLoadMore={loadMore}
-      />
+      <div className={styles.grid} data-switching={pending !== undefined}>
+        {/* With a country chosen, every tile would repeat it, so tiles show
+            the place only; the viewer still shows the country. */}
+        <PhotoGrid
+          photos={photos.map(toTile)}
+          variant="rows"
+          tileSublabels={country === null}
+          hasMore={hasMore}
+          onLoadMore={loadMore}
+        />
+      </div>
       {error && <p className={styles.error}>{error}</p>}
       {hasMore && (
         <div className={styles.more}>
@@ -128,10 +152,12 @@ export default function GalleryView({
 function Chip({
   label,
   active,
+  loading,
   onClick,
 }: {
   label: string;
   active: boolean;
+  loading: boolean;
   onClick: () => void;
 }) {
   return (
@@ -142,6 +168,14 @@ function Chip({
       onClick={onClick}
     >
       {label}
+      {/* While its photos load, a short light runs round the pill's border.
+          Drawn as an outline (ry is half the height, so the ends are round)
+          so it moves at an even speed along the sides and round the ends. */}
+      {loading && (
+        <svg className={styles.running} aria-hidden="true">
+          <rect width="100%" height="100%" ry="50%" pathLength={100} />
+        </svg>
+      )}
     </button>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import ContentPage from '@/components/layout/ContentPage';
+import ProseCta from '@/components/layout/ProseCta';
 import ProseTable from '@/components/layout/ProseTable';
 import JsonLd from '@/components/seo/JsonLd';
 import { getServerSessionUser } from '@/lib/auth/session-server';
@@ -75,45 +76,78 @@ export default async function PolarstepsAlternativeGuide() {
 
       <h2>Side by side</h2>
       <ProseTable note="Polarsteps details checked against their own support documentation on 11 August 2026. Their product changes; if you are deciding between the two, it is worth confirming the current behaviour with them.">
-        <table>
-          <thead>
-            <tr>
-              <th scope="col"></th>
-              <th scope="col">Polarsteps</th>
-              <th scope="col">Minnekart</th>
+        {/* Explicit roles keep this a table for screen readers on phones,
+            where CSS shows each row as a block; data-label names the
+            column beside each cell there. */}
+        <table role="table">
+          <thead role="rowgroup">
+            <tr role="row">
+              <th scope="col" role="columnheader"></th>
+              <th scope="col" role="columnheader">
+                Polarsteps
+              </th>
+              <th scope="col" role="columnheader">
+                Minnekart
+              </th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <th scope="row">Default visibility</th>
-              <td>Your followers</td>
-              <td>Private to you</td>
+          <tbody role="rowgroup">
+            <tr role="row">
+              <th scope="row" role="rowheader">
+                Default visibility
+              </th>
+              <td role="cell" data-label="Polarsteps">
+                Your followers
+              </td>
+              <td role="cell" data-label="Minnekart">
+                Private to you
+              </td>
             </tr>
-            <tr>
-              <th scope="row">Followers and feed</th>
-              <td>Yes — following is the organising idea</td>
-              <td>None. There is no social graph</td>
+            <tr role="row">
+              <th scope="row" role="rowheader">
+                Followers and feed
+              </th>
+              <td role="cell" data-label="Polarsteps">
+                Yes — following is the organising idea
+              </td>
+              <td role="cell" data-label="Minnekart">
+                None. There is no social graph
+              </td>
             </tr>
-            <tr>
-              <th scope="row">Live location</th>
-              <td>
+            <tr role="row">
+              <th scope="row" role="rowheader">
+                Live location
+              </th>
+              <td role="cell" data-label="Polarsteps">
                 Tracked during a trip and shown to followers by default; can be
                 hidden
               </td>
-              <td>Never asked for, and never will be</td>
+              <td role="cell" data-label="Minnekart">
+                Never asked for, and never will be
+              </td>
             </tr>
-            <tr>
-              <th scope="row">Visibility options</th>
-              <td>Only me, followers, or public</td>
-              <td>
+            <tr role="row">
+              <th scope="row" role="rowheader">
+                Visibility options
+              </th>
+              <td role="cell" data-label="Polarsteps">
+                Only me, followers, or public
+              </td>
+              <td role="cell" data-label="Minnekart">
                 A revocable link per memory, or an opt-in public globe you mark
                 memories into
               </td>
             </tr>
-            <tr>
-              <th scope="row">What it is for</th>
-              <td>Following a journey while it happens</td>
-              <td>Remembering places afterwards</td>
+            <tr role="row">
+              <th scope="row" role="rowheader">
+                What it is for
+              </th>
+              <td role="cell" data-label="Polarsteps">
+                Following a journey while it happens
+              </td>
+              <td role="cell" data-label="Minnekart">
+                Remembering places afterwards
+              </td>
             </tr>
           </tbody>
         </table>
@@ -163,9 +197,7 @@ export default async function PolarstepsAlternativeGuide() {
         </Link>{' '}
         walks through how to build one. When you&apos;re ready:
       </p>
-      <p>
-        <Link href="/">Start your private globe →</Link>
-      </p>
+      <ProseCta href="/">Start your private globe →</ProseCta>
     </ContentPage>
   );
 }

@@ -14,7 +14,7 @@
 
 /* Dark backdrop so the mobile clearance below the footer reads as footer. */
 .footerHolder {
-  background: #1c1917;
+  background: var(--footer);
 }
 
 @media (max-width: 720px) {

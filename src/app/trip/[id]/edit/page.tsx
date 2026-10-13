@@ -30,34 +30,22 @@ export default async function EditTripPage({ params }: EditTripPageProps) {
         email: user.email,
         isOwner: user.role === 'owner',
       }}
-      width="narrow"
     >
-      <Link
-        href={`/trip/${id}`}
-        style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}
-      >
-        ← Back to memory
-      </Link>
-      <h1
-        className="serif"
-        style={{
-          fontSize: 'clamp(39px,5.7vw,55px)',
-          fontWeight: 700,
-          color: 'var(--foreground)',
-          letterSpacing: '-1.2px',
-          margin: '14px 0 24px',
-        }}
-      >
-        Edit memory
-      </h1>
-      <TripForm mode="edit" tripId={id} initial={toTripDTO(trip)} />
-      <PhotoUploader tripId={id} plan={user.plan} />
-      <ShareCard
+      <TripForm
+        mode="edit"
         tripId={id}
-        isPublic={trip.isPublic}
-        isFeatured={trip.isFeatured}
-        shareToken={trip.shareToken}
-      />
+        initial={toTripDTO(trip)}
+        title="Edit memory"
+        back={<Link href={`/trip/${id}`}>← Back to memory</Link>}
+      >
+        <PhotoUploader tripId={id} plan={user.plan} />
+        <ShareCard
+          tripId={id}
+          isPublic={trip.isPublic}
+          isFeatured={trip.isFeatured}
+          shareToken={trip.shareToken}
+        />
+      </TripForm>
     </AppPage>
   );
 }

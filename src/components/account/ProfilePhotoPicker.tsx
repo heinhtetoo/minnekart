@@ -70,12 +70,12 @@ export default function ProfilePhotoPicker({
         />
         <div className={styles.rowText}>
           <p className={styles.rowTitle}>
-            {previewUrl ? 'Your card photo' : 'No photo chosen'}
+            {previewUrl ? 'Your profile photo' : 'No photo chosen'}
           </p>
           <p className={styles.hint}>
             {previewUrl
-              ? 'Shown behind your name on your profile.'
-              : 'Your profile card uses the plain gradient.'}
+              ? 'Shown as the print on your profile.'
+              : 'Your profile shows your initial instead.'}
           </p>
           <div className={styles.rowActions}>
             <button type="button" className={styles.link} onClick={toggle}>

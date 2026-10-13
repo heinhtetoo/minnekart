@@ -31,7 +31,7 @@ const FREE_TIER: PricingTier = {
   amount: 0,
   currency: 'USD',
   cadence: 'forever',
-  summary: `${FREE_TRIP_LIMIT} free memories, ${FREE_PHOTOS_PER_TRIP} photos each.`,
+  summary: 'Everything you need to start your globe.',
   features: [
     `${FREE_TRIP_LIMIT} memories with ${FREE_PHOTOS_PER_TRIP} photos each`,
     'The whole globe, timeline and gallery',

@@ -1,151 +1,200 @@
+/* Plan: a section like the others. The badge and its line sit together;
+   messages carry an edge (persimmon for news, red for a payment problem). */
 .card {
-  background: #fff;
-  border-radius: 18px;
-  padding: 6px clamp(20px, 3vw, 30px) 20px;
-  border: 1px solid rgba(28, 25, 23, 0.07);
-  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.05);
-  margin-top: 16px;
+  margin-top: 72px;
+  padding-top: 30px;
+  border-top: 1px solid var(--rule);
+}
+
+.rowTitle {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--foreground);
 }
 
 .row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0 6px;
-}
-
-.rowTitle {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--foreground);
-  margin: 0;
-}
-
-.rowHint {
-  font-size: 12.5px;
-  color: var(--muted);
-  margin: 3px 0 0;
-  line-height: 1.5;
-  max-width: 42ch;
+  gap: 12px 16px;
+  margin-top: 22px;
 }
 
 .planBadge {
-  flex-shrink: 0;
-  font-size: 11px;
+  padding: 8px 14px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 2px;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--forest);
-  background: #f4efe6;
-  border: 1px solid rgba(28, 25, 23, 0.1);
+  color: var(--foreground-2);
+  border: 1px solid var(--rule);
   border-radius: 999px;
-  padding: 5px 12px;
+}
+
+.planBadge[data-plan='paid'] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.planLine {
+  margin: 0;
+  font-size: 16px;
+  color: var(--foreground-2);
+}
+
+.rowHint {
+  margin: 0;
+  max-width: 560px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--foreground-2);
+}
+
+.manage {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 18px;
 }
 
 .upgradeRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin-top: 12px;
+  gap: 10px 12px;
+  margin-top: 22px;
+}
+
+.manage .upgradeRow {
+  margin-top: 0;
+}
+
+.primaryButton,
+.secondaryButton,
+.dangerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  padding: 0 24px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
+}
+
+.manage .primaryButton,
+.manage .secondaryButton,
+.manage .dangerButton {
+  height: 40px;
+  padding: 0 18px;
+  font-size: 14px;
 }
 
 .primaryButton {
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: var(--forest);
   border: none;
-  border-radius: 10px;
-  padding: 10px 16px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s;
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
-.primaryButton:hover {
-  background: #24403a;
+.primaryButton:hover:not(:disabled) {
+  background: var(--primary-hover);
 }
 
 .secondaryButton {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--forest);
-  background: transparent;
-  border: 1px solid rgba(28, 25, 23, 0.15);
-  border-radius: 10px;
-  padding: 9px 14px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s;
+  border: 1.5px solid var(--foreground);
+  background: none;
+  color: var(--foreground);
 }
 
-.secondaryButton:hover {
-  background: #f4efe6;
+.secondaryButton:hover:not(:disabled) {
+  background: rgb(var(--ink-rgb) / 0.05);
 }
 
-.manage {
-  border-top: 1px solid rgba(28, 25, 23, 0.07);
-  margin-top: 14px;
-  padding-top: 14px;
+.dangerButton {
+  border: none;
+  background: var(--danger);
+  color: #fff;
+}
+
+/* Nightfall's danger red is light, so it takes dark text. */
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme='light'])) .dangerButton {
+    color: #231a26;
+  }
+}
+
+:global(:root[data-theme='dark']) .dangerButton {
+  color: #231a26;
 }
 
 .linkButton {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--muted);
-  background: none;
+  padding: 0 4px;
   border: none;
-  padding: 9px 4px;
-  cursor: pointer;
+  background: none;
   font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--foreground-2);
+  cursor: pointer;
+}
+
+.linkButton:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-.linkButton:hover {
-  color: var(--foreground);
-}
-
-.dangerButton {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--danger);
-  background: transparent;
-  border: 1px solid rgba(180, 60, 40, 0.3);
-  border-radius: 10px;
-  padding: 9px 14px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s;
-}
-
-.dangerButton:hover {
-  background: rgba(180, 60, 40, 0.06);
-}
-
-.card button:disabled {
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.dangerButton:disabled {
   opacity: 0.6;
   cursor: default;
 }
 
+.warning,
+.success {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--foreground);
+}
+
 .warning {
-  font-size: 13px;
-  color: var(--danger);
-  margin: 8px 0 0;
-  line-height: 1.5;
+  background: rgb(var(--danger-rgb) / 0.08);
+  border-left: 3px solid var(--danger);
 }
 
 .success {
-  font-size: 13px;
-  color: var(--forest);
-  font-weight: 600;
-  margin: 8px 0 0;
+  background: rgb(var(--ink-rgb) / 0.05);
+  border-left: 3px solid var(--spot);
 }
 
 .error {
-  font-size: 13px;
+  margin: 16px 0 0;
+  font-size: 14px;
   color: var(--danger);
-  margin: 12px 0 0;
+}
+
+@media (max-width: 720px) {
+  .card {
+    margin-top: 52px;
+  }
+  .rowTitle {
+    font-size: 30px;
+  }
+  .primaryButton,
+  .secondaryButton,
+  .dangerButton {
+    height: 44px;
+    padding: 0 20px;
+  }
 }

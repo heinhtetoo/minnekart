@@ -14,17 +14,17 @@ export const borders = mesh(
 );
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-// Pale continents on a dark sea. The old palette put land and water at almost
-// the same lightness, so the continents never quite resolved; inverting the
-// value is what makes them read. The sea is --forest, already the stats band
-// and the footer, so the globe costs the product no new colour.
+// Pale continents on a dark sea: inverting the value is what makes the
+// continents read. Every value is a theme token (globals.css), so the globe
+// follows Haze / Nightfall. They are CSS values, so apply them with style —
+// SVG presentation attributes do not resolve var().
 export const GLOBE_COLORS = {
-  water: '#2c4e46',
-  land: '#e4dcd0',
-  border: '#1c3a33',
-  graticule: '#e4dcd0',
+  water: 'var(--globe-ocean)',
+  land: 'var(--globe-land)',
+  border: 'var(--globe-border)',
+  graticule: 'var(--globe-land)',
   // Pin rim only, in both globes. Task 24 owns it.
-  stroke: '#fff',
+  stroke: 'var(--globe-pin-ring)',
 };
 
 // Both globes wash the limb the same way, so the stops live here rather than

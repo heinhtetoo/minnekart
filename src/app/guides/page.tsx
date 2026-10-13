@@ -4,6 +4,8 @@ import Link from 'next/link';
 import ContentPage from '@/components/layout/ContentPage';
 import { getServerSessionUser } from '@/lib/auth/session-server';
 
+import styles from './guides.module.css';
+
 export const dynamic = 'force-dynamic';
 
 const DESCRIPTION =
@@ -25,13 +27,17 @@ export default async function GuidesPage() {
   const viewer = await getServerSessionUser();
 
   return (
-    <ContentPage viewer={viewer} eyebrow="Guides" title="Guides">
+    <ContentPage
+      viewer={viewer}
+      eyebrow="Guides"
+      title="Short reads on keeping your own map"
+    >
       <p>
         Short, practical reads on keeping a private map of everywhere
         you&apos;ve been — the thinking behind Minnekart, and how it differs
         from the apps that want to broadcast where you are right now.
       </p>
-      <ul>
+      <ul className={styles.index}>
         <li>
           <Link href="/guides/private-travel-map">
             How to keep a private record of everywhere you&apos;ve travelled

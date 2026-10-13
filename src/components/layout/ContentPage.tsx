@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { Children, isValidElement, ReactNode } from 'react';
 
 import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/nav/BottomNav';
@@ -53,7 +53,7 @@ export default function ContentPage({
             )}
           </header>
           <div className={layout === 'prose' ? styles.prose : styles.wide}>
-            {children}
+            {layout === 'prose' ? sectioned(children) : children}
           </div>
         </div>
       </main>
@@ -65,6 +65,35 @@ export default function ContentPage({
         <Footer loggedIn={loggedIn} />
       </div>
       {loggedIn && <BottomNav />}
+    </>
+  );
+}
+
+// Groups a prose body into one section per h2, so each heading can sit in the
+// margin beside its text. Everything before the first h2 is the intro. The
+// content and its order are unchanged.
+function sectioned(children: ReactNode) {
+  const intro: ReactNode[] = [];
+  const sections: { heading: ReactNode; body: ReactNode[] }[] = [];
+  Children.toArray(children).forEach((child) => {
+    if (isValidElement(child) && child.type === 'h2') {
+      sections.push({ heading: child, body: [] });
+    } else if (sections.length > 0) {
+      sections[sections.length - 1].body.push(child);
+    } else {
+      intro.push(child);
+    }
+  });
+
+  return (
+    <>
+      {intro.length > 0 && <div className={styles.intro}>{intro}</div>}
+      {sections.map((section, index) => (
+        <section key={index} className={styles.section}>
+          <div className={styles.sectionLabel}>{section.heading}</div>
+          <div>{section.body}</div>
+        </section>
+      ))}
     </>
   );
 }

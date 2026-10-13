@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+
+import form from '@/components/ui/Form.module.css';
 
 import { accountApi } from './api';
 import styles from './ProfileCard.module.css';
@@ -62,15 +65,13 @@ export default function ProfileCard({
   return (
     <form className={styles.card} onSubmit={save}>
       <div className={styles.head}>
-        <h2 className={styles.title}>Your About page</h2>
-        <p className={styles.hint}>
-          This is what visitors see on your public About page.
-        </p>
+        <h2 className={`serif ${styles.title}`}>Your profile</h2>
+        <p className={styles.line}>Shown on your Profile page.</p>
       </div>
 
       <Field label="Name" hint={`${name.length}/80`}>
         <input
-          className="field"
+          className={`${form.field} ${styles.name}`}
           value={name}
           onChange={(event) => setName(event.target.value)}
           maxLength={80}
@@ -79,7 +80,7 @@ export default function ProfileCard({
 
       <Field label="Tagline" hint={`${tagline.length}/80`}>
         <input
-          className="field"
+          className={`${form.field} ${styles.tagline}`}
           value={tagline}
           onChange={(event) => setTagline(event.target.value)}
           placeholder="Cartographer of small moments"
@@ -89,7 +90,7 @@ export default function ProfileCard({
 
       <Field label="Headline" hint={`${headline.length}/120`}>
         <input
-          className="field"
+          className={`${form.field} ${styles.headline}`}
           value={headline}
           onChange={(event) => setHeadline(event.target.value)}
           placeholder="I collect places the way others collect stamps."
@@ -99,20 +100,19 @@ export default function ProfileCard({
 
       <Field label="Bio" hint={`${bio.length}/2000`}>
         <textarea
-          className="field"
+          className={`${form.field} ${styles.bio}`}
           value={bio}
           onChange={(event) => setBio(event.target.value)}
-          placeholder="Tell visitors the story behind your globe. Leave a blank line between paragraphs."
+          placeholder="Tell the story behind your globe. Leave a blank line between paragraphs."
           maxLength={2000}
           rows={6}
-          style={{ resize: 'vertical', lineHeight: 1.6 }}
         />
       </Field>
 
       <div className={styles.fieldWrap}>
         <span className={styles.fieldHead}>
-          <span className="label" style={{ margin: 0 }}>
-            Card photo
+          <span className={form.label} style={{ margin: 0 }}>
+            Profile photo
           </span>
         </span>
         <ProfilePhotoPicker
@@ -123,9 +123,16 @@ export default function ProfileCard({
       </div>
 
       <div className={styles.actions}>
-        <button className="button" type="submit" disabled={busy}>
+        <button
+          className={`${form.button} ${styles.save}`}
+          type="submit"
+          disabled={busy}
+        >
           {busy ? 'Saving…' : 'Save profile'}
         </button>
+        <Link href="/profile" className={styles.view}>
+          View your profile →
+        </Link>
         {saved && !error && <span className={styles.saved}>Saved</span>}
       </div>
 
@@ -146,7 +153,7 @@ function Field({
   return (
     <label className={styles.fieldWrap}>
       <span className={styles.fieldHead}>
-        <span className="label" style={{ margin: 0 }}>
+        <span className={form.label} style={{ margin: 0 }}>
           {label}
         </span>
         <span className={styles.hint}>{hint}</span>

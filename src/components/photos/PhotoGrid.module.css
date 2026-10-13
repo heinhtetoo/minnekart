@@ -1,35 +1,43 @@
-.masonry {
-  column-count: 4;
-  column-gap: 16px;
-}
-
-.masonry .tile {
-  width: 100%;
-  margin: 0 0 16px;
-  break-inside: avoid;
-  border-radius: 14px;
-}
-
+/* grid3: the trip page's contact sheet. Each photo sits on a small print
+   with its frame number underneath. */
 .grid3 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
 }
 
 .grid3 .tile {
-  height: 180px;
-  border-radius: 13px;
+  padding: 8px 8px 0;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  text-align: left;
+  transition: box-shadow 0.2s;
+}
+
+.grid3 .tile:hover {
+  box-shadow: 0 12px 30px rgb(var(--shadow-rgb) / 0.12);
+}
+
+.frameNo {
+  display: block;
+  padding: 7px 2px 8px;
+  font-family: var(--font-serif), serif;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--muted);
 }
 
 .tile {
   position: relative;
   border: none;
   padding: 0;
-  background: #ece5d8;
+  background: var(--segment);
   overflow: hidden;
   cursor: zoom-in;
   display: block;
-  box-shadow: 0 2px 10px rgba(28, 25, 23, 0.06);
+  box-shadow: 0 2px 10px rgb(var(--shadow-rgb) / 0.06);
 }
 
 .tile img {
@@ -39,12 +47,13 @@
 }
 
 .grid3 .tile img {
-  height: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
   object-fit: cover;
 }
 
-.masonry .tile img {
-  height: auto;
+.grid3 .tile:hover img {
+  transform: none;
 }
 
 .tile:hover img {
@@ -60,8 +69,8 @@
   padding: 12px 14px;
   background: linear-gradient(
     180deg,
-    rgba(28, 25, 23, 0) 55%,
-    rgba(28, 25, 23, 0.5)
+    rgb(var(--shadow-rgb) / 0) 55%,
+    rgb(var(--shadow-rgb) / 0.5)
   );
   pointer-events: none;
 }
@@ -80,16 +89,172 @@
 }
 
 @media (max-width: 1024px) {
-  .masonry {
-    column-count: 3;
+  .grid3 {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 680px) {
-  .masonry {
-    column-count: 2;
-  }
   .grid3 {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .grid3 .tile {
+    padding: 6px 6px 0;
+  }
+}
+
+/* rows: the gallery's light table. Each photo grows in proportion to its
+   shape (--r, width / height), so every photo in a row comes out the same
+   height, edge to edge. The empty flex item at the end keeps the last row
+   from stretching. Reads left to right, row by row. */
+.rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rows::after {
+  content: '';
+  flex: 999 1 0;
+}
+
+.rows .tile {
+  flex: var(--r) 1 calc(var(--r) * 205px);
+  min-width: 0;
+  text-align: left;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.photo {
+  position: relative;
+  display: block;
+  padding-bottom: calc(100% / var(--r));
+  background: var(--segment);
+}
+
+.photo img {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The caption sits over a dark fade at the bottom of the photo. On desktop it
+   shows on hover or keyboard focus; on phones and touch screens, always. The
+   fade is dark in both themes, so the white text keeps its contrast on any
+   photo.
+   Place and country sit side by side when they fit; on a narrow photo the
+   country drops under the place (the flex row wraps). Long names wrap rather
+   than shorten: up to two lines each, and "…" only beyond that. */
+.scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  padding: 48px 16px 14px;
+  color: #fff;
+  background: linear-gradient(
+    to top,
+    rgb(var(--shadow-rgb) / 0.8),
+    rgb(var(--shadow-rgb) / 0.5) 45%,
+    rgb(var(--shadow-rgb) / 0)
+  );
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.scrim .caption,
+.scrim .sublabel {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  color: #fff;
+}
+
+.clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: break-word;
+}
+
+.scrim .caption {
+  font-family: var(--font-serif), serif;
+  font-size: 21px;
+  font-weight: 500;
+  /* Room for the serif's descenders, which the line limit would clip. */
+  line-height: 1.25;
+}
+
+.scrim .sublabel {
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.rows .tile:hover .scrim,
+.rows .tile:focus-visible .scrim {
+  opacity: 1;
+}
+
+.rows .tile:focus-visible {
+  outline: 2px solid var(--spot);
+  outline-offset: 3px;
+}
+
+@media (hover: none) {
+  .scrim {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 680px) {
+  .rows {
+    gap: 4px;
+  }
+  .rows .tile {
+    flex-basis: calc(var(--r) * 100px);
+  }
+  .scrim {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    padding: 26px 10px 8px;
+    opacity: 1;
+  }
+  .scrim .caption {
+    font-size: 15.5px;
+  }
+  /* On phones the country keeps to one line, so the caption covers no more
+     than about half of a small photo. */
+  .scrim .sublabel {
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+  }
+  .scrim .sublabel .clamp {
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrim,
+  .rows .tile img {
+    transition: none;
+  }
+  .rows .tile:hover img {
+    transform: none;
   }
 }

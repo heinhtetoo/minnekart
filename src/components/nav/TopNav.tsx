@@ -5,6 +5,7 @@ import Wordmark from '@/components/brand/Wordmark';
 import AccountMenu from './AccountMenu';
 import styles from './Nav.module.css';
 import NavLinks from './NavLinks';
+import NavTrail from './NavTrail';
 
 interface TopNavProps {
   name: string;
@@ -25,6 +26,7 @@ export default function TopNav({ name, email, isOwner }: TopNavProps) {
         </Link>
         <AccountMenu name={name} email={email} isOwner={isOwner} />
       </div>
+      <NavTrail />
     </nav>
   );
 }

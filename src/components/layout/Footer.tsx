@@ -29,7 +29,7 @@ export default function Footer({ loggedIn }: FooterProps) {
       <div className={styles.inner}>
         <div className={styles.brand}>
           <Link href="/" aria-label="Minnekart home" className={styles.mark}>
-            <Wordmark base="#f4efe6" accent="#9ec2b2" stroke="#9ec2b2" />
+            <Wordmark size={34} ink="var(--on-band)" spot="var(--spot)" />
           </Link>
           <p className={styles.copy}>© {year} · A memory palace you can spin</p>
         </div>

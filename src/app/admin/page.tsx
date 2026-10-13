@@ -5,6 +5,8 @@ import AppPage from '@/components/layout/AppPage';
 import { inviteStatus, listInvites } from '@/lib/auth/invites';
 import { requireOwnerPageUser } from '@/lib/auth/session-server';
 
+import styles from './admin.module.css';
+
 const dateFormat = new Intl.DateTimeFormat('en-AU', {
   day: 'numeric',
   month: 'short',
@@ -27,34 +29,16 @@ export default async function AdminPage() {
   return (
     <AppPage
       user={{ name: user.name, email: user.email, isOwner: true }}
-      width="narrow"
+      width="wide"
     >
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: 3,
-          color: 'var(--accent)',
-          textTransform: 'uppercase',
-          margin: '0 0 12px',
-        }}
-      >
-        Owner
-      </p>
-      <h1
-        className="serif"
-        style={{
-          fontSize: 'clamp(39px,5.7vw,55px)',
-          fontWeight: 700,
-          color: 'var(--foreground)',
-          letterSpacing: '-1.2px',
-          margin: '0 0 24px',
-        }}
-      >
-        Invites
-      </h1>
-      <InviteManager />
-      <InviteList invites={invites} />
+      {/* Register: Settings' column and heading, then the create part and a
+          ruled ledger of invites. */}
+      <div className={styles.page}>
+        <p className={styles.eyebrow}>Owner</p>
+        <h1 className={`serif ${styles.title}`}>Invites</h1>
+        <InviteManager />
+        <InviteList invites={invites} />
+      </div>
     </AppPage>
   );
 }

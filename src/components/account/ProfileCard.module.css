@@ -1,36 +1,32 @@
+/* Settings sections share one shape: a hairline, then a serif heading. */
 .card {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  background: #fff;
-  border-radius: 18px;
-  padding: 22px clamp(20px, 3vw, 30px);
-  margin-bottom: 20px;
-  border: 1px solid rgba(28, 25, 23, 0.07);
-  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.05);
+  gap: 28px;
+  margin-top: 56px;
+  padding-top: 30px;
+  border-top: 1px solid var(--rule);
 }
 
 .head {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 8px;
 }
 
 .title {
-  font-size: 19px;
-  font-weight: 600;
-  color: var(--foreground);
   margin: 0;
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--foreground);
 }
 
-.hint {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.head .hint {
-  font-size: 12.5px;
-  line-height: 1.5;
+.line {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--foreground-2);
 }
 
 .fieldWrap {
@@ -41,23 +37,113 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.hint {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+/* Journal fields (components/ui/Form.module.css); only the differences. */
+.card .name {
+  font-family: var(--font-serif), serif;
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.card .tagline {
+  font-family: var(--font-serif), serif;
+  font-size: 23px;
+  font-style: italic;
+}
+
+.card .headline {
+  font-family: var(--font-serif), serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+/* The bio is written on ruled lines. */
+.card .bio {
+  display: block;
+  padding: 0;
+  border-bottom: 0;
+  font-family: var(--font-serif), serif;
+  font-size: 19px;
+  line-height: 32px;
+  min-height: 192px;
+  resize: vertical;
+  background: repeating-linear-gradient(
+    transparent 0 31px,
+    rgb(var(--ink-rgb) / 0.16) 31px 32px
+  );
+}
+
+.card .bio:focus {
+  border-bottom: 0;
+  box-shadow: inset 0 -2px 0 0 var(--spot);
 }
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 12px 20px;
+  margin-top: 6px;
+}
+
+.actions .save {
+  width: auto;
+  height: 46px;
+  padding: 0 26px;
+}
+
+.view {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.view:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .saved {
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--forest);
+  color: var(--foreground-2);
+}
+
+.saved::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  background: var(--spot);
+  transform: rotate(45deg);
 }
 
 .error {
-  font-size: 13px;
+  margin: -12px 0 0;
+  font-size: 14px;
   color: var(--danger);
-  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .card {
+    margin-top: 44px;
+  }
+  .title {
+    font-size: 30px;
+  }
+  .card .name {
+    font-size: 27px;
+  }
 }

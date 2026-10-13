@@ -1,9 +1,18 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { FormEvent, forwardRef, useImperativeHandle, useState } from 'react';
+import {
+  FormEvent,
+  forwardRef,
+  useId,
+  useImperativeHandle,
+  useState,
+} from 'react';
+
+import form from '@/components/ui/Form.module.css';
 
 import { authApi } from './api';
+import styles from './auth.module.css';
 import Turnstile from './Turnstile';
 
 type Mode = 'login' | 'signup' | 'forgot' | 'forgotSent';
@@ -38,6 +47,7 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
   ref,
 ) {
   const router = useRouter();
+  const passwordId = useId();
   const [mode, setMode] = useState<Mode>(
     invite || startOnSignup ? 'signup' : 'login',
   );
@@ -126,26 +136,9 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
   }
 
   return (
-    <div
-      style={{
-        background: '#fff',
-        borderRadius: 16,
-        padding: '24px 26px 22px',
-        border: '1px solid rgba(28,25,23,.07)',
-        boxShadow: '0 10px 34px rgba(28,25,23,.09)',
-      }}
-    >
+    <div className={styles.sheet}>
       {(mode === 'login' || mode === 'signup') && (
-        <div
-          style={{
-            display: 'flex',
-            gap: 5,
-            padding: 4,
-            background: '#ece5d8',
-            borderRadius: 12,
-            marginBottom: 20,
-          }}
-        >
+        <div className={styles.tabs}>
           <Tab
             active={mode === 'login'}
             label="Sign in"
@@ -166,7 +159,7 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
       )}
 
       {mode === 'login' && (
-        <form className="fade" onSubmit={onLogin}>
+        <form className={`fade ${styles.body}`} onSubmit={onLogin}>
           <Heading
             title="Welcome back"
             subtitle="Sign in to open your globe."
@@ -179,22 +172,17 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
             placeholder="you@example.com"
             autoComplete="email"
           />
-          <div style={{ marginBottom: 4 }}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-                marginBottom: 6,
-              }}
-            >
-              <span className="label" style={{ margin: 0 }}>
+          <div className={styles.fieldWrap}>
+            <div className={styles.fieldHead}>
+              <label
+                className={`${form.label} ${styles.label}`}
+                htmlFor={passwordId}
+              >
                 Password
-              </span>
+              </label>
               <button
                 type="button"
-                className="authlink"
-                style={{ fontSize: 11.5 }}
+                className={`${form.link} ${styles.link} ${styles.forgot}`}
                 onClick={() => {
                   setMode('forgot');
                   resetFeedback();
@@ -204,7 +192,8 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
               </button>
             </div>
             <input
-              className="field"
+              id={passwordId}
+              className={`${form.field} ${styles.field}`}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -213,30 +202,24 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
             />
           </div>
           <ErrorLine error={error} />
-          <button className="button" type="submit" disabled={busy}>
+          <button
+            className={`${form.button} ${styles.button}`}
+            type="submit"
+            disabled={busy}
+          >
             {busy ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
       )}
 
       {mode === 'signup' && (
-        <form className="fade" onSubmit={onSignup}>
+        <form className={`fade ${styles.body}`} onSubmit={onSignup}>
           <Heading
             title="Start your Minnekart"
             subtitle="Pin your first place today."
           />
           {!invite && (
-            <p
-              style={{
-                fontSize: 12.5,
-                color: 'var(--muted)',
-                background: '#f4efe6',
-                padding: '10px 12px',
-                borderRadius: 9,
-                margin: '0 0 14px',
-                lineHeight: 1.5,
-              }}
-            >
+            <p className={styles.note}>
               {openSignup
                 ? 'Free to join — 15 memories with 6 photos each. Upgrade ' +
                   'any time for unlimited.'
@@ -285,15 +268,17 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
             autoComplete="new-password"
           />
           {turnstileSiteKey && canSignup && (
-            <Turnstile
-              siteKey={turnstileSiteKey}
-              onToken={setCaptchaToken}
-              resetNonce={captchaNonce}
-            />
+            <div className={styles.turnstile}>
+              <Turnstile
+                siteKey={turnstileSiteKey}
+                onToken={setCaptchaToken}
+                resetNonce={captchaNonce}
+              />
+            </div>
           )}
           <ErrorLine error={error} />
           <button
-            className="button"
+            className={`${form.button} ${styles.button}`}
             type="submit"
             disabled={busy || !canSignup}
           >
@@ -303,7 +288,7 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
       )}
 
       {mode === 'forgot' && (
-        <form className="fade" onSubmit={onForgot}>
+        <form className={`fade ${styles.body}`} onSubmit={onForgot}>
           <Heading
             title="Reset your password"
             subtitle="We'll email you a link to set a new one."
@@ -317,7 +302,11 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
             autoComplete="email"
           />
           <ErrorLine error={error} />
-          <button className="button" type="submit" disabled={busy}>
+          <button
+            className={`${form.button} ${styles.button}`}
+            type="submit"
+            disabled={busy}
+          >
             {busy ? 'Sending…' : 'Send reset link'}
           </button>
           <BackToSignIn onClick={() => setMode('login')} />
@@ -325,16 +314,9 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
       )}
 
       {mode === 'forgotSent' && (
-        <div className="fade" style={{ textAlign: 'center' }}>
-          <Heading title="Check your inbox" subtitle="" center />
-          <p
-            style={{
-              fontSize: 14,
-              color: 'var(--muted)',
-              lineHeight: 1.6,
-              margin: '0 0 18px',
-            }}
-          >
+        <div className={`fade ${styles.body} ${styles.center}`}>
+          <Heading title="Check your inbox" subtitle="" />
+          <p className={styles.message}>
             If an account exists for <b>{email}</b>, a reset link is on its way.
             It expires in 30 minutes.
           </p>
@@ -359,56 +341,21 @@ function Tab({
   return (
     <button
       type="button"
+      className={styles.tab}
+      data-active={active}
       onClick={onClick}
-      style={{
-        flex: 1,
-        textAlign: 'center',
-        fontSize: 13,
-        fontWeight: 600,
-        padding: 9,
-        borderRadius: 9,
-        cursor: 'pointer',
-        border: 'none',
-        fontFamily: 'inherit',
-        background: active ? '#fff' : 'transparent',
-        color: active ? 'var(--forest)' : 'var(--muted)',
-        boxShadow: active ? '0 1px 4px rgba(28,25,23,.08)' : 'none',
-        transition: 'all .15s',
-      }}
     >
+      {active && <span className={styles.diamond} aria-hidden="true" />}
       {label}
     </button>
   );
 }
 
-function Heading({
-  title,
-  subtitle,
-  center,
-}: {
-  title: string;
-  subtitle: string;
-  center?: boolean;
-}) {
+function Heading({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div style={{ textAlign: center ? 'center' : 'left' }}>
-      <h2
-        className="serif"
-        style={{
-          fontSize: 27,
-          fontWeight: 600,
-          color: 'var(--foreground)',
-          margin: '0 0 3px',
-          letterSpacing: '-0.4px',
-        }}
-      >
-        {title}
-      </h2>
-      {subtitle && (
-        <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 18px' }}>
-          {subtitle}
-        </p>
-      )}
+    <div>
+      <h2 className={`serif ${styles.title}`}>{title}</h2>
+      {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
     </div>
   );
 }
@@ -428,11 +375,17 @@ function Field({
   placeholder: string;
   autoComplete: string;
 }) {
+  const id = useId();
   return (
-    <div style={{ marginBottom: 12 }}>
-      <label className="label">{label}</label>
+    <div className={styles.fieldWrap}>
+      <div className={styles.fieldHead}>
+        <label className={`${form.label} ${styles.label}`} htmlFor={id}>
+          {label}
+        </label>
+      </div>
       <input
-        className="field"
+        id={id}
+        className={`${form.field} ${styles.field}`}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -444,24 +397,17 @@ function Field({
 }
 
 function ErrorLine({ error }: { error: string }) {
-  return (
-    <div className="fieldError" style={{ minHeight: 18, marginBottom: 4 }}>
-      {error}
-    </div>
-  );
+  return <div className={`${form.error} ${styles.error}`}>{error}</div>;
 }
 
 function BackToSignIn({ onClick }: { onClick: () => void }) {
   return (
-    <p
-      style={{
-        textAlign: 'center',
-        fontSize: 13,
-        color: 'var(--muted)',
-        margin: '16px 0 0',
-      }}
-    >
-      <button type="button" className="authlink" onClick={onClick}>
+    <p className={styles.back}>
+      <button
+        type="button"
+        className={`${form.link} ${styles.link}`}
+        onClick={onClick}
+      >
         Back to sign in
       </button>
     </p>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import ContentPage from '@/components/layout/ContentPage';
+import ProseCta from '@/components/layout/ProseCta';
 import JsonLd from '@/components/seo/JsonLd';
 import { getServerSessionUser } from '@/lib/auth/session-server';
 import { env } from '@/lib/env';
@@ -117,9 +118,7 @@ export default async function PrivateTravelMapGuide() {
         <Link href="/guides/polarsteps-alternative">Polarsteps comparison</Link>{' '}
         lays out the difference.
       </p>
-      <p>
-        <Link href="/">Begin your private map →</Link>
-      </p>
+      <ProseCta href="/">Begin your private map →</ProseCta>
     </ContentPage>
   );
 }
