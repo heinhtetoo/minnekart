@@ -1,0 +1,72 @@
+/* The guides as a ruled index (Atlas, screen 12): a diamond in the page's
+   margin column, the title in the serif, its summary underneath. The list
+   reaches back into ContentPage's margin, whose widths it reads from
+   `--margin-col` and `--margin-gap`. Selectors start at `body ul`, so they
+   outrank `.prose ul` / `.prose li`. */
+body ul.index {
+  margin: 10px 0 0 calc(-1 * (var(--margin-col) + var(--margin-gap)));
+  border-top: 1px solid var(--rule);
+}
+
+body ul.index > li {
+  display: grid;
+  grid-template-columns: var(--margin-col) minmax(0, 744px);
+  column-gap: var(--margin-gap);
+  margin: 0;
+  padding: 34px 0 36px;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--font-serif), serif;
+  font-size: 20px;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--foreground-2);
+}
+
+body ul.index > li::before {
+  position: static;
+  grid-row: 1 / span 2;
+  width: 9px;
+  height: 9px;
+  margin: 16px 0 0 2px;
+}
+
+/* The summary text follows the link into the second row by itself. */
+body ul.index > li > a {
+  grid-column: 2;
+  justify-self: start;
+  max-width: 26ch;
+  margin-bottom: 14px;
+  font-size: 34px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  color: var(--foreground);
+  text-decoration-color: rgb(var(--ink-rgb) / 0.25);
+  text-underline-offset: 7px;
+}
+
+body ul.index > li > a:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+
+@media (max-width: 860px) {
+  body ul.index {
+    margin-left: 0;
+  }
+  body ul.index > li {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 26px 0 28px;
+    font-size: 18px;
+  }
+  body ul.index > li::before {
+    grid-row: auto;
+    margin: 0 0 14px 2px;
+  }
+  body ul.index > li > a {
+    grid-column: 1;
+    margin-bottom: 10px;
+    font-size: 28px;
+  }
+}

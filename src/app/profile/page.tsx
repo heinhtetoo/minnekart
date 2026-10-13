@@ -63,73 +63,75 @@ export default async function ProfilePage() {
         isOwner={user.role === 'owner'}
       />
       <main className="fade">
-        <section className={styles.grid}>
-          <div
-            className={styles.card}
-            data-photo={cardPhoto !== null}
-            style={
-              cardPhoto
-                ? { backgroundImage: `url(${cardPhoto.displayUrl})` }
-                : undefined
-            }
-          >
-            <div className={styles.cardInner}>
-              <div className={styles.avatar}>{initial}</div>
-              <div className={styles.cardName}>{user.name}</div>
-              {user.tagline && (
-                <div className={styles.cardTagline}>{user.tagline}</div>
+        {/* Portrait print: a centred title page. The profile photo is a framed
+            print with the initial as a seal on its corner; without a photo the
+            print holds the initial on a Dusk gradient. */}
+        <section className={styles.page}>
+          <p className={styles.eyebrow}>Profile</p>
+
+          <div className={styles.printWrap}>
+            <div className={styles.print}>
+              {cardPhoto ? (
+                <div
+                  className={styles.photo}
+                  style={{ backgroundImage: `url(${cardPhoto.displayUrl})` }}
+                />
+              ) : (
+                <div className={`serif ${styles.photo} ${styles.noPhoto}`}>
+                  {initial}
+                </div>
               )}
             </div>
+            {cardPhoto && (
+              <div className={`serif ${styles.seal}`}>{initial}</div>
+            )}
           </div>
 
-          <div>
-            <p className={styles.eyebrow}>Profile</p>
-            {hasStory ? (
-              <>
-                {headline && (
-                  <h1 className={`serif ${styles.title}`}>{headline}</h1>
-                )}
-                {bioParagraphs.map((paragraph, index) => (
-                  <p
-                    key={index}
-                    className={`${styles.body}${
-                      index === bioParagraphs.length - 1
-                        ? ` ${styles.bodyLast}`
-                        : ''
-                    }`}
-                  >
-                    {paragraph}
-                  </p>
-                ))}
-              </>
-            ) : (
-              <>
-                <h1 className={`serif ${styles.title}`}>
-                  Your story, in your words
-                </h1>
-                <p className={styles.storyPrompt}>
-                  Add a headline and a few lines about your travels —
-                  they&apos;ll live here, beside your globe.
-                </p>
-                <Link href="/settings" className={styles.storyLink}>
-                  Write your story →
-                </Link>
-              </>
-            )}
-            <div className={styles.stats}>
-              <div>
-                <div className={styles.statValue}>{stats.countries}</div>
-                <div className={styles.statLabel}>Countries</div>
-              </div>
-              <div>
-                <div className={styles.statValue}>{stats.photos}</div>
-                <div className={styles.statLabel}>Photos</div>
-              </div>
-              <div>
-                <div className={styles.statValue}>{stats.years}</div>
-                <div className={styles.statLabel}>Years</div>
-              </div>
-            </div>
+          <div className={`serif ${styles.name}`}>{user.name}</div>
+          {user.tagline && (
+            <div className={`serif ${styles.tagline}`}>{user.tagline}</div>
+          )}
+
+          <div className={styles.ornament} aria-hidden="true">
+            <span />
+          </div>
+
+          {hasStory ? (
+            <>
+              {headline && (
+                <h1 className={`serif ${styles.title}`}>{headline}</h1>
+              )}
+              {bioParagraphs.length > 0 && (
+                <div className={styles.bio}>
+                  {bioParagraphs.map((paragraph, index) => (
+                    <p key={index} className={`serif ${styles.body}`}>
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <h1 className={`serif ${styles.title}`}>
+                Your story, in your words
+              </h1>
+              <p className={`serif ${styles.storyPrompt}`}>
+                Add a headline and a few lines about your travels — they&apos;ll
+                live here, beside your globe.
+              </p>
+              <Link href="/settings" className={styles.storyLink}>
+                Write your story →
+              </Link>
+            </>
+          )}
+
+          {/* The same four stats, in the same ruled row, as the home page. */}
+          <div className={styles.stats}>
+            <Stat value={stats.countries} label="Countries" />
+            <Stat value={stats.cities} label="Cities" />
+            <Stat value={stats.photos} label="Photos" />
+            <Stat value={stats.years} label="Years" />
           </div>
         </section>
       </main>
@@ -138,5 +140,14 @@ export default async function ProfilePage() {
       </div>
       <BottomNav />
     </>
+  );
+}
+
+function Stat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className={styles.stat}>
+      <div className={`serif ${styles.statValue}`}>{value}</div>
+      <div className={styles.statLabel}>{label}</div>
+    </div>
   );
 }

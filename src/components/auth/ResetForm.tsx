@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useId, useState } from 'react';
 
 import { authApi } from './api';
+import styles from './auth.module.css';
 
 const RESET_ERRORS: Record<string, string> = {
   invalid_token:
@@ -12,15 +13,7 @@ const RESET_ERRORS: Record<string, string> = {
   rate_limited: 'Too many attempts. Please wait a moment and try again.',
 };
 
-const cardStyle = {
-  background: 'var(--surface)',
-  borderRadius: 16,
-  padding: '24px 26px 22px',
-  border: '1px solid rgb(var(--ink-rgb) / 0.07)',
-  boxShadow: '0 10px 34px rgb(var(--shadow-rgb) / 0.09)',
-  width: 'min(100%, 400px)',
-  textAlign: 'left' as const,
-};
+const sheet = `${styles.sheet} ${styles.standalone}`;
 
 export default function ResetForm({ token }: { token: string | null }) {
   const [password, setPassword] = useState('');
@@ -31,26 +24,30 @@ export default function ResetForm({ token }: { token: string | null }) {
 
   if (!token) {
     return (
-      <div style={cardStyle}>
-        <Heading
-          title="Link expired"
-          subtitle="This reset link is missing or invalid. Head back and request a new one."
-        />
-        <BackToSignIn />
+      <div className={sheet}>
+        <div className={styles.body}>
+          <Heading
+            title="Link expired"
+            subtitle="This reset link is missing or invalid. Head back and request a new one."
+          />
+          <BackToSignIn />
+        </div>
       </div>
     );
   }
 
   if (done) {
     return (
-      <div className="fade" style={cardStyle}>
-        <Heading
-          title="Password updated"
-          subtitle="You can now sign in with your new password."
-        />
-        <Link className="button" href="/" style={{ display: 'block' }}>
-          Go to sign in
-        </Link>
+      <div className={`fade ${sheet}`}>
+        <div className={styles.body}>
+          <Heading
+            title="Password updated"
+            subtitle="You can now sign in with your new password."
+          />
+          <Link className="button" href="/">
+            Go to sign in
+          </Link>
+        </div>
       </div>
     );
   }
@@ -79,30 +76,30 @@ export default function ResetForm({ token }: { token: string | null }) {
   }
 
   return (
-    <form className="fade" style={cardStyle} onSubmit={onSubmit}>
-      <Heading
-        title="Set a new password"
-        subtitle="Choose a new password for your account."
-      />
-      <Field
-        label="New password"
-        value={password}
-        onChange={setPassword}
-        placeholder="At least 8 characters"
-      />
-      <Field
-        label="Confirm password"
-        value={confirm}
-        onChange={setConfirm}
-        placeholder="Re-enter password"
-      />
-      <div className="fieldError" style={{ minHeight: 18, marginBottom: 4 }}>
-        {error}
+    <form className={`fade ${sheet}`} onSubmit={onSubmit}>
+      <div className={styles.body}>
+        <Heading
+          title="Set a new password"
+          subtitle="Choose a new password for your account."
+        />
+        <Field
+          label="New password"
+          value={password}
+          onChange={setPassword}
+          placeholder="At least 8 characters"
+        />
+        <Field
+          label="Confirm password"
+          value={confirm}
+          onChange={setConfirm}
+          placeholder="Re-enter password"
+        />
+        <div className={`fieldError ${styles.error}`}>{error}</div>
+        <button className="button" type="submit" disabled={busy}>
+          {busy ? 'Updating…' : 'Update password'}
+        </button>
+        <BackToSignIn />
       </div>
-      <button className="button" type="submit" disabled={busy}>
-        {busy ? 'Updating…' : 'Update password'}
-      </button>
-      <BackToSignIn />
     </form>
   );
 }
@@ -110,21 +107,8 @@ export default function ResetForm({ token }: { token: string | null }) {
 function Heading({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div>
-      <h2
-        className="serif"
-        style={{
-          fontSize: 27,
-          fontWeight: 600,
-          color: 'var(--foreground)',
-          margin: '0 0 3px',
-          letterSpacing: '-0.4px',
-        }}
-      >
-        {title}
-      </h2>
-      <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 18px' }}>
-        {subtitle}
-      </p>
+      <h2 className={`serif ${styles.title}`}>{title}</h2>
+      <p className={styles.subtitle}>{subtitle}</p>
     </div>
   );
 }
@@ -140,10 +124,16 @@ function Field({
   onChange: (value: string) => void;
   placeholder: string;
 }) {
+  const id = useId();
   return (
-    <div style={{ marginBottom: 12 }}>
-      <label className="label">{label}</label>
+    <div className={styles.fieldWrap}>
+      <div className={styles.fieldHead}>
+        <label className="label" htmlFor={id}>
+          {label}
+        </label>
+      </div>
       <input
+        id={id}
         className="field"
         type="password"
         value={value}
@@ -157,14 +147,7 @@ function Field({
 
 function BackToSignIn() {
   return (
-    <p
-      style={{
-        textAlign: 'center',
-        fontSize: 13,
-        color: 'var(--muted)',
-        margin: '16px 0 0',
-      }}
-    >
+    <p className={styles.back}>
       <Link className="authlink" href="/">
         Back to sign in
       </Link>

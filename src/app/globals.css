@@ -51,6 +51,11 @@
   --logo-ink: #3e2442;
   --logo-spot: #d0662f;
 
+  /* Hairlines, and the globe's atmosphere (inner then outer stop). */
+  --rule: rgb(var(--ink-rgb) / 0.12);
+  --atmo-1: rgb(208 102 47 / 0.2);
+  --atmo-2: rgb(62 36 66 / 0.1);
+
   /* legacy name, kept so untouched rules keep working */
   --forest: var(--primary);
 }
@@ -94,6 +99,8 @@
     --globe-shadow: rgb(0 0 0 / 0.35);
     --logo-ink: #f3e9e2;
     --logo-spot: #e0773f;
+    --atmo-1: rgb(224 119 63 / 0.22);
+    --atmo-2: rgb(86 53 97 / 0.3);
   }
 }
 
@@ -135,6 +142,8 @@
   --globe-shadow: rgb(0 0 0 / 0.35);
   --logo-ink: #f3e9e2;
   --logo-spot: #e0773f;
+  --atmo-1: rgb(224 119 63 / 0.22);
+  --atmo-2: rgb(86 53 97 / 0.3);
 }
 
 * {

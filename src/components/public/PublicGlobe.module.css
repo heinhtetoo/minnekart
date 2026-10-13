@@ -1,0 +1,353 @@
+/* Public globe, Atlas. The stage is both homes' (screens 1 and 9): the globe
+   is allowed to outgrow its section as it zooms, passing behind the header and
+   the panel, and the heading steps back (--zoom: 0 at rest, 1 fully in, set by
+   PublicGlobe). --radius is the globe's resting radius and must match
+   restingRadius() in PublicGlobe.tsx. Combined with the homes' copies in the
+   tidy-up after screen 13. */
+.page {
+  --radius: min(292px, calc((100vw - 520px) / 2.6));
+  --zoom: 0;
+  isolation: isolate;
+  /* The canvas is wider than the screen on phones and when zoomed. */
+  overflow-x: clip;
+}
+
+.hero {
+  position: relative;
+  max-width: 1280px;
+  margin: 0 auto;
+  min-height: calc(2 * var(--radius) + 430px);
+}
+
+/* Heading ---------------------------------------------------------------- */
+.intro {
+  position: relative;
+  z-index: 15;
+  /* Plain text over the globe: never in the way of a pin or a drag. */
+  pointer-events: none;
+  padding: 84px 64px 0;
+  opacity: calc(1 - var(--zoom) * 1.6);
+  transform: translateY(calc(var(--zoom) * -24px));
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: currentColor;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(48px, 7.2vw, 92px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+}
+
+/* A long owner name steps down a size, so the heading stays on one line
+   above the globe. */
+.title[data-long='true'] {
+  font-size: clamp(44px, 5.6vw, 72px);
+}
+
+.title em {
+  font-weight: 400;
+  color: var(--accent-display);
+}
+
+/* Globe ------------------------------------------------------------------ */
+.globeSlot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* A zero-size point at the globe's centre; the canvas centres on it. */
+.globeAnchor {
+  position: absolute;
+  z-index: 10;
+  left: calc(58px + var(--radius));
+  top: calc(288px + var(--radius));
+  width: 0;
+  height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.globeAnchor > * {
+  flex: none;
+}
+
+/* Only the sphere itself takes the pointer; the empty canvas lets clicks
+   through to the page. */
+.globeAnchor svg {
+  pointer-events: none;
+}
+
+.globeAnchor svg :global(.water),
+.globeAnchor svg :global(.land) path {
+  pointer-events: auto;
+}
+
+/* A pin's ring has no fill; "all" keeps its whole face clickable. */
+.globeAnchor svg :global(.pins) circle[cursor='pointer'] {
+  pointer-events: all;
+}
+
+/* Chosen place ------------------------------------------------------------ */
+/* Desktop: a slot over the globe from where the heading was down to 70 px
+   above the globe's centre, where the chosen pin always lands (choosing a
+   place turns it there). The postcard sits at the slot's bottom, so it stays
+   just above the pin; a taller one grows upwards, but never higher than the
+   slot's top ("safe" keeps it from rising past it). Only the postcard takes
+   the pointer, so the globe around it still drags. Stacked, the slot steps
+   aside and the postcard sits in the flow (PeekPanel.module.css). */
+.cardSlot {
+  position: absolute;
+  z-index: 30;
+  left: 56px;
+  top: 40px;
+  height: calc(288px + var(--radius) - 70px - 40px);
+  /* Never under the places panel (420 px at 64 px from the right). */
+  width: min(584px, calc(100% - 564px));
+  display: flex;
+  flex-direction: column;
+  justify-content: safe flex-end;
+  pointer-events: none;
+}
+
+.cardSlot > * {
+  pointer-events: auto;
+}
+
+/* Places: the signed-in panel's paper sheet ------------------------------- */
+.panel {
+  position: absolute;
+  z-index: 20;
+  top: 290px;
+  right: 64px;
+  width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow: 0 24px 60px rgb(var(--shadow-rgb) / 0.1);
+}
+
+.places {
+  padding: 20px 0 8px;
+}
+
+.panelTitle {
+  margin: 0;
+  padding: 0 24px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.placesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 420px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.placeRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 13px 24px;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.placeRow:hover {
+  background: rgb(var(--ink-rgb) / 0.03);
+}
+
+.placeRow[data-active='true'] {
+  background: rgb(var(--ink-rgb) / 0.045);
+}
+
+.placeRow[data-active='true']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--spot);
+}
+
+.placeThumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 3px;
+}
+
+.placeInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.placeName {
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+.placeMeta {
+  font-size: 13.5px;
+  color: var(--foreground-2);
+}
+
+.placeDates {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Empty globe ------------------------------------------------------------ */
+.emptyState {
+  padding: 34px 28px;
+  text-align: center;
+}
+
+.ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.ornament::before,
+.ornament::after {
+  content: '';
+  width: 40px;
+  height: 1px;
+  background: var(--rule);
+}
+
+.ornament i {
+  width: 7px;
+  height: 7px;
+  background: var(--spot);
+  transform: rotate(45deg);
+}
+
+.emptyTitle {
+  margin: 16px 0 0;
+  font-size: 28px;
+  font-style: italic;
+  line-height: 1.15;
+  color: var(--foreground);
+}
+
+.emptyBody {
+  max-width: 30ch;
+  margin: 10px auto 0;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--foreground-2);
+}
+
+/* Stacked: tablets and phones ---------------------------------------------- */
+@media (max-width: 1100px) {
+  .page {
+    --radius: min(44vw, 260px);
+  }
+  .hero {
+    min-height: 0;
+    padding-bottom: 48px;
+  }
+  .intro {
+    padding: 48px 40px 0;
+  }
+  .globeSlot {
+    position: relative;
+    inset: auto;
+    height: calc(2 * var(--radius) + 40px);
+  }
+  .globeAnchor {
+    left: 50%;
+    top: 50%;
+  }
+  .panel {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: auto;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .cardSlot {
+    display: contents;
+  }
+}
+
+@media (max-width: 720px) {
+  .intro {
+    padding: 30px 20px 0;
+  }
+  .eyebrow {
+    font-size: 11.5px;
+    margin-bottom: 14px;
+  }
+  .title,
+  .title[data-long='true'] {
+    font-size: 48px;
+    line-height: 1.02;
+  }
+  .panel {
+    margin: 0 16px;
+  }
+  .panelTitle {
+    padding: 0 18px 12px;
+  }
+  .placeRow {
+    gap: 14px;
+    padding: 12px 18px;
+  }
+  .placeName {
+    font-size: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    transform: none;
+  }
+}

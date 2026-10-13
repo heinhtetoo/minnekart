@@ -5,6 +5,7 @@ import { db } from '@/db';
 import PublicTripView from '@/components/public/PublicTripView';
 import { getServerSessionUser } from '@/lib/auth/session-server';
 import { loadTripTiles } from '@/lib/photos/tiles';
+import { isTripId } from '@/lib/trips/ids';
 import { publicTripMetadata } from '@/lib/trips/public-meta';
 import { getPublicTrip, getPublicUser } from '@/lib/trips/sharing';
 
@@ -13,6 +14,9 @@ interface PublicTripPageProps {
 }
 
 async function resolve(username: string, tripId: string) {
+  if (!isTripId(tripId)) {
+    return null;
+  }
   const owner = await getPublicUser(db(), username);
   if (!owner) {
     return null;

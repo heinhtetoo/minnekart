@@ -1,72 +1,97 @@
+/* Globe visibility: a section like the others; the switch sits beside its
+   heading, and the public address is an underlined field with a Copy pill. */
 .card {
-  background: var(--surface);
-  border-radius: 18px;
-  padding: 6px clamp(20px, 3vw, 30px) 20px;
-  border: 1px solid rgb(var(--ink-rgb) / 0.07);
-  box-shadow: 0 2px 12px rgb(var(--shadow-rgb) / 0.05);
+  margin-top: 72px;
+  padding-top: 30px;
+  border-top: 1px solid var(--rule);
 }
 
 .row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0 6px;
+  gap: 24px;
 }
 
 .rowTitle {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--foreground);
   margin: 0;
+  font-family: var(--font-serif), serif;
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--foreground);
 }
 
 .rowHint {
-  font-size: 12.5px;
-  color: var(--muted);
-  margin: 3px 0 0;
-  line-height: 1.5;
-  max-width: 42ch;
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--foreground-2);
+}
+
+.row > :last-child {
+  margin-top: 8px;
 }
 
 .linkRow {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 22px;
 }
 
 .linkInput {
   flex: 1;
   min-width: 0;
-  font-size: 16px;
-  color: var(--foreground);
-  background: var(--background);
-  border: 1px solid rgb(var(--ink-rgb) / 0.1);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-family: inherit;
+  padding: 4px 0 8px;
+  border: 0;
+  border-bottom: 1.5px solid rgb(var(--ink-rgb) / 0.35);
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-serif), serif;
+  font-size: 19px;
+  color: var(--foreground-2);
+  text-overflow: ellipsis;
+}
+
+.linkInput:focus {
+  outline: none;
+  border-bottom-color: var(--spot);
 }
 
 .copyButton {
   flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--on-primary);
-  background: var(--forest);
-  border: none;
-  border-radius: 10px;
-  padding: 0 16px;
-  cursor: pointer;
+  height: 40px;
+  padding: 0 20px;
+  border: 1.5px solid var(--foreground);
+  border-radius: 999px;
+  background: none;
   font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+  cursor: pointer;
   transition: background 0.15s;
 }
 
 .copyButton:hover {
-  background: var(--primary-hover);
+  background: rgb(var(--ink-rgb) / 0.05);
 }
 
 .error {
-  font-size: 13px;
+  margin: 14px 0 0;
+  font-size: 14px;
   color: var(--danger);
-  margin: 12px 0 0;
+}
+
+@media (max-width: 720px) {
+  .card {
+    margin-top: 52px;
+  }
+  .rowTitle {
+    font-size: 30px;
+  }
+  .linkInput {
+    font-size: 17px;
+  }
 }

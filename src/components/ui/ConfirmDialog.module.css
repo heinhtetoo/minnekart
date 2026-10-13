@@ -1,0 +1,81 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(var(--bg-rgb) / 0.82);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.15s ease both;
+}
+
+.dialog {
+  width: min(440px, 100%);
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow: 0 30px 70px rgb(var(--shadow-rgb) / 0.25);
+}
+
+.diamond {
+  display: block;
+  width: 7px;
+  height: 7px;
+  background: var(--spot);
+  transform: rotate(45deg);
+}
+
+.message {
+  margin: 14px 0 24px;
+  font-size: 22px;
+  line-height: 1.35;
+  color: var(--foreground);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.cancel,
+.confirm {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel {
+  border: 1.5px solid var(--foreground);
+  background: none;
+  color: var(--foreground);
+}
+
+.confirm {
+  border: none;
+  background: var(--danger);
+  color: #fff;
+}
+
+/* Nightfall's danger red is light, so it takes dark text. */
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme='light'])) .confirm {
+    color: #231a26;
+  }
+}
+
+:global(:root[data-theme='dark']) .confirm {
+  color: #231a26;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrim {
+    animation: none;
+  }
+}

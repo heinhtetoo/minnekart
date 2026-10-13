@@ -67,10 +67,11 @@ export default function SortablePhotoGrid({
         strategy={rectSortingStrategy}
       >
         <div className={styles.grid}>
-          {photos.map((photo) => (
+          {photos.map((photo, index) => (
             <SortablePhotoTile
               key={photo.id}
               photo={photo}
+              position={index + 1}
               onRemove={onRemove}
             />
           ))}
@@ -82,10 +83,17 @@ export default function SortablePhotoGrid({
 
 interface SortablePhotoTileProps {
   photo: SignedPhoto;
+  position: number;
   onRemove: (photoId: string) => void;
 }
 
-function SortablePhotoTile({ photo, onRemove }: SortablePhotoTileProps) {
+// Each photo as a small print: a grip to show it can be dragged, its frame
+// number, and × to remove it.
+function SortablePhotoTile({
+  photo,
+  position,
+  onRemove,
+}: SortablePhotoTileProps) {
   const {
     attributes,
     listeners,
@@ -109,17 +117,36 @@ function SortablePhotoTile({ photo, onRemove }: SortablePhotoTileProps) {
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={photo.thumbUrl} alt="" loading="lazy" />
-      <button
-        type="button"
-        className={styles.remove}
-        onClick={() => onRemove(photo.id)}
-        onMouseDown={(event) => event.stopPropagation()}
-        onTouchStart={(event) => event.stopPropagation()}
-        onKeyDown={(event) => event.stopPropagation()}
-        aria-label="Remove photo"
-      >
-        ×
-      </button>
+      <span className={styles.tileFoot}>
+        <svg
+          className={styles.grip}
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle cx="9" cy="6" r="1.6" />
+          <circle cx="15" cy="6" r="1.6" />
+          <circle cx="9" cy="12" r="1.6" />
+          <circle cx="15" cy="12" r="1.6" />
+          <circle cx="9" cy="18" r="1.6" />
+          <circle cx="15" cy="18" r="1.6" />
+        </svg>
+        <span className={`serif ${styles.frameNo}`}>
+          {String(position).padStart(2, '0')}
+        </span>
+        <button
+          type="button"
+          className={styles.remove}
+          onClick={() => onRemove(photo.id)}
+          onMouseDown={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+          aria-label="Remove photo"
+        >
+          ×
+        </button>
+      </span>
     </div>
   );
 }

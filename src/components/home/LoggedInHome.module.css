@@ -1,0 +1,644 @@
+/* Signed-in home, Atlas direction. The globe is deliberately allowed to outgrow
+   its section as it zooms: it passes behind the top bar, the panel and the
+   sections below, and the heading steps back (--zoom: 0 at rest, 1 fully in,
+   set by LoggedInHome). --radius is the globe's resting radius and must match
+   restingRadius() in LoggedInHome.tsx. */
+.page {
+  --radius: min(292px, calc((100vw - 520px) / 2.6));
+  --zoom: 0;
+  isolation: isolate;
+  /* The canvas is wider than the screen on phones and when zoomed. */
+  overflow-x: clip;
+}
+
+.hero {
+  position: relative;
+  max-width: 1280px;
+  margin: 0 auto;
+  min-height: calc(2 * var(--radius) + 430px);
+}
+
+/* Heading ---------------------------------------------------------------- */
+.intro {
+  position: relative;
+  z-index: 15;
+  /* Plain text over the globe: never in the way of a pin or a drag. */
+  pointer-events: none;
+  padding: 84px 64px 0;
+  opacity: calc(1 - var(--zoom) * 1.6);
+  transform: translateY(calc(var(--zoom) * -24px));
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: currentColor;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(48px, 7.2vw, 92px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+}
+
+.title em {
+  font-weight: 400;
+  color: var(--accent-display);
+}
+
+/* Globe ------------------------------------------------------------------ */
+.globeSlot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* A zero-size point at the globe's centre; the canvas centres on it. */
+.globeAnchor {
+  position: absolute;
+  z-index: 10;
+  left: calc(58px + var(--radius));
+  top: calc(288px + var(--radius));
+  width: 0;
+  height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.globeAnchor > * {
+  flex: none;
+}
+
+/* The canvas is far larger than the resting globe, so only the sphere itself
+   takes the pointer: empty canvas lets clicks through to the page (and still
+   counts as "outside" for the account menu), as the smaller canvas did. */
+.globeAnchor svg {
+  pointer-events: none;
+}
+
+.globeAnchor svg :global(.water),
+.globeAnchor svg :global(.land) path {
+  pointer-events: auto;
+}
+
+/* A pin's ring has no fill; "all" keeps its whole face clickable. */
+.globeAnchor svg :global(.pins) circle[cursor='pointer'] {
+  pointer-events: all;
+}
+
+/* Panel: Highlight + pins on one paper sheet ------------------------------ */
+.panel {
+  position: absolute;
+  z-index: 20;
+  top: 290px;
+  right: 64px;
+  width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow: 0 24px 60px rgb(var(--shadow-rgb) / 0.1);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.diamond {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  background: var(--spot);
+  transform: rotate(45deg);
+}
+
+.highlight {
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.highlight:only-child {
+  border-bottom: 0;
+}
+
+.highlightTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reset {
+  flex: none;
+  padding: 0 0 1px;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.prompt {
+  margin: 14px 0 0;
+  font-size: 23px;
+  font-style: italic;
+  line-height: 1.35;
+  color: var(--foreground-2);
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.detailThumb {
+  width: 96px;
+  height: 120px;
+  border-radius: 3px;
+  background-size: cover;
+  background-position: center;
+}
+
+.detailName {
+  font-size: 34px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--foreground);
+}
+
+.detailQuote {
+  margin: 8px 0 12px;
+  font-size: 18px;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--foreground-2);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.open {
+  margin-left: auto;
+  color: var(--accent);
+}
+
+/* Pins: a numbered index --------------------------------------------------- */
+.pins {
+  padding: 18px 0 6px;
+}
+
+.pinsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 24px 10px;
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.pinsList {
+  list-style: none;
+  margin: 0;
+  /* Room after the last row, so it can scroll clear of the bottom fade. */
+  padding: 0 0 14px;
+  max-height: 392px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* Fades only on an edge with more pins beyond it (set by PinsList). */
+.pinsList[data-fade='below'] {
+  mask-image: linear-gradient(#000 calc(100% - 64px), transparent);
+}
+
+.pinsList[data-fade='above'] {
+  mask-image: linear-gradient(transparent, #000 44px);
+}
+
+.pinsList[data-fade='both'] {
+  mask-image: linear-gradient(
+    transparent,
+    #000 44px,
+    #000 calc(100% - 64px),
+    transparent
+  );
+}
+
+.pinRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px 44px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 11px 24px;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pinRow:hover {
+  background: rgb(var(--ink-rgb) / 0.03);
+}
+
+.pinRow[data-active='true'] {
+  background: rgb(var(--ink-rgb) / 0.045);
+}
+
+.pinRow[data-active='true']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--spot);
+}
+
+.pinNo {
+  font-size: 17px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.pinRow[data-active='true'] .pinNo {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.pinThumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 3px;
+  background-size: cover;
+  background-position: center;
+}
+
+.pinInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pinName {
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--foreground);
+}
+
+.pinMeta {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Below the hero: these sit above the globe and fade it out ---------------- */
+.after {
+  position: relative;
+  z-index: 20;
+  background: var(--background);
+}
+
+.after::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -140px;
+  height: 140px;
+  background: linear-gradient(rgb(var(--bg-rgb) / 0), var(--background));
+  pointer-events: none;
+}
+
+.wrap {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding-left: clamp(20px, 5vw, 64px);
+  padding-right: clamp(20px, 5vw, 64px);
+  box-sizing: content-box;
+}
+
+.ledger {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 34px 0 30px;
+}
+
+.stat + .stat {
+  border-left: 1px solid var(--rule);
+}
+
+.statValue {
+  font-size: 76px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--foreground);
+}
+
+.statLabel {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Featured journeys: an editorial spread ----------------------------------- */
+.featured {
+  padding-top: 110px;
+  padding-bottom: 120px;
+}
+
+.featuredHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.featuredTitle {
+  margin: 0;
+  font-size: 52px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+
+.seeAll {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.featuredGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  color: var(--foreground);
+}
+
+.cardPhoto {
+  aspect-ratio: 4 / 5;
+  border-radius: 3px;
+  background-size: cover;
+  background-position: center;
+  transition: opacity 0.2s;
+}
+
+.card:hover .cardPhoto {
+  opacity: 0.92;
+}
+
+.cardCountry {
+  margin: 20px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.cardRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardName {
+  font-size: 34px;
+  font-weight: 500;
+  line-height: 1.05;
+}
+
+.cardDate {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.cardQuote {
+  margin: 10px 0 0;
+  font-size: 19px;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--foreground-2);
+}
+
+.cardFoot {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+}
+
+.footerHolder {
+  position: relative;
+  z-index: 20;
+  background: var(--footer);
+}
+
+/* Stacked: tablets and phones ---------------------------------------------- */
+@media (max-width: 1100px) {
+  .page {
+    --radius: min(44vw, 260px);
+  }
+  .hero {
+    min-height: 0;
+    padding-bottom: 8px;
+  }
+  .intro {
+    padding: 48px 40px 0;
+  }
+  .globeSlot {
+    position: relative;
+    inset: auto;
+    height: calc(2 * var(--radius) + 40px);
+  }
+  .globeAnchor {
+    left: 50%;
+    top: 50%;
+  }
+  .panel {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: auto;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .after {
+    margin-top: 56px;
+  }
+  .featuredGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .intro {
+    padding: 30px 20px 0;
+  }
+  .eyebrow {
+    font-size: 11.5px;
+    margin-bottom: 14px;
+  }
+  .title {
+    font-size: 50px;
+    line-height: 1.02;
+  }
+  .panel {
+    margin: 0 16px;
+  }
+  .highlight {
+    padding: 18px;
+  }
+  .prompt {
+    font-size: 20px;
+  }
+  .pinsHead {
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 18px 10px;
+  }
+  .hint {
+    font-size: 12px;
+  }
+  .pinsList {
+    max-height: 300px;
+  }
+  .pinRow {
+    grid-template-columns: 24px 44px 1fr auto;
+    gap: 12px;
+    padding: 10px 18px;
+  }
+  .detail {
+    grid-template-columns: 80px 1fr;
+    gap: 14px;
+  }
+  .detailThumb {
+    width: 80px;
+    height: 100px;
+  }
+  .detailName {
+    font-size: 30px;
+  }
+  .detailQuote {
+    font-size: 17px;
+  }
+  .ledger {
+    grid-template-columns: 1fr 1fr;
+  }
+  .stat {
+    padding: 24px 0;
+  }
+  .stat:nth-child(3) {
+    border-left: 0;
+  }
+  .stat:nth-child(n + 3) {
+    border-top: 1px solid var(--rule);
+  }
+  .statValue {
+    font-size: 58px;
+  }
+  .featured {
+    padding-top: 64px;
+    padding-bottom: 72px;
+  }
+  .featuredHead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .featuredTitle {
+    font-size: 42px;
+  }
+  .featuredGrid {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+  .cardPhoto {
+    aspect-ratio: 4 / 3;
+  }
+  /* Room for the fixed bottom bar. */
+  .footerHolder {
+    padding-bottom: calc(78px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    transform: none;
+  }
+}

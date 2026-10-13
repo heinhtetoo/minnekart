@@ -1,134 +1,208 @@
-.grid {
-  max-width: 1000px;
+/* Profile, Portrait print direction: a centred title page. The profile photo
+   is a framed print (as the trip page's cover), the initial a seal on its
+   corner; name and tagline under the print, then the story and the stats. */
+.page {
+  max-width: 760px;
   margin: 0 auto;
-  padding: clamp(32px, 6vw, 72px) clamp(20px, 5vw, 64px);
-  display: grid;
-  grid-template-columns: 0.9fr 1.3fr;
-  gap: clamp(28px, 5vw, 60px);
-  align-items: center;
+  padding: clamp(28px, 5vw, 56px) clamp(20px, 5vw, 32px) clamp(60px, 8vw, 110px);
+  text-align: center;
 }
 
-.card {
-  aspect-ratio: 4 / 5;
-  border-radius: 20px;
-  background: linear-gradient(150deg, var(--plum-2), var(--band));
+.eyebrow {
   display: flex;
-  align-items: flex-end;
-  padding: 26px;
-  box-shadow: 0 20px 50px rgb(var(--shadow-rgb) / 0.2);
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
-.card[data-photo='true'] {
+.eyebrow::before,
+.eyebrow::after {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: currentColor;
+}
+
+/* The print ------------------------------------------------------------ */
+.printWrap {
   position: relative;
+  width: 340px;
+  max-width: 78%;
+  margin: 8px auto 0;
+}
+
+.print {
+  padding: 14px 14px 46px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  box-shadow: 0 30px 70px rgb(var(--shadow-rgb) / 0.14);
+  transform: rotate(-0.8deg);
+}
+
+.photo {
+  display: block;
+  aspect-ratio: 4 / 5;
   background-size: cover;
   background-position: center;
 }
 
-/* Keeps the name and tagline legible over a bright photo. */
-.card[data-photo='true']::before {
-  content: '';
+/* No profile photo: the initial, large, on a Dusk gradient. */
+.noPhoto {
+  display: grid;
+  place-items: center;
+  font-size: 150px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--on-band);
+  background: linear-gradient(155deg, var(--plum-2), var(--band));
+}
+
+.seal {
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(transparent 40%, rgb(var(--shadow-rgb) / 0.78));
-}
-
-.cardInner {
-  position: relative;
-}
-
-.avatar {
-  width: 56px;
-  height: 56px;
+  right: -22px;
+  bottom: 18px;
+  display: grid;
+  place-items: center;
+  width: 70px;
+  height: 70px;
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1.5px solid var(--foreground);
   border-radius: 50%;
-  background: var(--on-band);
-  color: var(--band);
+  box-shadow: 0 8px 20px rgb(var(--shadow-rgb) / 0.12);
+}
+
+/* Name and tagline ---------------------------------------------------- */
+.name {
+  margin: 46px 0 8px;
+  font-size: 56px;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+.tagline {
+  font-size: 21px;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--foreground-2);
+  overflow-wrap: anywhere;
+}
+
+.ornament {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-serif), serif;
-  font-size: 28px;
-  font-weight: 600;
-  margin-bottom: 14px;
+  gap: 14px;
+  margin: 40px 0;
 }
 
-.cardName {
-  font-family: var(--font-serif), serif;
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--on-band);
+.ornament::before,
+.ornament::after {
+  content: '';
+  width: 80px;
+  height: 1px;
+  background: var(--rule);
 }
 
-.cardTagline {
-  font-size: 12px;
-  color: var(--on-band-muted);
-  letter-spacing: 1px;
-  margin-top: 4px;
+.ornament span {
+  width: 8px;
+  height: 8px;
+  background: var(--spot);
+  transform: rotate(45deg);
 }
 
-.eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 4px;
-  color: var(--accent);
-  text-transform: uppercase;
-  margin: 0 0 14px;
-}
-
+/* Story ---------------------------------------------------------------- */
 .title {
-  font-size: clamp(39px, 5.7vw, 57px);
-  font-weight: 700;
-  color: var(--foreground);
   margin: 0 0 22px;
-  letter-spacing: -1.5px;
-  line-height: 1.05;
+  font-size: 46px;
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+.bio {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: left;
 }
 
 .body {
-  font-size: 16px;
+  margin: 0 0 18px;
+  font-size: 21px;
+  line-height: 1.7;
   color: var(--foreground-2);
-  line-height: 1.75;
-  margin: 0 0 16px;
+  overflow-wrap: anywhere;
 }
 
-.bodyLast {
-  margin-bottom: 28px;
+.body:last-child {
+  margin-bottom: 0;
 }
 
 .storyPrompt {
-  font-size: 16px;
+  max-width: 520px;
+  margin: 0 auto 22px;
+  font-size: 21px;
+  font-style: italic;
+  line-height: 1.6;
   color: var(--foreground-2);
-  line-height: 1.75;
-  margin: 0 0 20px;
 }
 
 .storyLink {
   display: inline-block;
-  font-size: 13px;
+  padding-bottom: 2px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--accent);
-  margin-bottom: 28px;
+  border-bottom: 1px solid currentColor;
 }
 
+/* Stats: the home page's ruled row ------------------------------------- */
 .stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 64px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.stat {
   display: flex;
-  gap: 32px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 30px 0 26px;
+}
+
+.stat + .stat {
+  border-left: 1px solid var(--rule);
 }
 
 .statValue {
-  font-family: var(--font-serif), serif;
-  font-size: 40px;
-  font-weight: 600;
-  color: var(--brand-text);
+  font-size: 64px;
+  font-weight: 500;
   line-height: 1;
+  color: var(--foreground);
 }
 
 .statLabel {
-  font-size: 11px;
-  letter-spacing: 2px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-top: 5px;
 }
 
 .footerHolder {
@@ -136,13 +210,50 @@
 }
 
 @media (max-width: 720px) {
-  .grid {
-    grid-template-columns: 1fr;
+  .printWrap {
+    width: 250px;
   }
-
-  .card {
-    max-width: 300px;
-    margin: 0 auto;
+  .noPhoto {
+    font-size: 110px;
+  }
+  .seal {
+    right: -16px;
+    width: 58px;
+    height: 58px;
+    font-size: 27px;
+  }
+  .name {
+    margin-top: 36px;
+    font-size: 42px;
+  }
+  .tagline {
+    font-size: 19px;
+  }
+  .ornament {
+    margin: 30px 0;
+  }
+  .title {
+    font-size: 36px;
+  }
+  .body,
+  .storyPrompt {
+    font-size: 18.5px;
+  }
+  .stats {
+    grid-template-columns: 1fr 1fr;
+    margin-top: 44px;
+  }
+  .stat {
+    padding: 22px 0;
+  }
+  .stat:nth-child(3) {
+    border-left: 0;
+  }
+  .stat:nth-child(n + 3) {
+    border-top: 1px solid var(--rule);
+  }
+  .statValue {
+    font-size: 50px;
   }
 
   .footerHolderApp {

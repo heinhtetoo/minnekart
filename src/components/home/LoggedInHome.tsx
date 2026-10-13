@@ -1,19 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import Globe, { GlobePin } from '@/components/globe/Globe';
+import Globe, { GLOBE_MAX_ZOOM, GlobePin } from '@/components/globe/Globe';
 import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/nav/BottomNav';
+import NavIcon from '@/components/nav/navIcons';
 import TopNav from '@/components/nav/TopNav';
 import { coverGradient } from '@/lib/photos/gradient';
 import { TripDTO } from '@/lib/trips/dto';
 import { TripStats } from '@/lib/trips/stats';
 
-import styles from './Home.module.css';
-import { formatTripDates } from './format';
-import StatCell from './StatCell';
+import { formatPhotoCount, formatTripDates } from './format';
+import styles from './LoggedInHome.module.css';
 
 export interface HomeTrip extends TripDTO {
   photoCount: number;
@@ -41,6 +41,19 @@ export default function LoggedInHome({
 }: LoggedInHomeProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const trip = selected === null ? null : trips[selected];
+  const canvas = useGlobeCanvas();
+  const mainRef = useRef<HTMLElement>(null);
+
+  // The page steps back as the globe grows: 0 at rest, 1 fully zoomed in.
+  // Written straight to a CSS variable rather than state, because it changes
+  // on every animation frame and nothing else needs to re-render.
+  const onZoom = useCallback((zoom: number) => {
+    const progress = Math.min(
+      1,
+      Math.max(0, (zoom - 1) / (GLOBE_MAX_ZOOM - 1)),
+    );
+    mainRef.current?.style.setProperty('--zoom', progress.toFixed(3));
+  }, []);
 
   const pins: GlobePin[] = trips.map((item, index) => ({
     id: String(index),
@@ -56,52 +69,30 @@ export default function LoggedInHome({
   return (
     <>
       <TopNav name={user.name} email={user.email} isOwner={user.isOwner} />
-      <main
-        className="fade"
-        style={{ isolation: 'isolate', paddingBottom: 24 }}
-      >
-        <section className={styles.intro}>
-          <p
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: 4,
-              color: 'var(--accent)',
-              textTransform: 'uppercase',
-              margin: '0 0 14px',
-            }}
-          >
-            Your world so far
-          </p>
-          <h1
-            className="serif"
-            style={{
-              fontSize: 'clamp(39px,6.6vw,66px)',
-              fontWeight: 700,
-              color: 'var(--foreground)',
-              margin: 0,
-              lineHeight: 1.04,
-              letterSpacing: '-1.5px',
-            }}
-          >
-            Welcome back,{' '}
-            <em style={{ color: 'var(--accent-display)', fontWeight: 400 }}>
-              {firstName(user.name)}.
-            </em>
-          </h1>
-        </section>
-
+      <main ref={mainRef} className={`fade ${styles.page}`}>
         <section className={styles.hero}>
-          <div className={styles.globeLayer}>
-            <Globe
-              pins={pins}
-              width={960}
-              height={960}
-              focusId={selected === null ? null : String(selected)}
-              onSelect={(id) => setSelected(Number(id))}
-            />
+          <div className={styles.intro}>
+            <p className={styles.eyebrow}>Your world so far</p>
+            <h1 className={`serif ${styles.title}`}>
+              Welcome back, <em>{firstName(user.name)}.</em>
+            </h1>
           </div>
-          <div className={styles.formWrap}>
+
+          <div className={styles.globeSlot}>
+            <div className={styles.globeAnchor}>
+              <Globe
+                pins={pins}
+                accent="var(--spot)"
+                width={canvas}
+                height={canvas}
+                focusId={selected === null ? null : String(selected)}
+                onSelect={(id) => setSelected(Number(id))}
+                onZoom={onZoom}
+              />
+            </div>
+          </div>
+
+          <div className={styles.panel}>
             {trips.length === 0 ? (
               <EmptyState />
             ) : (
@@ -121,25 +112,68 @@ export default function LoggedInHome({
           </div>
         </section>
 
-        <section
-          className={styles.band}
-          style={{ position: 'relative', zIndex: 1 }}
-        >
-          <div className={styles.stats}>
-            <StatCell value={String(stats.countries)} label="Countries" />
-            <StatCell value={String(stats.cities)} label="Cities" bordered />
-            <StatCell value={String(stats.photos)} label="Photos" bordered />
-            <StatCell value={String(stats.years)} label="Years" bordered />
+        <div className={styles.after}>
+          <div className={styles.wrap}>
+            <div className={styles.ledger}>
+              <Stat value={stats.countries} label="Countries" />
+              <Stat value={stats.cities} label="Cities" />
+              <Stat value={stats.photos} label="Photos" />
+              <Stat value={stats.years} label="Years" />
+            </div>
           </div>
-        </section>
 
-        {featured.length > 0 && <FeaturedSection featured={featured} />}
+          {featured.length > 0 && <FeaturedSection featured={featured} />}
+        </div>
       </main>
       <div className={styles.footerHolder}>
         <Footer loggedIn />
       </div>
       <BottomNav />
     </>
+  );
+}
+
+// The canvas is sized so the globe's resting radius matches the layout in
+// LoggedInHome.module.css (--radius): side by side above 1100px, stacked and
+// sized to the screen below. The globe only fills its canvas at full zoom.
+function restingRadius(viewport: number): number {
+  return viewport > 1100
+    ? Math.min(292, (viewport - 520) / 2.6)
+    : Math.min(viewport * 0.44, 260);
+}
+
+function useGlobeCanvas(): number {
+  const [radius, setRadius] = useState(292);
+
+  useEffect(() => {
+    const measure = () =>
+      setRadius(Math.round(restingRadius(window.innerWidth)));
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  return Math.round(2 * (radius * GLOBE_MAX_ZOOM + 20));
+}
+
+function Stat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className={styles.stat}>
+      <span className={`serif ${styles.statValue}`}>{value}</span>
+      <span className={styles.statLabel}>{label}</span>
+    </div>
+  );
+}
+
+// The photo icon with "1 photo" / "5 photos" (or just the number in the pins
+// list). Nothing at all for a trip without photos.
+function PhotoCount({ count, short }: { count: number; short?: boolean }) {
+  if (count <= 0) return null;
+  return (
+    <span className={styles.count}>
+      <NavIcon name="photo" size={16} strokeWidth={1.6} />
+      {short ? count : formatPhotoCount(count)}
+    </span>
   );
 }
 
@@ -153,50 +187,65 @@ function PinsList({
   onSelect: (index: number) => void;
 }) {
   const listRef = useRef<HTMLUListElement>(null);
-  const [overflowing, setOverflowing] = useState(false);
+  // Which edges fade: only where there are more pins to scroll to, so the
+  // first and last rows read at full strength once you reach them.
+  const [fade, setFade] = useState<'none' | 'above' | 'below' | 'both'>('none');
 
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
-    const measure = () => setOverflowing(el.scrollHeight > el.clientHeight + 1);
+    const measure = () => {
+      const above = el.scrollTop > 1;
+      const below = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+      setFade(
+        above && below ? 'both' : above ? 'above' : below ? 'below' : 'none',
+      );
+    };
     measure();
+    el.addEventListener('scroll', measure, { passive: true });
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    return () => {
+      el.removeEventListener('scroll', measure);
+      window.removeEventListener('resize', measure);
+    };
   }, [trips.length]);
 
   return (
-    <div className={styles.pinsBlock}>
+    <div className={styles.pins}>
       <div className={styles.pinsHead}>
-        <span className={styles.pinsLabel}>Your Pins</span>
-        <span className={styles.pinsHint}>
+        <span className={styles.label}>Your Pins</span>
+        <span className={styles.hint}>
           Drag to spin · pinch or scroll to zoom
         </span>
       </div>
-      <div className={styles.pinsListWrap} data-overflow={overflowing}>
-        <ul ref={listRef} className={styles.pinsList}>
-          {trips.map((trip, index) => (
-            <li key={trip.id}>
-              <button
-                type="button"
-                onClick={() => onSelect(index)}
-                className={styles.pinCard}
-                aria-current={selected === index}
-                data-active={selected === index}
-              >
-                <span className={styles.pinSwatch} style={coverStyle(trip)} />
-                <span className={styles.pinInfo}>
-                  <span className={styles.pinName}>{trip.placeName}</span>
-                  <span className={styles.pinMeta}>
-                    {trip.country} ·{' '}
-                    {formatTripDates(trip.dateStart, trip.dateEnd)}
-                  </span>
+      <ul ref={listRef} className={styles.pinsList} data-fade={fade}>
+        {trips.map((trip, index) => (
+          <li key={trip.id}>
+            <button
+              type="button"
+              onClick={() => onSelect(index)}
+              className={styles.pinRow}
+              aria-current={selected === index}
+              data-active={selected === index}
+            >
+              <span className={`serif ${styles.pinNo}`} aria-hidden="true">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <span className={styles.pinThumb} style={coverStyle(trip)} />
+              <span className={styles.pinInfo}>
+                <span className={`serif ${styles.pinName}`}>
+                  {trip.placeName}
                 </span>
-                <span className={styles.pinCount}>{trip.photoCount}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+                <span className={styles.pinMeta}>
+                  {trip.country} ·{' '}
+                  {formatTripDates(trip.dateStart, trip.dateEnd)}
+                </span>
+              </span>
+              <PhotoCount count={trip.photoCount} short />
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -210,43 +259,39 @@ function DetailCard({
 }) {
   if (!trip) {
     return (
-      <div className={`fade ${styles.detailCard}`}>
-        <div className={styles.detailTop}>
-          <span className={styles.detailLabel}>
-            <span className={styles.detailDot} />
-            Highlight
-          </span>
-        </div>
-        <p className={`serif ${styles.detailPrompt}`}>
-          Click any pin on the globe — or in the list — to relive a memory.
+      <div className={`fade ${styles.highlight}`}>
+        <span className={styles.label}>
+          <i className={styles.diamond} />
+          Highlight
+        </span>
+        <p className={`serif ${styles.prompt}`}>
+          Choose any pin on the globe — or in the list — to relive a memory.
         </p>
       </div>
     );
   }
 
   return (
-    <div className={`fade ${styles.detailCard}`}>
-      <div className={styles.detailTop}>
-        <span className={styles.detailLabel}>
-          <span className={styles.detailDot} />
+    <div className={`fade ${styles.highlight}`}>
+      <div className={styles.highlightTop}>
+        <span className={styles.label}>
+          <i className={styles.diamond} />
           {trip.country} · {formatTripDates(trip.dateStart, trip.dateEnd)}
         </span>
-        <button type="button" className={styles.detailReset} onClick={onReset}>
+        <button type="button" className={styles.reset} onClick={onReset}>
           Reset view
         </button>
       </div>
-      <div className={styles.detailBody}>
+      <div className={styles.detail}>
         <span className={styles.detailThumb} style={coverStyle(trip)} />
-        <div className={styles.detailMain}>
+        <div>
           <div className={`serif ${styles.detailName}`}>{trip.placeName}</div>
           {trip.highlight && (
             <p className={`serif ${styles.detailQuote}`}>“{trip.highlight}”</p>
           )}
-          <div className={styles.detailFoot}>
-            <span className={styles.detailPhotos}>
-              {trip.photoCount} photos
-            </span>
-            <Link href={`/trip/${trip.id}`} className={styles.detailOpen}>
+          <div className={styles.foot}>
+            <PhotoCount count={trip.photoCount} />
+            <Link href={`/trip/${trip.id}`} className={styles.open}>
               Open journey →
             </Link>
           </div>
@@ -258,42 +303,35 @@ function DetailCard({
 
 function FeaturedSection({ featured }: { featured: HomeTrip[] }) {
   return (
-    <section className={styles.featuredSection}>
+    <section className={`${styles.wrap} ${styles.featured}`}>
       <div className={styles.featuredHead}>
         <h2 className={`serif ${styles.featuredTitle}`}>Featured journeys</h2>
-        <Link href="/timeline" className={styles.featuredSeeAll}>
+        <Link href="/timeline" className={styles.seeAll}>
           See all on the timeline →
         </Link>
       </div>
       <div className={styles.featuredGrid}>
         {featured.map((trip) => (
-          <Link
-            key={trip.id}
-            href={`/trip/${trip.id}`}
-            className={styles.featuredCard}
-          >
-            <div className={styles.featuredBanner} style={coverStyle(trip)}>
-              <span className={styles.countryPill}>{trip.country}</span>
-            </div>
-            <div className={styles.featuredBody}>
-              <div className={styles.featuredRow}>
-                <span className={`serif ${styles.featuredName}`}>
-                  {trip.placeName}
-                </span>
-                <span className={styles.featuredDate}>
-                  {formatTripDates(trip.dateStart, trip.dateEnd)}
-                </span>
-              </div>
-              {trip.highlight && (
-                <p className={styles.featuredHighlight}>{trip.highlight}</p>
-              )}
-              <div className={styles.featuredFoot}>
-                <span className={styles.featuredPhotos}>
-                  {trip.photoCount} photos
-                </span>
-                <span className={styles.featuredOpen}>Open journey →</span>
-              </div>
-            </div>
+          <Link key={trip.id} href={`/trip/${trip.id}`} className={styles.card}>
+            <span className={styles.cardPhoto} style={coverStyle(trip)} />
+            <span className={styles.cardCountry}>{trip.country}</span>
+            <span className={styles.cardRow}>
+              <span className={`serif ${styles.cardName}`}>
+                {trip.placeName}
+              </span>
+              <span className={styles.cardDate}>
+                {formatTripDates(trip.dateStart, trip.dateEnd)}
+              </span>
+            </span>
+            {trip.highlight && (
+              <span className={`serif ${styles.cardQuote}`}>
+                {trip.highlight}
+              </span>
+            )}
+            <span className={`${styles.foot} ${styles.cardFoot}`}>
+              <PhotoCount count={trip.photoCount} />
+              <span className={styles.open}>Open journey →</span>
+            </span>
           </Link>
         ))}
       </div>
@@ -303,9 +341,12 @@ function FeaturedSection({ featured }: { featured: HomeTrip[] }) {
 
 function EmptyState() {
   return (
-    <div className={styles.emptyState}>
-      <p className={styles.panelTitle}>Your globe is waiting</p>
-      <p className={styles.emptyBody}>
+    <div className={styles.highlight}>
+      <span className={styles.label}>
+        <i className={styles.diamond} />
+        Your globe is waiting
+      </span>
+      <p className={`serif ${styles.prompt}`}>
         You haven&apos;t pinned a place yet. Add your first trip and it will
         light up here, ready to spin.
       </p>

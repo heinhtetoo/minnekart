@@ -2,19 +2,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 66px;
-  padding: 0 clamp(20px, 5vw, 64px);
-  border-bottom: 1px solid rgb(var(--ink-rgb) / 0.08);
+  height: 72px;
+  padding: 0 clamp(20px, 3.2vw, 40px);
+  border-bottom: 1px solid var(--rule);
 }
 
 .main {
   flex: 1 0 auto;
   padding: clamp(20px, 4vw, 40px) clamp(20px, 5vw, 64px) clamp(28px, 6vw, 56px);
-}
-
-/* Full-bleed main used by the trip hero — its own padding lives inside. */
-.mainBleed {
-  flex: 1 0 auto;
 }
 
 .wide {
@@ -32,17 +27,83 @@
   margin: 0 auto;
 }
 
-.form {
-  max-width: 640px;
+/* Pricing (screen 11): matches ContentPage's wide page and the plan sheets. */
+.pricing {
+  max-width: 1152px;
   margin: 0 auto;
+  padding-top: clamp(14px, 2vw, 36px);
 }
 
-.header {
-  margin-bottom: 28px;
+.pricingTitle {
+  margin-top: 22px;
+}
+
+.pricingLead {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.pricingPlans {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 64px;
+}
+
+.pricingSheet {
+  min-height: 470px;
+  padding: 34px 30px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.pricingSheet:nth-child(2) {
+  transform: translateY(-14px);
+}
+
+.pricingRule {
+  height: 1px;
+  margin: 26px 0 24px;
+  background: var(--rule);
 }
 
 .gap12 {
   height: 12px;
+}
+
+/* Content pages (screen 12): matches ContentPage's Atlas "Margin" body. */
+.content {
+  --margin-col: 248px;
+  --margin-gap: 56px;
+  max-width: 1152px;
+  margin: 0 auto;
+  padding-top: clamp(14px, 2vw, 36px);
+}
+
+.contentTitle {
+  width: min(520px, 100%);
+  height: 76px;
+  margin-top: 22px;
+}
+
+.contentIntro {
+  margin: 60px 0 34px calc(var(--margin-col) + var(--margin-gap));
+  max-width: 744px;
+}
+
+.contentLine + .contentLine {
+  margin-top: 14px;
+}
+
+.contentSection {
+  display: grid;
+  grid-template-columns: var(--margin-col) minmax(0, 744px);
+  column-gap: var(--margin-gap);
+  padding: 34px 0 16px;
+  border-top: 1px solid var(--rule);
 }
 
 .block {
@@ -60,7 +121,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.45),
+    rgb(var(--bg-rgb) / 0.55),
     transparent
   );
   animation: shimmer 1.4s ease-in-out infinite;
@@ -72,188 +133,475 @@
   }
 }
 
-/* Home ------------------------------------------------------------------ */
-.heroRow {
-  display: flex;
-  gap: 40px;
-  align-items: center;
-  margin-top: 24px;
+/* Home (Atlas) ----------------------------------------------------------- */
+.homeHero {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding-top: 44px;
 }
 
-.globe {
-  flex: 1 1 auto;
-  max-width: 460px;
+.homeRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 40px;
+  margin-top: 44px;
+}
+
+.homeGlobe {
+  flex: 0 1 560px;
   aspect-ratio: 1;
 }
 
-.pinsCol {
-  width: 360px;
+.homeSheet {
+  width: 420px;
   flex-shrink: 0;
+  padding: 22px 24px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.homeSheetRule {
+  height: 1px;
+  margin: 22px -24px 6px;
+  background: var(--rule);
 }
 
 .pinRow {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 9px;
+  gap: 14px;
+  padding: 11px 0;
 }
 
 .pinBody {
   flex: 1;
 }
 
-.statsBand {
-  background: var(--band);
-  margin: 34px 0;
-  padding: 34px clamp(20px, 5vw, 64px);
-}
-
-.statsInner {
-  max-width: 1180px;
-  margin: 0 auto;
+.homeLedger {
+  max-width: 1152px;
+  margin: 72px auto 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
 
 .statCol {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  padding: 34px 0 30px;
 }
 
-.cardGrid3 {
+.statCol + .statCol {
+  border-left: 1px solid var(--rule);
+}
+
+.homeCards {
+  max-width: 1152px;
+  margin: 110px auto 0;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
-  margin-top: 26px;
+  gap: 40px;
 }
 
-.cardBody {
-  padding: 16px;
+.homeCardPhoto {
+  aspect-ratio: 4 / 5;
 }
 
-/* Gallery --------------------------------------------------------------- */
+/* Gallery (light table) ------------------------------------------------- */
+.galleryHead {
+  padding-top: 16px;
+}
+
 .chips {
   display: flex;
-  flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 22px;
+  margin: 34px 0;
+  overflow: hidden;
 }
 
-.masonry {
-  columns: 3;
-  column-gap: 16px;
+.pill {
+  flex-shrink: 0;
+  border-radius: 999px;
 }
 
-.masonryItem {
-  width: 100%;
-  margin-bottom: 16px;
-  break-inside: avoid;
+.photoRows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-/* Timeline -------------------------------------------------------------- */
-.thread {
-  position: relative;
+.photoRows::after {
+  content: '';
+  flex: 999 1 0;
 }
 
-.line {
-  position: absolute;
-  left: 7px;
-  top: 8px;
-  bottom: 8px;
-  width: 2px;
-  background: rgb(var(--ink-rgb) / 0.12);
+.rowPhoto {
+  flex: var(--r) 1 calc(var(--r) * 205px);
+  aspect-ratio: var(--r);
+  border-radius: 0;
+}
+
+/* Timeline (Almanac) ----------------------------------------------------- */
+.almanac {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.almanacHead {
+  margin: 16px 0 56px 150px;
+}
+
+.almanacRow {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: start;
 }
 
 .entry {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 18px;
+  gap: 28px;
+  padding: 26px 0 26px 36px;
+  border-bottom: 1px solid var(--rule);
+  border-left: 1px solid var(--rule);
 }
 
 .entryBody {
   flex: 1;
 }
 
-/* Trip detail ----------------------------------------------------------- */
-.tripHero {
-  height: clamp(300px, 42vw, 420px);
+/* Trip detail (Plate) ---------------------------------------------------- */
+.tripHead {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding-top: 24px;
+  display: grid;
+  grid-template-columns: 5fr 6fr;
+  gap: 72px;
+  align-items: end;
+}
+
+.tripPlate {
+  aspect-ratio: 4 / 3.6;
+  border-radius: 2px;
+}
+
+.tripLedger {
+  max-width: 1152px;
+  margin: 64px auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.tripLedgerCell {
+  display: flex;
+  justify-content: center;
+  padding: 28px 0;
+}
+
+.tripLedgerCell + .tripLedgerCell {
+  border-left: 1px solid var(--rule);
+}
+
+.tripStory {
+  max-width: 680px;
+  margin: 72px auto 0;
+}
+
+.tripSheet {
+  max-width: 1152px;
+  margin: 64px auto 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.tripFrame {
+  aspect-ratio: 4 / 3.5;
   border-radius: 0;
 }
 
-.tripBody {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: clamp(28px, 5vw, 48px) clamp(20px, 5vw, 64px);
-}
-
-.bodyGrid {
-  display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: 40px;
-  margin-bottom: 40px;
-}
-
-/* About ----------------------------------------------------------------- */
-.profileGrid {
-  display: grid;
-  grid-template-columns: 0.9fr 1.3fr;
-  gap: 40px;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.portrait {
+/* Profile (Portrait print) --------------------------------------------- */
+.titlePage {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 40px 28px;
-  border: 1px solid rgb(var(--ink-rgb) / 0.08);
-  border-radius: 18px;
-  background: var(--surface);
+  max-width: 760px;
+  margin: 0 auto;
 }
 
-.statsRow {
+.titlePrint {
+  width: 340px;
+  max-width: 78%;
+  margin: 26px 0 46px;
+  padding: 14px 14px 46px;
+  border: 1px solid var(--rule);
+}
+
+.titlePhoto {
+  aspect-ratio: 4 / 5;
+  border-radius: 0;
+}
+
+.titleLine {
+  width: 100%;
+  max-width: 640px;
+  margin-bottom: 12px;
+}
+
+.titleStats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
+  margin-top: 52px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.titleStat {
   display: flex;
-  gap: 32px;
-  margin-top: 28px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 0;
 }
 
-/* Form ------------------------------------------------------------------ */
-.fieldRow {
-  margin-bottom: 20px;
+/* Settings (Journal) --------------------------------------------------- */
+.settings {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-top: 16px;
+}
+
+.settingsSection {
+  margin-top: 56px;
+  padding-top: 30px;
+  border-top: 1px solid var(--rule);
+}
+
+.settingsField {
+  margin-top: 28px;
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid var(--rule);
+}
+
+/* Admin (Register) ------------------------------------------------------ */
+.admin {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-top: 16px;
+}
+
+.adminCreate {
+  margin-top: 56px;
+  padding-top: 36px;
+  border-top: 1px solid var(--rule);
+}
+
+.adminField {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 20px;
+}
+
+.adminButton {
+  border-radius: 999px;
+}
+
+.adminList {
+  margin-top: 64px;
+  border-top: 1px solid var(--rule);
+}
+
+.adminRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+@media (max-width: 720px) {
+  .admin {
+    padding-top: 0;
+  }
+  .adminField {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .adminRow {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+/* Form (Journal) ---------------------------------------------------------- */
+.journal {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 330px 1fr;
+  gap: 80px;
+}
+
+.journalGlobe {
+  width: 240px;
+  aspect-ratio: 1;
+}
+
+.journalRow {
+  margin-bottom: 30px;
+}
+
+@media (max-width: 1100px) {
+  .homeRow {
+    flex-direction: column;
+    align-items: center;
+  }
+  .homeGlobe {
+    flex: none;
+    width: min(88vw, 520px);
+  }
+  .homeSheet {
+    width: min(100%, 560px);
+  }
+}
+
+@media (max-width: 960px) {
+  .journal {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .journalGlobe {
+    width: 96px;
+  }
 }
 
 @media (max-width: 860px) {
-  .bodyGrid {
+  .tripHead {
     grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .tripSheet {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 860px) {
+  .pricingPlans {
+    grid-template-columns: 1fr;
+    max-width: 560px;
+    margin-inline: auto;
+  }
+  .pricingSheet:nth-child(2) {
+    transform: none;
   }
 }
 
 @media (max-width: 720px) {
-  .heroRow {
+  .almanacHead {
+    margin-left: 0;
+  }
+  .pricingPlans {
+    gap: 20px;
+    margin-top: 40px;
+  }
+  .pricingSheet {
+    min-height: 360px;
+    padding: 22px 20px;
+  }
+  .almanacRow {
+    grid-template-columns: 1fr;
+  }
+  .almanacRow > :first-child {
+    margin: 14px 0 10px;
+  }
+  .navStrip {
+    height: 60px;
+  }
+  .homeRow {
     flex-direction: column;
     align-items: stretch;
   }
-  .globe {
-    max-width: none;
-    width: 100%;
+  .homeGlobe {
+    flex: none;
+    width: 88%;
+    margin: 0 auto;
   }
-  .pinsCol {
-    width: 100%;
+  .homeSheet {
+    width: auto;
   }
-  .cardGrid3 {
+  .homeLedger {
+    grid-template-columns: 1fr 1fr;
+  }
+  .statCol:nth-child(3) {
+    border-left: 0;
+  }
+  .statCol:nth-child(n + 3) {
+    border-top: 1px solid var(--rule);
+  }
+  .homeCards {
     grid-template-columns: 1fr;
+    margin-top: 64px;
   }
-  .masonry {
-    columns: 2;
+  .homeCardPhoto {
+    aspect-ratio: 4 / 3;
   }
-  .profileGrid {
-    grid-template-columns: 1fr;
+  .galleryHead {
+    padding-top: 0;
+  }
+  .chips {
+    margin: 24px 0 22px;
+    gap: 8px;
+  }
+  .photoRows {
+    gap: 4px;
+  }
+  .rowPhoto {
+    flex-basis: calc(var(--r) * 100px);
+  }
+  .titlePrint {
+    width: 250px;
+  }
+  .titleStats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 1000px) {
+  .content {
+    --margin-col: 200px;
+    --margin-gap: 40px;
+  }
+}
+
+@media (max-width: 860px) {
+  .contentIntro {
+    margin-left: 0;
+  }
+  .contentSection {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 14px;
+    padding: 28px 0 8px;
+  }
+}
+
+@media (max-width: 720px) {
+  .contentTitle {
+    height: 92px;
+  }
+  .contentIntro {
+    margin-top: 40px;
   }
 }
 

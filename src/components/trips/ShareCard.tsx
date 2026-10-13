@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import Toggle from '@/components/ui/Toggle';
 import { useOrigin } from '@/components/ui/useOrigin';
 
@@ -30,6 +31,7 @@ export default function ShareCard({
   const [busyLink, setBusyLink] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirm, confirmDialog] = useConfirm();
 
   async function togglePublic() {
     const next = !isPublic;
@@ -62,7 +64,10 @@ export default function ShareCard({
     setError(null);
     if (shareToken) {
       if (
-        !window.confirm('Revoke this link? Anyone with it will lose access.')
+        !(await confirm(
+          'Revoke this link? Anyone with it will lose access.',
+          'Revoke link',
+        ))
       ) {
         setBusyLink(false);
         return;
@@ -159,6 +164,7 @@ export default function ShareCard({
       )}
 
       {error && <p className={styles.error}>{error}</p>}
+      {confirmDialog}
     </section>
   );
 }

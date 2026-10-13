@@ -162,18 +162,16 @@ export default function BillingCard({
 
   return (
     <section className={styles.card}>
+      <h2 className={`serif ${styles.rowTitle}`}>Plan</h2>
       <div className={styles.row}>
-        <div>
-          <h2 className={styles.rowTitle}>Plan</h2>
-          <p className={styles.rowHint}>
-            {plan === 'paid'
-              ? 'Paid — unlimited memories and photos.'
-              : 'Free — 15 memories, 6 photos each.'}
-          </p>
-        </div>
-        <span className={styles.planBadge}>
+        <span className={styles.planBadge} data-plan={plan}>
           {plan === 'paid' ? 'Paid' : 'Free'}
         </span>
+        <p className={styles.planLine}>
+          {plan === 'paid'
+            ? 'Paid — unlimited memories and photos.'
+            : 'Free — 15 memories, 6 photos each.'}
+        </p>
       </div>
 
       {subscriptionStatus === 'past_due' && (

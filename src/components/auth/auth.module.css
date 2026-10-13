@@ -1,0 +1,327 @@
+/* Sign-in pages, Atlas direction "Sheet": the sign-in card, the reset form and
+   the email check. Every form sits on a paper sheet like the signed-in home's
+   panel, with the trip form's Journal fields and pill buttons. The global
+   .field / .label / .button / .authlink / .fieldError / .otpCell classes are
+   restyled only inside .sheet, so other pages keep theirs. */
+.sheet {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow: 0 24px 60px rgb(var(--shadow-rgb) / 0.1);
+}
+
+/* Tabs: an index line, the active one underlined and marked with the diamond. */
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--rule);
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 54px;
+  padding: 0 8px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.tab + .tab {
+  border-left: 1px solid var(--rule);
+}
+
+.tab:hover {
+  color: var(--foreground);
+}
+
+.tab[data-active='true'] {
+  color: var(--foreground);
+}
+
+.tab[data-active='true']::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--foreground);
+}
+
+.diamond {
+  flex: none;
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  background: var(--spot);
+  transform: rotate(45deg);
+}
+
+.body {
+  padding: 26px 28px 28px;
+}
+
+.center {
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+
+.subtitle {
+  margin: 6px 0 24px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--foreground-2);
+}
+
+.message {
+  margin: 14px 0 0;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--foreground-2);
+  overflow-wrap: anywhere;
+}
+
+.message b {
+  color: var(--foreground);
+}
+
+.note {
+  margin: -6px 0 22px;
+  padding: 11px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--foreground-2);
+  background: rgb(var(--ink-rgb) / 0.045);
+  border-left: 3px solid var(--spot);
+}
+
+/* Journal fields ----------------------------------------------------------- */
+.fieldWrap + .fieldWrap {
+  margin-top: 22px;
+}
+
+.fieldHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.sheet :global(.label) {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+
+.sheet :global(.field) {
+  padding: 6px 0 6px;
+  border: 0;
+  border-bottom: 1.5px solid rgb(var(--ink-rgb) / 0.35);
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-serif), serif;
+  font-size: 19px;
+  color: var(--foreground);
+  transition: border-color 0.15s;
+}
+
+.sheet :global(.field):focus,
+.sheet :global(.field):focus-visible {
+  outline: none;
+  border-bottom-color: var(--spot);
+  box-shadow: 0 2px 0 0 var(--spot);
+}
+
+.sheet :global(.field)::placeholder {
+  color: var(--muted);
+  font-style: italic;
+  opacity: 0.85;
+}
+
+/* "Forgot?" sits on the password label's row. */
+.sheet :global(.authlink).forgot {
+  font-size: 13.5px;
+}
+
+.error {
+  min-height: 22px;
+  margin: 14px 0 6px;
+}
+
+.sheet :global(.fieldError) {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--danger);
+}
+
+/* Pill buttons -------------------------------------------------------------- */
+.sheet :global(.button) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 48px;
+  padding: 0 28px;
+  border-radius: 999px;
+  font-size: 15px;
+  background: var(--primary);
+}
+
+.sheet :global(.button):hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.sheet :global(.button):disabled {
+  opacity: 0.45;
+}
+
+.back {
+  margin: 18px 0 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--foreground-2);
+}
+
+.sheet :global(.authlink) {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.sheet :global(.authlink):hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Turnstile (Cloudflare's own widget) keeps its own look; only spacing. */
+.turnstile {
+  margin-top: 22px;
+}
+
+/* Stand-alone sheets (reset page, email check) ----------------------------- */
+.standalone {
+  width: min(100%, 440px);
+  text-align: left;
+}
+
+.standalone .body {
+  padding: 34px 34px 32px;
+}
+
+.standalone .title {
+  font-size: 38px;
+}
+
+.standalone .subtitle {
+  margin: 8px 0 26px;
+  font-size: 15.5px;
+}
+
+/* Email check ------------------------------------------------------------- */
+.verifyPage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 56px 20px;
+}
+
+.verify {
+  text-align: center;
+}
+
+.verify .subtitle {
+  margin-bottom: 0;
+}
+
+.otp {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  margin: 28px 0 4px;
+}
+
+/* Sans digits, not the serif: EB Garamond's figures hang below the line. */
+.sheet :global(.otpCell) {
+  aspect-ratio: 0.86;
+  border: 1px solid rgb(var(--ink-rgb) / 0.28);
+  border-radius: 4px;
+  background: var(--background);
+  font-size: 26px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.sheet :global(.otpCell):focus {
+  border-color: var(--foreground);
+  box-shadow: inset 0 -2px 0 0 var(--spot);
+}
+
+.sheet :global(.otpCell):disabled {
+  opacity: 0.6;
+}
+
+.small {
+  margin: 16px 0 0;
+  font-size: 14.5px;
+  color: var(--foreground-2);
+}
+
+.sheet :global(.authlink):disabled {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-size: 14.5px;
+  color: var(--foreground-2);
+}
+
+@media (max-width: 720px) {
+  .verifyPage {
+    justify-content: flex-start;
+    padding-top: 44px;
+  }
+  .standalone .body {
+    padding: 28px 22px 26px;
+  }
+  .standalone .title {
+    font-size: 34px;
+  }
+  .otp {
+    gap: 8px;
+  }
+}

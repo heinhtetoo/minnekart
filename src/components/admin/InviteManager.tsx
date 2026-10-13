@@ -1,13 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import styles from './Admin.module.css';
 import { invitesApi } from './api';
 
 export default function InviteManager() {
   const router = useRouter();
+  const noteId = useId();
   const [note, setNote] = useState('');
   const [link, setLink] = useState('');
   const [busy, setBusy] = useState(false);
@@ -39,13 +40,19 @@ export default function InviteManager() {
   return (
     <section className={styles.card}>
       <div className={styles.form}>
-        <input
-          className={styles.noteInput}
-          placeholder="Note (optional) — e.g. for Sofia"
-          value={note}
-          maxLength={100}
-          onChange={(event) => setNote(event.target.value)}
-        />
+        <div className={styles.noteField}>
+          <label className={styles.label} htmlFor={noteId}>
+            Note (optional)
+          </label>
+          <input
+            id={noteId}
+            className={styles.noteInput}
+            placeholder="e.g. for Sofia"
+            value={note}
+            maxLength={100}
+            onChange={(event) => setNote(event.target.value)}
+          />
+        </div>
         <button
           type="button"
           className={styles.generateButton}
@@ -57,28 +64,42 @@ export default function InviteManager() {
       </div>
 
       {link ? (
-        <>
-          <p className={styles.hint}>
+        <div className={styles.linkBox}>
+          <p className={styles.linkHint}>
             Copy this link now — it won’t be shown again.
           </p>
           <div className={styles.linkRow}>
-            <input className={styles.linkInput} readOnly value={link} />
+            <input
+              className={styles.linkInput}
+              readOnly
+              value={link}
+              aria-label="Invite link"
+            />
             <button
               type="button"
-              className={styles.copyButton}
+              className={
+                copied
+                  ? `${styles.copyButton} ${styles.copied}`
+                  : styles.copyButton
+              }
               onClick={copyLink}
             >
               {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
-        </>
+        </div>
       ) : (
         <p className={styles.hint}>
           Invites expire in 14 days and can be used once.
         </p>
       )}
 
-      {error && <p className={styles.error}>{error}</p>}
+      {/* Announces "Copied" and the error to screen readers; the error also
+          shows here. */}
+      <div aria-live="polite">
+        {copied && <span className={styles.srOnly}>Copied</span>}
+        {error && <p className={styles.error}>{error}</p>}
+      </div>
     </section>
   );
 }

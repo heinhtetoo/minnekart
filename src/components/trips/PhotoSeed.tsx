@@ -1,5 +1,7 @@
 'use client';
 
+import NavIcon from '@/components/nav/navIcons';
+
 import styles from './TripForm.module.css';
 
 export default function PhotoSeed({
@@ -24,10 +26,15 @@ export default function PhotoSeed({
   onUseLocation: () => void;
 }) {
   return (
-    <div className={styles.seed}>
-      {preview && (
+    <div className={styles.seed} data-picked={Boolean(fileName)}>
+      {/* An empty print slot until a photo is picked, then the photo as a print. */}
+      {preview ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img className={styles.seedPreview} src={preview} alt="" />
+      ) : (
+        <span className={styles.seedSlot} aria-hidden="true">
+          <NavIcon name="photo" size={26} strokeWidth={1.5} />
+        </span>
       )}
 
       <div className={styles.seedBody}>

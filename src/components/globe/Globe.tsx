@@ -39,6 +39,9 @@ interface GlobeProps {
   showGraticule?: boolean;
   onSelect?: (id: string) => void;
   focusId?: string | null;
+  // Read-only: reports the zoom factor (1 = at rest, MAX_ZOOM = fully in)
+  // whenever it changes, so the page can step back as the globe grows.
+  onZoom?: (zoom: number) => void;
   width?: number;
   height?: number;
 }
@@ -52,10 +55,15 @@ const IDLE_RESUME_MS = 5000;
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2.2;
+// For callers that size the canvas from the radius they want at rest: the
+// globe fills min(width, height) / 2 - 20 only at MAX_ZOOM.
+export const GLOBE_MAX_ZOOM = MAX_ZOOM;
 
 const PIN_RADIUS = 11;
 const PIN_HOVER_RADIUS = 14;
 const PIN_HALO_RADIUS = 20;
+// Outer edge of the atmosphere glow, as a multiple of the globe's radius.
+const ATMOSPHERE = 1.22;
 
 export default function Globe({
   pins,
@@ -65,12 +73,14 @@ export default function Globe({
   showGraticule = true,
   onSelect,
   focusId = null,
+  onZoom,
   width = 540,
   height = 480,
 }: GlobeProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const pinsRef = useRef(pins);
   const selectRef = useRef(onSelect);
+  const zoomRef = useRef(onZoom);
   const focusIdRef = useRef(focusId);
   const appliedFocusRef = useRef<string | null>(focusId);
   const apiRef = useRef<GlobeApi | null>(null);
@@ -81,6 +91,7 @@ export default function Globe({
   useEffect(() => {
     pinsRef.current = pins;
     selectRef.current = onSelect;
+    zoomRef.current = onZoom;
     focusIdRef.current = focusId;
   });
 
@@ -112,8 +123,24 @@ export default function Globe({
     const defs = svg.append('defs');
     appendVignette(defs, defsPrefix);
     appendShadowFilter(defs, defsPrefix);
+    const atmosphere = appendAtmosphere(
+      defs,
+      defsPrefix,
+      width / 2,
+      height / 2,
+    );
 
     const root = svg.append('g');
+    // A soft glow past the limb, so a globe that outgrows its section fades
+    // into the page instead of ending on a hard edge.
+    root
+      .append('circle')
+      .attr('class', 'atmosphere')
+      .attr('cx', width / 2)
+      .attr('cy', height / 2)
+      .attr('r', view.scale * ATMOSPHERE)
+      .attr('fill', `url(#${defsPrefix}-atmosphere)`)
+      .attr('pointer-events', 'none');
     root
       .append('ellipse')
       .attr('class', 'shadow')
@@ -121,7 +148,7 @@ export default function Globe({
       .attr('cy', height / 2 + base * 0.9)
       .attr('rx', base * 0.86)
       .attr('ry', base * 0.11)
-      .attr('fill', 'rgb(var(--primary-rgb) / 0.22)')
+      .style('fill', 'rgb(var(--shadow-rgb) / 0.22)')
       .attr('filter', `url(#${defsPrefix}-shadow)`);
     root
       .append('circle')
@@ -170,9 +197,17 @@ export default function Globe({
       .attr('pointer-events', 'none');
     const pinLayer = root.append('g').attr('class', 'pins');
 
+    let reportedScale = NaN;
+
     function redraw() {
       projection.scale(view.scale).rotate(view.rotation);
       const r = view.scale;
+      if (r !== reportedScale) {
+        reportedScale = r;
+        atmosphere.attr('r', r * ATMOSPHERE);
+        svg.select('.atmosphere').attr('r', r * ATMOSPHERE);
+        zoomRef.current?.(r / base);
+      }
       svg
         .select('.shadow')
         .attr('rx', r * 0.86)
@@ -241,6 +276,8 @@ export default function Globe({
         const point = projection([pin.lng, pin.lat]);
         if (!point) continue;
         const fills = ensurePinFills(pin);
+        const focused = pin.id === appliedFocusRef.current;
+        const radius = focused ? PIN_RADIUS * 1.25 : PIN_RADIUS;
 
         // One group per pin, so hover can grow the whole face without having
         // to work out which circles belong together.
@@ -254,13 +291,16 @@ export default function Globe({
             .style('fill', fill)
             .attr('pointer-events', 'none');
 
-        circle(PIN_HALO_RADIUS, accent).style('fill-opacity', 0.2);
+        circle(
+          focused ? PIN_HALO_RADIUS * 1.45 : PIN_HALO_RADIUS,
+          accent,
+        ).style('fill-opacity', focused ? 0.3 : 0.2);
         // The gradient sits under the photo rather than beside it, so a
         // thumbnail that is still loading — or whose signed URL has expired
         // after its hour — falls back on its own with no error handling.
-        circle(PIN_RADIUS, fills.base).attr('class', 'pin-face');
+        circle(radius, fills.base).attr('class', 'pin-face');
         if (fills.photo) {
-          circle(PIN_RADIUS, fills.photo).attr('class', 'pin-face');
+          circle(radius, fills.photo).attr('class', 'pin-face');
         }
 
         const setRadius = (radius: number) =>
@@ -271,10 +311,11 @@ export default function Globe({
           .attr('class', 'pin-ring')
           .attr('cx', point[0])
           .attr('cy', point[1])
-          .attr('r', PIN_RADIUS)
+          .attr('r', radius)
           .attr('fill', 'none')
-          .style('stroke', COLORS.stroke)
-          .attr('stroke-width', 2)
+          // The focused pin wears the spot colour, matching its list row.
+          .style('stroke', focused ? accent : COLORS.stroke)
+          .attr('stroke-width', focused ? 3 : 2)
           // fill is none, so without this only the 2px stroke would be
           // clickable rather than the whole face.
           .attr('pointer-events', 'all')
@@ -285,7 +326,7 @@ export default function Globe({
             focusPin(pin);
           })
           .on('mouseenter', () => setRadius(PIN_HOVER_RADIUS))
-          .on('mouseleave', () => setRadius(PIN_RADIUS));
+          .on('mouseleave', () => setRadius(radius));
       }
     }
 
@@ -521,6 +562,30 @@ function appendVignette(defs: any, prefix: string) {
     .append('stop')
     .attr('offset', '100%')
     .attr('stop-color', GLOBE_VIGNETTE.outer);
+}
+
+function appendAtmosphere(defs: any, prefix: string, cx: number, cy: number) {
+  const inner = 1 / ATMOSPHERE;
+  const gradient = defs
+    .append('radialGradient')
+    .attr('id', `${prefix}-atmosphere`)
+    .attr('gradientUnits', 'userSpaceOnUse')
+    .attr('cx', cx)
+    .attr('cy', cy);
+  gradient
+    .append('stop')
+    .attr('offset', inner)
+    .style('stop-color', 'var(--atmo-1)');
+  gradient
+    .append('stop')
+    .attr('offset', inner + (1 - inner) * 0.35)
+    .style('stop-color', 'var(--atmo-2)');
+  gradient
+    .append('stop')
+    .attr('offset', 1)
+    .attr('stop-color', '#000')
+    .attr('stop-opacity', 0);
+  return gradient;
 }
 
 function appendShadowFilter(defs: any, prefix: string) {
