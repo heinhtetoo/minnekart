@@ -241,6 +241,9 @@
 /* Stacked: tablets and phones ---------------------------------------------- */
 @media (max-width: 1100px) {
   .card {
+    /* Above the globe (z-index 10), as .cardSlot keeps it on desktop: stacked,
+       the slot is display: contents and can't. */
+    z-index: 30;
     max-width: 560px;
     /* Overlaps the lower globe, just under the chosen pin at its centre. */
     margin: calc(28px - var(--radius)) auto 24px;
