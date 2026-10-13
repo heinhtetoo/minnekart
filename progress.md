@@ -1680,7 +1680,7 @@ blocking Tier 2 work:
       on the `dev` preview rather than assuming, since Neon's pooled connection
       may already make the session lookup cheap enough not to matter.
       Performance work, not GEO work — ranking does not depend on it.
-- [ ] **35. Apply the Phase 2 redesign (P0 + P1)** _(13 October 2026)_.
+- [x] **35. Apply the Phase 2 redesign (P0 + P1)** _(13 October 2026)_.
       The Dusk rebrand and the screen-by-screen redesign, built and locked in a
       private copy of this repo (baseline `dev` at `261eaa9`), move here. P0 is
       the token layer (Haze light, Nightfall dark), the Rune M wordmark,
@@ -1715,11 +1715,22 @@ blocking Tier 2 work:
         9, 11 and 12 fail only the checks that switch env vars mid-run, which
         a production server reads once at start; screen 13's two failures
         are task 36, which the original code shows too
-  - [ ] PR into `dev`, then preview QA. Photos copied from prod don't load on
+  - [x] PR into `dev`, then preview QA. Photos copied from prod don't load on
         the preview (bucket isolation, task 33), so the photo checks use a
-        test account's own uploads
-  - [ ] Safari (macOS, iOS), Firefox and Android Chrome checks, in both themes
-  - [ ] Release `dev → main`; production smoke test
+        test account's own uploads. Merged as #18; the checklist lives on #19.
+        Preview testing found one bug: on tablet and phone, choosing a place
+        on a public globe left the postcard behind the zoomed-in globe, hidden
+        and unclickable. It dated from the screen's build: stacked, the
+        postcard's slot is `display: contents`, so its `z-index` was lost
+        under the globe anchor's 10. Fixed in `fa0751f` (#20) by giving the
+        stacked postcard `z-index: 30`, the layer the slot gives it on
+        desktop. The screen checks, which had tested that it was in view and
+        focused but never that it was on top, now hit-test it as well
+  - [x] Real-browser checks by hand on the preview: Safari on macOS, Chrome
+        on Android and Edge on Windows
+  - [x] Release `dev → main`; production smoke test. Released as #19
+        (`main` at `8191003`, 13 October 2026); the production smoke test
+        passed
 - [ ] **36. Admin invite list doesn't refresh in production builds**
       _(found 13 October 2026, while testing task 35)_. On `/admin`,
       Generate invite and Revoke both succeed (the row is written or
