@@ -1701,16 +1701,36 @@ blocking Tier 2 work:
       Plan: three commits, each from its locked snapshot: P0; P1 screens
       1–13; the tidy-up.
   - [x] Pre-flight: `dev` still at `261eaa9`; `main` matches `dev`
-  - [ ] Branch `redesign/p1` from `dev`; commit P0, P1, tidy-up
-  - [ ] Prove the port: branch `src` equals the locked snapshot apart from
-        the excluded files; lint, format, typecheck and tests green
-  - [ ] Local production build (`next build`); style comparison and the 13
-        screen checks against it
+  - [x] Branch `redesign/p1` from `dev`; commit P0, P1, tidy-up
+  - [x] Prove the port: branch `src` equals the locked snapshot apart from
+        the excluded files; lint, format, typecheck and tests green. Each
+        commit passes the gates on its own (455 tests after P0, 458 after)
+  - [x] Local production build (`next build`); style comparison and the 13
+        screen checks against it. The branch builds as committed. Against a
+        production build (with the copy's test pages and data added outside
+        the repo), all 188 views match the locked screens: the only
+        differences are the minifier writing `background: none` as
+        `0px 0px`, React id names, and the globe settling a fraction of a
+        degree differently. Screen checks: screens 1–8 and 10 pass in full;
+        9, 11 and 12 fail only the checks that switch env vars mid-run, which
+        a production server reads once at start; screen 13's two failures
+        are task 36, which the original code shows too
   - [ ] PR into `dev`, then preview QA. Photos copied from prod don't load on
         the preview (bucket isolation, task 33), so the photo checks use a
         test account's own uploads
   - [ ] Safari (macOS, iOS), Firefox and Android Chrome checks, in both themes
   - [ ] Release `dev → main`; production smoke test
+- [ ] **36. Admin invite list doesn't refresh in production builds**
+      _(found 13 October 2026, while testing task 35)_. On `/admin`,
+      Generate invite and Revoke both succeed (the row is written or
+      revoked in the database), but the list on screen doesn't change until
+      the page is reloaded. Only in a production build (`next build` +
+      `next start`); `next dev` refreshes as expected, which is why it went
+      unnoticed. The original `dev` code (`261eaa9`) does the same, so it
+      predates task 35. Both components call `router.refresh()` after a
+      successful request; the next step is finding out why that doesn't
+      re-render the server-fetched list in production. Owner-only, and
+      reloading works around it.
 - Globe auto-spin as a `/settings` toggle _(BACKLOG, idea)_. Task 27 makes the
   spin follow the OS `prefers-reduced-motion` preference, which is the right
   default. An in-app toggle would go further: stop the spin without changing an
