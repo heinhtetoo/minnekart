@@ -171,6 +171,35 @@ export const webhookEvents = pgTable('webhook_events', {
     .defaultNow(),
 });
 
+// Append-only history of plan changes. `users.plan` is current state only, so
+// without this "how long did someone take to upgrade" is unanswerable — and
+// unanswerable retrospectively, since the data to reconstruct it never existed.
+//
+// A separate table rather than a column on `users`: nothing in the session path
+// selects this, so a deploy that lands before the migration degrades to "the
+// webhook can't append" instead of failing every authenticated request.
+export const planEvents = pgTable(
+  'plan_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    // CASCADE is load-bearing: deleteAccount() issues a single DELETE FROM
+    // users and relies on it. A restricting FK here would block self-serve
+    // account deletion, exactly as invites.used_by once did.
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    // Null when the previous plan wasn't known at the time of writing.
+    fromPlan: userPlan('from_plan'),
+    toPlan: userPlan('to_plan').notNull(),
+    // Where the change came from, e.g. 'webhook'.
+    reason: text('reason').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('plan_events_user_id_idx').on(table.userId)],
+);
+
 export const rateLimits = pgTable(
   'rate_limits',
   {

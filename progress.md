@@ -1133,8 +1133,8 @@ blocking Tier 2 work:
       looked conspicuously modern. Against the dark sea they read as a crisp
       highlight — the terracotta pops where before it competed with a mid-tone
       sea. The pin redesign no longer has to fight the palette.
-- [ ] **27. Globe does not auto-spin on Android Chrome** _(fix shipped to `dev`
-      7 August 2026; OPEN pending iOS)_. The
+- [x] **27. Globe does not auto-spin on Android Chrome**
+      _(13 August 2026)_. The
       globe sat still on a phone until you dragged it. Not a
       mystery — `Globe.tsx:428` skipped the idle spin whenever
       `matchMedia('(pointer: coarse)')` matches, so it is off on **every** touch
@@ -1222,13 +1222,20 @@ blocking Tier 2 work:
       synthetic `MouseEvent` with no `view`, which d3-drag reads to bind its
       move/up listeners, so no drag ever started.
       **Confirmed working on Android Chrome** on the `dev` preview (7 August
-      2026). **Still open: iOS Safari has not been tested**, which is the whole
-      reason the guard existed — emulated coarse pointers prove the branching,
-      not that WebKit's tap dispatch survives a spinning globe. Two things to
-      check before ticking this: the logged-out sign-in taps have not regressed,
-      and the logged-in home's pin list and bottom nav respond on the first tap
-      while the globe turns. If either is flaky, the fallback is one line —
-      `spinOnTouch={false}` on `LoggedInHome` too.
+      2026).
+      **Closed on iOS Safari, 13 August 2026.** This was the check that
+      mattered, because it is the one thing emulation could not stand in for:
+      coarse-pointer emulation proves the branching, not that WebKit's tap
+      dispatch survives a globe actually spinning. Verified in three parts, and
+      the first two are separate cases that are easy to conflate — the
+      logged-out home is the page carrying `spinOnTouch={false}`, so its globe
+      is **still**, and taps working there only proves the original
+      tap-starvation bug has not returned. What the change actually did was
+      switch the spin back **on** for the other two pages, so those had to be
+      tested under a turning globe: the logged-in home's pin list and bottom
+      nav, and `/u/<username>` including tapping a pin to open the peek panel.
+      All three first-touch, no repeats. The `spinOnTouch={false}` fallback on
+      `LoggedInHome` is not needed.
 
 ### Tier 4 — hygiene / post-PMF
 
@@ -1353,7 +1360,8 @@ blocking Tier 2 work:
       typecheck, 400 tests, build, and `/trip/new` serving 200 in dev.
       **Not verified by a human in a browser** — the photo-pick flows in the
       plan's manual pass need a real device and a logged-in session.
-- [ ] **30. Optimise for AI answer engines and search (GEO/SEO).** Task 9 built
+- [x] **30. Optimise for AI answer engines and search (GEO/SEO)**
+      _(11 August 2026)_. Task 9 built
       the base layer — `/guides` hub-and-spoke, branded OG cards, per-page
       `metadata`, sitemap, robots. This is the layer above it, aimed at being
       **quoted** by ChatGPT, Claude, Perplexity and AI Overviews rather than
@@ -1425,7 +1433,57 @@ blocking Tier 2 work:
       budget, but fixing it means splitting the viewer-dependent nav out so the
       shell can be static. Real refactor risk for a performance win, not a GEO
       one. Its own task if it is worth doing.
-- [ ] **31. Analytics — measure the product without breaking the promise.**
+      **Shipped as four commits** (`07cccd1`, `76a30e2`, `c457ba3`,
+      `210f07c`), 437 tests green, no schema or migration.
+      **A.** `robots.ts` now splits crawlers by purpose. The trap worth
+      remembering: a crawler obeys exactly one group — its most specific
+      `User-agent` match — and inherits nothing from `*`, so the citation group
+      has to repeat the private-route disallow list or naming those bots
+      _grants_ them what the catch-all keeps out. Tests pin that inversion, and
+      the rendered `robots.txt` was read group by group rather than trusted
+      from source. Canonicals added everywhere (the home page's `?invite=` /
+      `?signup=` were splitting signals); `sitemap.ts` stopped claiming every
+      page changed on every deploy, with the two guide dates moved into a new
+      `src/lib/seo/guides.ts` so the sitemap and `Article` schema read one
+      source.
+      **B.** JSON-LD via pure builders in `src/lib/seo/schema.ts`. `offers`
+      generate from the same `pricingTiers()` the page renders — verified both
+      ways, with and without `PADDLE_PRICE_LIFETIME`, so schema can never
+      advertise a tier the page hides.
+      **The bug worth recording**: the first version emitted a bare top-level
+      array where a page had several entities. Valid JSON-LD, badly supported —
+      a consumer reading `parsed['@context']` gets `undefined` on an array and
+      throws, which it did, in the browser console on a dev run. The `curl`
+      checks had confirmed the content was correct and never that it was
+      _consumable_; reading valid-looking JSON is not the same as checking
+      something can parse it. Now `jsonLdDocument()` builds a real document —
+      one top-level `@context`, `@graph` for several entities, a lone entity
+      inlined.
+      **C — verification first, and it found more than expected.** Four
+      inaccuracies on live pages, three of them corrected in `07cccd1`:
+      `/privacy` claimed the capture date was "the one thing we read" from EXIF
+      (untrue since task 10 added GPS pin suggestions); `/privacy` and both
+      guides described the share link as the only path to visibility, omitting
+      the two-switch public globe; `/terms` still said deletion was email-only,
+      contradicting `/privacy`, which task 12b had already updated.
+      **And we had mischaracterised Polarsteps.** The guide called them "a
+      public trip profile"; their own support docs say the default is
+      **Followers**, with "Only me" and "Public" as the alternatives, and the
+      live dot is hideable. Overstating a competitor's publicness on a page
+      whose entire argument is a privacy contrast is the one claim a reader
+      would check. Reframed to social-vs-solitary — accurate, and a sharper
+      contrast anyway, since the real difference is that they are built around
+      an audience and we have no social graph at all.
+      Then the content: a five-row table (each row traceable to their docs,
+      with a dated "checked on" note, and the planned EXIF row **dropped**
+      because their EXIF handling was never verified and an unsourced
+      competitor claim is not worth a row), and six FAQ answers cross-checked
+      against `/terms`, `/privacy` and `/refunds`. `ContentPage.module.css` had
+      no table styles; the table scrolls in its own wrapper, verified in
+      headless Chromium at 360px — 520px table in a 320px container, document
+      still 360 and not scrolling sideways.
+- [x] **31. Analytics — measure the product without breaking the promise**
+      _(12 August 2026)_.
       **The constraint comes first, because it rules out most of the market.**
       The site publishes "no analytics" in six places, and `/privacy` makes it
       specific and checkable: "There is no Google Analytics, no pixel, no
@@ -1438,25 +1496,62 @@ blocking Tier 2 work:
       is not a candidate at all.
       **What that leaves is better than it sounds**, because most of what is
       worth knowing is already in Postgres and needs no new collection.
-      **Part 1 — product metrics from data we already hold.** Activation (share
-      of signups adding a first trip within 24h), how many users reach the
-      `FREE_TRIP_LIMIT` of 15 and what share of those upgrade, free-to-paid
-      conversion and time to convert, median trips and photos per user, 30-day
-      retention. All of it is SQL over `users`, `sessions`, `trips` and
-      `photos`, joined to `users.plan` for revenue. Advantages a hosted tool
-      cannot match: exact rather than sampled, **retrospective** — the rows were
-      always there, so a question asked today can look at last March, where a
-      tracker only answers what it was configured for in advance — and
-      identity-resolved without sending anyone's identity anywhere. Ship it as
-      saved SQL first; a card in `/admin` (which already has the owner gate and
-      `InviteManager` to copy) only if it earns the upkeep.
-      **Part 2 — Google Search Console for acquisition.** Free, verified by DNS
-      record or HTML file, and it runs **no code on the site** — it reports
-      Google's own index data rather than watching visitors, so the published
-      claim stays true. Gives search queries, impressions, clicks, average
-      position and index coverage per page. This is the feedback loop task 30
-      needs; without it the JSON-LD and the guides ship with no way to tell
-      whether they worked.
+      **Part 1 — product metrics, shipped as a tested library, not saved SQL.**
+      The task originally said "ship it as saved SQL first" — deviated on
+      purpose, because a metric nobody can verify is worse than none, and the
+      repo already has the integration-test harness to prove each one against
+      seeded rows. `src/lib/metrics/queries.ts` + `npm run metrics`
+      (`scripts/metrics.ts`, following `create-invite.ts`'s pattern). Reports
+      plan mix, activation (first memory within 24h), free-ceiling pressure,
+      median trips/photos per user, activity retention, and conversion.
+      **A real bug the tests caught, not just exercised.** Three metrics
+      (`depth`, `activityRetention`) failed on first run with medians and
+      counts of zero. Cause: Drizzle qualifies column names for tables in the
+      query's FROM/JOIN graph, but a table referenced only inside a raw `sql`
+      subquery gets **bare** names — so `trips.userId = users.id` rendered as
+      `"user_id" = "id"`, both resolving to `trips`, silently comparing the
+      table to itself. No error, just a confidently wrong number. Fixed by
+      rewriting both as joined derived tables instead of correlated
+      subqueries; `activation`, `capPressure`, `planMix` and `conversion` were
+      checked and were already correctly qualified. This is the argument for
+      tested code over a `.sql` file settled in code, not in principle — a
+      plain script would have shipped the bug.
+      **Conversion needed a schema addition the task hadn't scoped**:
+      `users.plan` is current state only, so "time to convert" was
+      uncomputable from anything stored. New `plan_events` table
+      (`id, user_id, from_plan, to_plan, reason, created_at`), appended by
+      `updateBilling` in `src/lib/billing/webhook.ts` — **only on an actual
+      plan change**, tested explicitly: `past_due` keeps a user paid and must
+      not manufacture a conversion, `canceled` does record one. A table, not a
+      `users` column: nothing in the session path selects it, so a deploy
+      landing before the migration degrades to "the webhook can't append" for
+      a moment rather than the outage a new `users` column causes. `user_id`
+      is `ON DELETE CASCADE`, with a dedicated test — this is task 12b's
+      `invites.used_by` bug, and a new FK referencing `users` is exactly where
+      it would come back.
+      **Migration `0002`'s grandfathered cohort would have flattered every
+      number computed carelessly.** It backfilled every pre-existing user to
+      `paid`; they never made a decision. `planMix` reports them as their own
+      segment, and `conversion`'s denominator excludes them explicitly, with a
+      test asserting the exclusion.
+      **Three places the report refuses to print a misleading number.**
+      Grandfathered accounts are labelled, not folded into "paid". Retention is
+      labelled activity, not logins — `sessions` renews in place on a sliding
+      30-day expiry and deletes logged-out rows, so it cannot answer "did they
+      come back"; creating a memory or photo can. And an empty `plan_events`
+      prints "no plan changes recorded yet", never `0%` — a confident wrong
+      number is the actual failure mode for a metrics tool, more than a
+      missing one.
+      **Part 2 — Google Search Console, verified 12 August 2026.** DNS TXT
+      record on a Domain property (covers apex, `www`, and both protocols in
+      one verification; also the only method a Domain property offers, which
+      is the point — no token committed to the public repo, no route to
+      serve it). Sitemap submitted. This is the feedback loop task 30 needed —
+      without it the JSON-LD and the guides ship with no way to tell whether
+      they worked.
+      Docs in `docs/OPS.md` § Measuring the product. 455 tests green (18 new),
+      gates clean, no schema surprise: `plan_events` is additive, generated via
+      `drizzle-kit generate`, checked into `drizzle/0007_clumsy_ultimates.sql`.
       **The blind spot, stated honestly.** Neither part can see anyone who
       visited and left without signing up, which is most people. Non-search
       referrals — Reddit, a newsletter, an AI engine's citation link — are
@@ -1508,15 +1603,83 @@ blocking Tier 2 work:
       the true orphan was flagged and then removed), and a real upload
       through `/trip/new` on the `dev` preview confirmed the happy path is
       unchanged.
-- [ ] **33. R2 API token scope isn't documented or asserted.** `docs/OPS.md`'s
-      R2 section (§ Object storage) covers the CORS policy and the SDK
-      checksum footgun but never states the token must be scoped to **Object
-      Read & Write on the one bucket**, not account-wide R2 access. Cloudflare's
-      token UI does not default to least privilege, so a token minted without
-      reading this carefully can end up with reach beyond the app's own bucket.
-      Add the scoping instruction to the setup checklist and verify the
-      currently-live prod and dev tokens against it in the Cloudflare
-      dashboard — a docs + ops check, no code change.
+      **Correction, found running it on the real box (11 August 2026).** The
+      script claimed psql was "already required by the other two scripts" —
+      true of `rclone`, not psql; the OCI box has no native postgres client.
+      Fixed to match `backup-neon.sh`'s own pattern instead of assuming a
+      dependency that wasn't there: the DB query now runs inside a disposable
+      `postgres:18` container (`DATABASE_URL` forwarded by reference via `-e`,
+      expanded inside the container by a single-quoted `sh -c` so the secret
+      never touches the host's own process list), rather than requiring a
+      native client install. First real run on the box came back clean —
+      connected to the real bucket and the real Neon database, reported "no
+      orphaned photos found". Installed on the OCI cron at 03:45
+      (`DRY_RUN=true`, staggered after both backups) — staying in dry-run for
+      a few nights and watching `logs/reap.log` before flipping to
+      `DRY_RUN=false`, rather than trusting unattended deletion against real
+      data on the first pass.
+- [x] **33. R2 API token scope isn't documented or
+      asserted** _(11 August 2026)_. The R2 section of `docs/OPS.md` covered
+      the CORS policy and the SDK checksum footgun but never said what
+      **permissions** a token should carry. Cloudflare's token UI does not default to least privilege —
+      "Admin Read & Write" across every bucket is two clicks away and looks
+      unremarkable — so a token minted without guidance can reach far beyond
+      the one bucket the app needs.
+      **Split into four scoped tokens**, one per consumer, each Object-level
+      (never Admin — `R2Storage` only issues `PutObject`, `GetObject`,
+      `HeadObject`, `DeleteObject`) and each applied to a single bucket:
+      `minnekart-app-prod` (RW, prod) and `minnekart-app-preview` (RW,
+      `minnekart-dev`) in the matching Vercel scopes, `minnekart-backup-ro`
+      (**read only**, prod) and `minnekart-reap-rw` (RW, prod) on the OCI box.
+      The one that matters is app-preview: a Preview deploy holding a
+      prod-capable token can delete production photos — the same env-scoping
+      landmine the audit checklist already flags for `DATABASE_URL`, one layer
+      down. Separate tokens make it impossible at the credential level rather
+      than by convention. The backup token is read-only deliberately: a backup
+      job that can write is a backup job that can destroy what it backs up.
+      **Docs**: § Object storage gained an "API token scope" item with the
+      four-token table, a new § Verifying token scope with negative `rclone`
+      probes, and a note that rotating invalidates outstanding presigned URLs
+      (1h signature, ~30min cache in `src/lib/photos/sign.ts`) so already-
+      rendered pages lose images until reload — done now precisely because
+      that costs nothing pre-launch. Env-var rows, the prod-vs-preview audit
+      checklist and the `backup.env` comments all updated to match.
+      **Verified on the real credentials**: prod key cannot reach the dev
+      bucket and the preview key cannot reach prod, each confirmed by hand;
+      backup token read-only and both box tokens prod-scoped, confirmed at
+      mint time; Vercel redeployed after each env change. Surfaced en route
+      that preview photos for rows copied from prod now fail to load — the
+      expected and correct consequence of real bucket isolation, since the
+      Neon `dev` branch is copy-on-write off prod and carries photo rows whose
+      objects only exist in the prod bucket. No code change: token scope is a
+      Cloudflare-side property, invisible to `src/lib/storage/r2.ts`.
+- [ ] **34. Public pages are all `force-dynamic`, so nothing is CDN-cached.**
+      Noted while auditing for task 30 and deliberately left out of it. **Eight
+      public pages** carry `export const dynamic = 'force-dynamic'`:
+      `/about`, `/pricing`, `/privacy`, `/terms`, `/refunds`, `/guides` and
+      both guide articles. (`/profile` has it too, but that one is
+      logged-in-only and legitimately dynamic — not part of this.)
+      **Why they're dynamic**: each calls `getServerSessionUser()` to decide
+      whether `ContentPage` renders `TopNav` or `PublicChrome`. That reads
+      cookies, which forces dynamic rendering whether or not the export is
+      there — so deleting the line alone changes nothing.
+      **What it costs**: every crawler hit does a DB session lookup for a page
+      whose content is identical for every signed-out visitor, and nothing sits
+      on the CDN. That is worst exactly where it matters most now — these are
+      the pages task 30 just spent its effort making quotable, and they are the
+      slowest ones we serve. Bad for TTFB, and crawl budget is finite.
+      **The fix is a real refactor, which is why it isn't a one-liner**: the
+      viewer-dependent chrome has to come out of the static shell. Either the
+      nav becomes a client component hydrating from `/api/auth/me`, or it sits
+      behind a Suspense boundary so the shell prerenders and only the nav
+      streams. Next 16's Partial Prerendering is the obvious thing to evaluate
+      first, since it is built for this exact shape. Watch the logged-out flash
+      of the wrong nav in either approach — that trade is the whole design
+      question.
+      Worth measuring before committing to it: check the actual TTFB difference
+      on the `dev` preview rather than assuming, since Neon's pooled connection
+      may already make the session lookup cheap enough not to matter.
+      Performance work, not GEO work — ranking does not depend on it.
 - Globe auto-spin as a `/settings` toggle _(BACKLOG, idea)_. Task 27 makes the
   spin follow the OS `prefers-reduced-motion` preference, which is the right
   default. An in-app toggle would go further: stop the spin without changing an
@@ -1528,6 +1691,38 @@ blocking Tier 2 work:
   whether anyone actually wants the override. The settings row is also the only
   place a "following your system Reduce Motion setting" explanation belongs —
   task 27 deliberately keeps it off the globe itself.
+- Metrics dashboard on `/admin` _(BACKLOG, idea — parked 12 August 2026)_.
+  Task 31 shipped `collectMetrics()` and `npm run metrics`, and deliberately
+  stopped short of a UI. Rendering today's numbers as a card is genuinely
+  small — the data layer is done and tested, `/admin` already has the owner
+  gate and `AppPage`, and `StatCell` is close to the display pattern. Call it
+  half a day.
+  **The cost is not in the card, it is in trends.** Every query returns a
+  point-in-time scalar, so a card would show "27% activation" with no sense of
+  direction — barely better than the CLI. Charting means bucketed
+  (`date_trunc`) queries, each needing its own tests, a date-range concept
+  threaded through, and rendering: there is **no chart library** in the
+  project and only `d3-geo`/`d3-drag`/`d3-selection` (no `d3-scale`,
+  no `d3-shape`), so it is either a new dependency in a repo that is
+  deliberately spare about them, or hand-rolled SVG. Several days, not hours.
+  **Two frictions worth knowing before starting.** The repo has no component
+  tests (`environment: 'node'`, no jsdom), so only extracted pure formatting
+  would be testable — the same trade every UI here already makes. And the
+  queries would move onto a request path: `collectMetrics()` currently awaits
+  six queries **sequentially**, so that is six Neon round trips per render,
+  and the percentile and group-by queries do full table scans. Trivial to fix
+  with `Promise.all` and irrelevant at current size, but it becomes a problem
+  quietly rather than loudly.
+  **The trigger for revisiting**: once `plan_events` has enough rows that
+  conversion and time-to-convert stop returning null. That is the point trends
+  exist, which is the point a UI beats a text report. Before then a dashboard
+  is a nicer-looking way to read the same zeros, and it invites daily checking
+  of numbers that cannot move yet.
+  **Cheap thing to consider first**: have the CLI append each run's numbers to
+  a snapshot table or JSON file. Costs almost nothing and means charts have
+  history to plot on day one — the same reasoning that made shipping
+  `plan_events` early worth it, since data only accumulates from the day you
+  start collecting it.
 - Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
   opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
   real usage data exists.

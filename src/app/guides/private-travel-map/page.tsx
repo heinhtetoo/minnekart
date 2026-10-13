@@ -2,21 +2,26 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import ContentPage from '@/components/layout/ContentPage';
+import JsonLd from '@/components/seo/JsonLd';
 import { getServerSessionUser } from '@/lib/auth/session-server';
+import { env } from '@/lib/env';
+import { guideBySlug, guidePath } from '@/lib/seo/guides';
+import { articleSchema, breadcrumbListSchema } from '@/lib/seo/schema';
 
 export const dynamic = 'force-dynamic';
 
-const DESCRIPTION =
-  'A private travel map keeps a record of everywhere you have been — for you, ' +
-  'not a public feed. Here is how to build one without live tracking or ads.';
+const guide = guideBySlug('private-travel-map');
 
 export const metadata: Metadata = {
   title: 'How to keep a private travel record · Minnekart',
-  description: DESCRIPTION,
+  description: guide.description,
+  alternates: { canonical: guidePath(guide) },
   openGraph: {
-    title: 'How to keep a private record of everywhere you have travelled',
-    description: DESCRIPTION,
-    type: 'website',
+    title: guide.headline,
+    description: guide.description,
+    type: 'article',
+    publishedTime: guide.datePublished,
+    modifiedTime: guide.dateModified,
   },
 };
 
@@ -29,6 +34,15 @@ export default async function PrivateTravelMapGuide() {
       eyebrow="Guide"
       title="How to keep a private record of everywhere you've travelled"
     >
+      <JsonLd
+        data={[
+          articleSchema(env().APP_URL, guide),
+          breadcrumbListSchema(env().APP_URL, [
+            { name: 'Guides', path: '/guides' },
+            { name: guide.headline, path: guidePath(guide) },
+          ]),
+        ]}
+      />
       <p>
         Most of us carry a map in our heads: the street where you got lost, the
         town you swore you&apos;d return to, the view that made the whole trip
@@ -77,16 +91,20 @@ export default async function PrivateTravelMapGuide() {
       <p>
         Minnekart is a globe you fill in after the fact. You drop a pin for each
         place, add a few words and the dates, and attach the photographs that
-        belong there. Everything is <strong>private by default</strong> — your
-        globe is yours until you choose to share a specific trip, and share
-        links can be revoked at any time.
+        belong there. Everything is <strong>private by default</strong>. Two
+        things can change that, and both stay off until you turn them on: a
+        share link for a single memory, revocable whenever you like, or a public
+        globe — which takes two switches, one to make the globe public and one
+        to mark a memory as shown on it.
       </p>
       <p>
         Photos are processed <strong>in your browser before they upload</strong>
         , which strips the embedded EXIF data — including the GPS coordinates
-        cameras quietly write into every shot. There are no ad trackers and no
-        analytics anywhere in the app, and Minnekart never builds a
-        live-location feature. You can read the specifics on the{' '}
+        cameras quietly write into every shot. The date and any coordinates are
+        read first, to suggest when and where a memory belongs, and kept only if
+        you accept the suggestion. There are no ad trackers and no analytics
+        anywhere in the app, and Minnekart never builds a live-location feature.
+        You can read the specifics on the{' '}
         <Link href="/privacy">privacy page</Link>.
       </p>
 

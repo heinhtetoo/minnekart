@@ -22,6 +22,9 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: 'Minnekart — your journeys, mapped',
   description: DESCRIPTION,
+  // This page takes `?invite=` and `?signup=`, so without a canonical each
+  // variant looks like a separate URL and the ranking signals split.
+  alternates: { canonical: '/' },
   openGraph: {
     title: 'Minnekart — your journeys, mapped',
     description: DESCRIPTION,

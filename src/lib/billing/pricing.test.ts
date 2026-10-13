@@ -36,6 +36,17 @@ describe('pricingTiers', () => {
     expect(priceOf('monthly')).toBe('$5');
     expect(priceOf('lifetime')).toBe('$99');
   });
+
+  // The numeric amount feeds schema.org `offers` while `price` feeds the
+  // visible page. Structured data that disagrees with the rendered price is
+  // read as a quality signal against the site, so the two are pinned together
+  // here rather than trusted to stay in step.
+  it('carries a numeric amount matching each display price', () => {
+    for (const tier of pricingTiers({ lifetime: true })) {
+      expect(tier.price).toBe(`$${tier.amount}`);
+      expect(tier.currency).toBe('USD');
+    }
+  });
 });
 
 describe('pricingCta', () => {

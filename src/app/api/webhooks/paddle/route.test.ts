@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { users, webhookEvents } from '@/db/schema';
+import { planEvents, users, webhookEvents } from '@/db/schema';
 
 import { POST } from './route';
 
@@ -314,5 +314,64 @@ describe('POST /api/webhooks/paddle', () => {
     );
     expect(response.status).toBe(200);
     expect((await userById(user.id)).plan).toBe('free');
+  });
+
+  // plan_events is what makes "how long did they take to upgrade" answerable;
+  // users.plan is current state only. It has to record real transitions and
+  // nothing else, or every conversion metric computed from it is fiction.
+  it('records a plan event when a subscription first activates', async () => {
+    const { user } = await createMember();
+
+    await POST(paddleWebhookRequest(subscriptionEvent({ userId: user.id })));
+
+    const events = await db.select().from(planEvents);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      userId: user.id,
+      fromPlan: 'free',
+      toPlan: 'paid',
+      reason: 'webhook',
+    });
+  });
+
+  it('records nothing when past_due leaves the user paid', async () => {
+    const { user } = await createMember();
+    await POST(paddleWebhookRequest(subscriptionEvent({ userId: user.id })));
+
+    // Paddle dunning keeps the plan paid. Appending here would invent a
+    // conversion that never happened.
+    await POST(
+      paddleWebhookRequest(
+        subscriptionEvent({
+          eventId: 'evt_sub_2',
+          status: 'past_due',
+          userId: user.id,
+        }),
+      ),
+    );
+
+    expect((await userById(user.id)).plan).toBe('paid');
+    expect(await db.select().from(planEvents)).toHaveLength(1);
+  });
+
+  it('records the downgrade when a subscription is cancelled', async () => {
+    const { user } = await createMember();
+    await POST(paddleWebhookRequest(subscriptionEvent({ userId: user.id })));
+    await POST(
+      paddleWebhookRequest(
+        subscriptionEvent({
+          eventId: 'evt_sub_3',
+          status: 'canceled',
+          userId: user.id,
+        }),
+      ),
+    );
+
+    const events = await db
+      .select()
+      .from(planEvents)
+      .orderBy(planEvents.createdAt);
+    expect(events).toHaveLength(2);
+    expect(events[1]).toMatchObject({ fromPlan: 'paid', toPlan: 'free' });
   });
 });
