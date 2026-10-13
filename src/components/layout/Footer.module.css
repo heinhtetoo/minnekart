@@ -1,6 +1,6 @@
 .footer {
-  background: #1c1917;
-  color: #a8a090;
+  background: var(--footer);
+  color: var(--on-footer);
 }
 
 .inner {
@@ -41,23 +41,23 @@
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #88807a;
+  color: var(--on-footer-muted);
   margin: 0 0 2px;
 }
 
 .link {
   font-size: 13px;
-  color: #a8a090;
+  color: var(--on-footer);
   transition: color 0.15s ease;
 }
 
 .link:hover {
-  color: #f4efe6;
+  color: var(--on-band);
 }
 
 .copy {
   font-size: 12px;
-  color: #88807a;
+  color: var(--on-footer-muted);
   margin: 0;
 }
 

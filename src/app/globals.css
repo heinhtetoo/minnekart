@@ -1,11 +1,140 @@
+/* Dusk palette. Light = Haze (default), dark = Nightfall (OS setting, or
+   <html data-theme="dark">). Components read roles, never raw colours.
+   *-rgb triplets exist so translucent lines and shadows can follow the theme:
+   rgb(var(--ink-rgb) / 0.08). */
 :root {
-  --background: #f4efe6;
-  --foreground: #1c1917;
-  --forest: #2c4e46;
-  --accent: #a55931;
-  --accent-soft: rgba(165, 89, 49, 0.16);
-  --muted: #756c5f;
-  --danger: #c0392b;
+  color-scheme: light;
+
+  --background: #efeaf0;
+  --bg-rgb: 239 234 240;
+  --surface: #ffffff;
+  --surface-2: #f7f4f8;
+  --segment: #e4dee6;
+
+  --foreground: #231a26;
+  --foreground-2: #463d4b;
+  --muted: #6c6273;
+  --ink-rgb: 35 26 38;
+  --shadow-rgb: 35 26 38;
+
+  --primary: #3e2442;
+  --primary-hover: #2e1a32;
+  --primary-rgb: 62 36 66;
+  --on-primary: #f3e9e2;
+  --brand-text: #3e2442;
+  --plum-2: #5a3a5f;
+
+  --band: #3e2442;
+  --on-band: #f3e9e2;
+  --on-band-muted: #cdb9c9;
+  --footer: #2a1b2d;
+  --on-footer: #c9bcc5;
+  --on-footer-muted: #9d8f99;
+
+  /* --accent is text-safe (4.8:1 on Haze); --accent-display is the bright
+     persimmon for large italics; --spot is the diamond and the pins. */
+  --accent: #a0512c;
+  --accent-display: #d0662f;
+  --accent-rgb: 208 102 47;
+  --accent-soft: rgb(208 102 47 / 0.16);
+  --spot: #d0662f;
+
+  --danger: #b5372b;
+  --danger-rgb: 181 55 43;
+
+  --globe-ocean: #4a2c4f;
+  --globe-land: #f3e9e2;
+  --globe-border: #2e1b31;
+  --globe-pin-ring: #ffffff;
+  --globe-shadow: rgb(62 36 66 / 0.22);
+
+  --logo-ink: #3e2442;
+  --logo-spot: #d0662f;
+
+  /* legacy name, kept so untouched rules keep working */
+  --forest: var(--primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --background: #21171f;
+    --bg-rgb: 33 23 31;
+    --surface: #2c1f2b;
+    --surface-2: #271b26;
+    --segment: #352634;
+    --foreground: #f3e9e2;
+    --foreground-2: #d8cbd2;
+    --muted: #b3a3ad;
+    --ink-rgb: 243 233 226;
+    --shadow-rgb: 0 0 0;
+    --primary: #e0773f;
+    --primary-hover: #ea8b57;
+    --primary-rgb: 224 119 63;
+    --on-primary: #21171f;
+    --brand-text: #f3e9e2;
+    --plum-2: #4a2c4f;
+    --band: #2f2032;
+    --on-band: #f3e9e2;
+    --on-band-muted: #b9a7b4;
+    --footer: #170f16;
+    --on-footer: #b3a3ad;
+    --on-footer-muted: #8a7b86;
+    --accent: #e0773f;
+    --accent-display: #e0773f;
+    --accent-rgb: 224 119 63;
+    --accent-soft: rgb(224 119 63 / 0.18);
+    --spot: #e0773f;
+    --danger: #e5675a;
+    --danger-rgb: 229 103 90;
+    --globe-ocean: #563561;
+    --globe-land: #eadbd0;
+    --globe-border: #1a1019;
+    --globe-pin-ring: #f3e9e2;
+    --globe-shadow: rgb(0 0 0 / 0.35);
+    --logo-ink: #f3e9e2;
+    --logo-spot: #e0773f;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --background: #21171f;
+  --bg-rgb: 33 23 31;
+  --surface: #2c1f2b;
+  --surface-2: #271b26;
+  --segment: #352634;
+  --foreground: #f3e9e2;
+  --foreground-2: #d8cbd2;
+  --muted: #b3a3ad;
+  --ink-rgb: 243 233 226;
+  --shadow-rgb: 0 0 0;
+  --primary: #e0773f;
+  --primary-hover: #ea8b57;
+  --primary-rgb: 224 119 63;
+  --on-primary: #21171f;
+  --brand-text: #f3e9e2;
+  --plum-2: #4a2c4f;
+  --band: #2f2032;
+  --on-band: #f3e9e2;
+  --on-band-muted: #b9a7b4;
+  --footer: #170f16;
+  --on-footer: #b3a3ad;
+  --on-footer-muted: #8a7b86;
+  --accent: #e0773f;
+  --accent-display: #e0773f;
+  --accent-rgb: 224 119 63;
+  --accent-soft: rgb(224 119 63 / 0.18);
+  --spot: #e0773f;
+  --danger: #e5675a;
+  --danger-rgb: 229 103 90;
+  --globe-ocean: #563561;
+  --globe-land: #eadbd0;
+  --globe-border: #1a1019;
+  --globe-pin-ring: #f3e9e2;
+  --globe-shadow: rgb(0 0 0 / 0.35);
+  --logo-ink: #f3e9e2;
+  --logo-spot: #e0773f;
 }
 
 * {
@@ -47,8 +176,8 @@ a {
   width: 100%;
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1px solid rgba(28, 25, 23, 0.16);
-  background: #fff;
+  border: 1px solid rgb(var(--ink-rgb) / 0.16);
+  background: var(--surface);
   font-size: 16px;
   font-family: var(--font-sans), sans-serif;
   color: var(--foreground);
@@ -83,7 +212,7 @@ a {
   border-radius: 10px;
   border: none;
   background: var(--forest);
-  color: var(--background);
+  color: var(--on-primary);
   font-size: 14px;
   font-weight: 600;
   font-family: var(--font-sans), sans-serif;
@@ -94,7 +223,7 @@ a {
 }
 
 .button:hover {
-  background: #24403a;
+  background: var(--primary-hover);
 }
 
 .button:active {
@@ -137,8 +266,8 @@ a {
   font-size: 22px;
   font-weight: 600;
   border-radius: 11px;
-  border: 1px solid rgba(28, 25, 23, 0.18);
-  background: #fff;
+  border: 1px solid rgb(var(--ink-rgb) / 0.18);
+  background: var(--surface);
   outline: none;
   /* Sans, not the serif: EB Garamond ships oldstyle figures with no lining
      alternate, so 3 5 7 9 hang below the baseline across seven distinct
@@ -203,7 +332,7 @@ select:focus-visible,
   font-family: var(--font-serif), serif;
   font-size: 53px;
   font-weight: 700;
-  color: var(--forest);
+  color: var(--brand-text);
   letter-spacing: -1px;
 }
 

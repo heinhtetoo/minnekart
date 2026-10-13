@@ -112,7 +112,9 @@ export default function LoggedOutHome({
           }}
         >
           Your journeys,{' '}
-          <em style={{ color: 'var(--accent)', fontWeight: 400 }}>mapped.</em>
+          <em style={{ color: 'var(--accent-display)', fontWeight: 400 }}>
+            mapped.
+          </em>
         </h1>
         <p
           style={{
@@ -325,11 +327,11 @@ function HowCard({
   return (
     <div
       style={{
-        background: '#fff',
+        background: 'var(--surface)',
         borderRadius: 16,
         padding: '28px 26px',
-        border: '1px solid rgba(28,25,23,.07)',
-        boxShadow: '0 2px 12px rgba(28,25,23,.05)',
+        border: '1px solid rgb(var(--ink-rgb) / 0.07)',
+        boxShadow: '0 2px 12px rgb(var(--shadow-rgb) / 0.05)',
       }}
     >
       <div

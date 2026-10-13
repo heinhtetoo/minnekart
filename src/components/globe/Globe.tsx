@@ -59,7 +59,7 @@ const PIN_HALO_RADIUS = 20;
 
 export default function Globe({
   pins,
-  accent = '#a55931',
+  accent = 'var(--accent)',
   autoSpin = true,
   spinOnTouch = true,
   showGraticule = true,
@@ -121,7 +121,7 @@ export default function Globe({
       .attr('cy', height / 2 + base * 0.9)
       .attr('rx', base * 0.86)
       .attr('ry', base * 0.11)
-      .attr('fill', 'rgba(44,78,70,.22)')
+      .attr('fill', 'rgb(var(--primary-rgb) / 0.22)')
       .attr('filter', `url(#${defsPrefix}-shadow)`);
     root
       .append('circle')
@@ -129,8 +129,8 @@ export default function Globe({
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', view.scale)
-      .attr('fill', COLORS.water)
-      .attr('stroke', COLORS.border)
+      .style('fill', COLORS.water)
+      .style('stroke', COLORS.border)
       .attr('stroke-width', 0.9);
     if (showGraticule) {
       root
@@ -138,7 +138,7 @@ export default function Globe({
         .attr('class', 'graticule')
         .datum(graticule)
         .attr('fill', 'none')
-        .attr('stroke', COLORS.graticule)
+        .style('stroke', COLORS.graticule)
         .attr('stroke-width', 0.45)
         .attr('opacity', 0.16);
     }
@@ -148,8 +148,8 @@ export default function Globe({
       .selectAll('path')
       .data(land.features)
       .join('path')
-      .attr('fill', COLORS.land)
-      .attr('stroke', COLORS.border)
+      .style('fill', COLORS.land)
+      .style('stroke', COLORS.border)
       .attr('stroke-width', 0.5)
       .attr('stroke-linejoin', 'round');
     root
@@ -157,7 +157,7 @@ export default function Globe({
       .attr('class', 'borders')
       .datum(borders)
       .attr('fill', 'none')
-      .attr('stroke', COLORS.border)
+      .style('stroke', COLORS.border)
       .attr('stroke-width', 0.35)
       .attr('opacity', 0.55);
     root
@@ -251,10 +251,10 @@ export default function Globe({
             .attr('cx', point[0])
             .attr('cy', point[1])
             .attr('r', radius)
-            .attr('fill', fill)
+            .style('fill', fill)
             .attr('pointer-events', 'none');
 
-        circle(PIN_HALO_RADIUS, toRgba(accent, 0.2));
+        circle(PIN_HALO_RADIUS, accent).style('fill-opacity', 0.2);
         // The gradient sits under the photo rather than beside it, so a
         // thumbnail that is still loading — or whose signed URL has expired
         // after its hour — falls back on its own with no error handling.
@@ -273,7 +273,7 @@ export default function Globe({
           .attr('cy', point[1])
           .attr('r', PIN_RADIUS)
           .attr('fill', 'none')
-          .attr('stroke', COLORS.stroke)
+          .style('stroke', COLORS.stroke)
           .attr('stroke-width', 2)
           // fill is none, so without this only the 2px stroke would be
           // clickable rather than the whole face.
@@ -535,11 +535,3 @@ function appendShadowFilter(defs: any, prefix: string) {
     .attr('stdDeviation', 14);
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
-
-function toRgba(hex: string, alpha: number): string {
-  const clean = hex.replace('#', '');
-  const r = parseInt(clean.slice(0, 2), 16);
-  const g = parseInt(clean.slice(2, 4), 16);
-  const b = parseInt(clean.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}

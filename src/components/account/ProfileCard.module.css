@@ -2,12 +2,12 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: #fff;
+  background: var(--surface);
   border-radius: 18px;
   padding: 22px clamp(20px, 3vw, 30px);
   margin-bottom: 20px;
-  border: 1px solid rgba(28, 25, 23, 0.07);
-  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.05);
+  border: 1px solid rgb(var(--ink-rgb) / 0.07);
+  box-shadow: 0 2px 12px rgb(var(--shadow-rgb) / 0.05);
 }
 
 .head {
@@ -53,7 +53,7 @@
 .saved {
   font-size: 13px;
   font-weight: 600;
-  color: var(--forest);
+  color: var(--brand-text);
 }
 
 .error {

@@ -85,7 +85,7 @@ export default function LoggedInHome({
             }}
           >
             Welcome back,{' '}
-            <em style={{ color: 'var(--accent)', fontWeight: 400 }}>
+            <em style={{ color: 'var(--accent-display)', fontWeight: 400 }}>
               {firstName(user.name)}.
             </em>
           </h1>

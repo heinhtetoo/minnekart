@@ -1,9 +1,9 @@
 .card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   padding: 20px 24px;
-  border: 1px solid rgba(28, 25, 23, 0.07);
-  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.05);
+  border: 1px solid rgb(var(--ink-rgb) / 0.07);
+  box-shadow: 0 2px 12px rgb(var(--shadow-rgb) / 0.05);
 }
 
 .form {
@@ -16,8 +16,8 @@
   min-width: 0;
   font-size: 14px;
   color: var(--foreground);
-  background: #f4efe6;
-  border: 1px solid rgba(28, 25, 23, 0.1);
+  background: var(--background);
+  border: 1px solid rgb(var(--ink-rgb) / 0.1);
   border-radius: 10px;
   padding: 10px 12px;
   font-family: inherit;
@@ -27,7 +27,7 @@
   flex-shrink: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
+  color: var(--on-primary);
   background: var(--forest);
   border: none;
   border-radius: 10px;
@@ -38,7 +38,7 @@
 }
 
 .generateButton:hover:not(:disabled) {
-  background: #24403a;
+  background: var(--primary-hover);
 }
 
 .generateButton:disabled {
@@ -64,8 +64,8 @@
   min-width: 0;
   font-size: 13px;
   color: var(--foreground);
-  background: #f4efe6;
-  border: 1px solid rgba(28, 25, 23, 0.1);
+  background: var(--background);
+  border: 1px solid rgb(var(--ink-rgb) / 0.1);
   border-radius: 10px;
   padding: 10px 12px;
   font-family: inherit;
@@ -75,7 +75,7 @@
   flex-shrink: 0;
   font-size: 13px;
   font-weight: 600;
-  color: #fff;
+  color: var(--on-primary);
   background: var(--forest);
   border: none;
   border-radius: 10px;
@@ -86,7 +86,7 @@
 }
 
 .copyButton:hover {
-  background: #24403a;
+  background: var(--primary-hover);
 }
 
 .error {
@@ -109,10 +109,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: #fff;
+  background: var(--surface);
   border-radius: 12px;
   padding: 14px 18px;
-  border: 1px solid rgba(28, 25, 23, 0.07);
+  border: 1px solid rgb(var(--ink-rgb) / 0.07);
 }
 
 .itemNote {
@@ -156,11 +156,11 @@
 
 .revoked {
   color: var(--danger);
-  background: rgba(180, 60, 50, 0.12);
+  background: rgb(var(--danger-rgb) / 0.12);
 }
 
 .expired {
-  color: #57534e;
+  color: var(--foreground-2);
   background: rgba(87, 83, 78, 0.12);
 }
 
@@ -169,7 +169,7 @@
   font-weight: 600;
   color: var(--danger);
   background: none;
-  border: 1px solid rgba(180, 60, 50, 0.35);
+  border: 1px solid rgb(var(--danger-rgb) / 0.35);
   border-radius: 8px;
   padding: 6px 12px;
   cursor: pointer;
@@ -178,7 +178,7 @@
 }
 
 .revokeButton:hover:not(:disabled) {
-  background: rgba(180, 60, 50, 0.08);
+  background: rgb(var(--danger-rgb) / 0.08);
 }
 
 .revokeButton:disabled {

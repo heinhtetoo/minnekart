@@ -59,7 +59,9 @@ export default function PublicGlobe({
           }}
         >
           {ownerName}&apos;s{' '}
-          <em style={{ color: 'var(--accent)', fontWeight: 400 }}>world.</em>
+          <em style={{ color: 'var(--accent-display)', fontWeight: 400 }}>
+            world.
+          </em>
         </h1>
       </section>
 

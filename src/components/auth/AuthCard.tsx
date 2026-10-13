@@ -128,11 +128,11 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
   return (
     <div
       style={{
-        background: '#fff',
+        background: 'var(--surface)',
         borderRadius: 16,
         padding: '24px 26px 22px',
-        border: '1px solid rgba(28,25,23,.07)',
-        boxShadow: '0 10px 34px rgba(28,25,23,.09)',
+        border: '1px solid rgb(var(--ink-rgb) / 0.07)',
+        boxShadow: '0 10px 34px rgb(var(--shadow-rgb) / 0.09)',
       }}
     >
       {(mode === 'login' || mode === 'signup') && (
@@ -141,7 +141,7 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
             display: 'flex',
             gap: 5,
             padding: 4,
-            background: '#ece5d8',
+            background: 'var(--segment)',
             borderRadius: 12,
             marginBottom: 20,
           }}
@@ -230,7 +230,7 @@ const AuthCard = forwardRef<AuthCardHandle, AuthCardProps>(function AuthCard(
               style={{
                 fontSize: 12.5,
                 color: 'var(--muted)',
-                background: '#f4efe6',
+                background: 'var(--background)',
                 padding: '10px 12px',
                 borderRadius: 9,
                 margin: '0 0 14px',
@@ -370,9 +370,9 @@ function Tab({
         cursor: 'pointer',
         border: 'none',
         fontFamily: 'inherit',
-        background: active ? '#fff' : 'transparent',
-        color: active ? 'var(--forest)' : 'var(--muted)',
-        boxShadow: active ? '0 1px 4px rgba(28,25,23,.08)' : 'none',
+        background: active ? 'var(--surface)' : 'transparent',
+        color: active ? 'var(--brand-text)' : 'var(--muted)',
+        boxShadow: active ? '0 1px 4px rgb(var(--shadow-rgb) / 0.08)' : 'none',
         transition: 'all .15s',
       }}
     >

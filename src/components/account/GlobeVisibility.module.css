@@ -1,9 +1,9 @@
 .card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 18px;
   padding: 6px clamp(20px, 3vw, 30px) 20px;
-  border: 1px solid rgba(28, 25, 23, 0.07);
-  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.05);
+  border: 1px solid rgb(var(--ink-rgb) / 0.07);
+  box-shadow: 0 2px 12px rgb(var(--shadow-rgb) / 0.05);
 }
 
 .row {
@@ -40,8 +40,8 @@
   min-width: 0;
   font-size: 16px;
   color: var(--foreground);
-  background: #f4efe6;
-  border: 1px solid rgba(28, 25, 23, 0.1);
+  background: var(--background);
+  border: 1px solid rgb(var(--ink-rgb) / 0.1);
   border-radius: 10px;
   padding: 10px 12px;
   font-family: inherit;
@@ -51,7 +51,7 @@
   flex-shrink: 0;
   font-size: 13px;
   font-weight: 600;
-  color: #fff;
+  color: var(--on-primary);
   background: var(--forest);
   border: none;
   border-radius: 10px;
@@ -62,7 +62,7 @@
 }
 
 .copyButton:hover {
-  background: #24403a;
+  background: var(--primary-hover);
 }
 
 .error {

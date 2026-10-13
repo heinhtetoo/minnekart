@@ -25,11 +25,11 @@ export default function PeekPanel({
     <div
       className={`fade ${styles.peek}`}
       style={{
-        background: '#fff',
+        background: 'var(--surface)',
         borderRadius: 14,
         padding: '18px 20px',
-        border: '1px solid rgba(28,25,23,.07)',
-        boxShadow: '0 8px 24px rgba(28,25,23,.12)',
+        border: '1px solid rgb(var(--ink-rgb) / 0.07)',
+        boxShadow: '0 8px 24px rgb(var(--shadow-rgb) / 0.12)',
       }}
     >
       <div
@@ -42,7 +42,11 @@ export default function PeekPanel({
         <div>
           <div
             className="serif"
-            style={{ fontSize: 22, fontWeight: 600, color: 'var(--forest)' }}
+            style={{
+              fontSize: 22,
+              fontWeight: 600,
+              color: 'var(--brand-text)',
+            }}
           >
             {title}
           </div>

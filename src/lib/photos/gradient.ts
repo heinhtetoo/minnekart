@@ -1,9 +1,11 @@
+// Dusk only: plum, persimmon, apricot and linen, so a photo-less memory
+// never introduces a colour the palette doesn't have.
 const GRAD_PAIRS: [string, string][] = [
-  ['#d8b48c', '#a86f3c'],
-  ['#c98b6a', '#8a3f3a'],
-  ['#e0b878', '#c07a3a'],
-  ['#5a7a9a', '#2e4a6a'],
-  ['#c86a4a', '#8a3020'],
+  ['#e8a07a', '#a0512c'],
+  ['#b79ab8', '#5a3a5f'],
+  ['#e7c29a', '#c0703f'],
+  ['#8f6f93', '#3e2442'],
+  ['#d98a6a', '#7a3a45'],
 ];
 
 const ANGLES = [135, 118, 152, 105, 142, 125];

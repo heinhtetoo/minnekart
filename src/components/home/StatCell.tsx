@@ -30,7 +30,7 @@ export default function StatCell({ value, label, bordered }: StatCellProps) {
           fontSize: 10,
           letterSpacing: 2.5,
           textTransform: 'uppercase',
-          color: '#9ec2b2',
+          color: 'var(--on-band-muted)',
           marginTop: 6,
         }}
       >

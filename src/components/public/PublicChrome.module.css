@@ -8,9 +8,9 @@
   gap: 20px;
   height: 66px;
   padding: 0 clamp(20px, 5vw, 64px);
-  background: rgba(244, 239, 230, 0.82);
+  background: rgb(var(--bg-rgb) / 0.82);
   backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(28, 25, 23, 0.08);
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 0.08);
 }
 
 .brand {
@@ -52,7 +52,7 @@
 .signUp {
   font-size: 13px;
   font-weight: 600;
-  color: #f4efe6;
+  color: var(--on-primary);
   background: var(--forest);
   padding: 9px 18px;
   border-radius: 22px;
@@ -61,11 +61,23 @@
 }
 
 .signUp:hover {
-  background: #24403a;
+  background: var(--primary-hover);
 }
 
 @media (max-width: 560px) {
   .attribution {
     display: none;
+  }
+}
+
+/* Header logo: 28px desktop, 26px mobile. */
+.brand svg {
+  height: 28px;
+  width: auto;
+}
+
+@media (max-width: 720px) {
+  .brand svg {
+    height: 26px;
   }
 }

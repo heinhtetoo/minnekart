@@ -142,11 +142,11 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
       <div
         style={{
           width: 'min(100%, 440px)',
-          background: '#fff',
+          background: 'var(--surface)',
           borderRadius: 18,
           padding: 'clamp(28px, 5vw, 40px)',
-          border: '1px solid rgba(28,25,23,.07)',
-          boxShadow: '0 12px 40px rgba(28,25,23,.10)',
+          border: '1px solid rgb(var(--ink-rgb) / 0.07)',
+          boxShadow: '0 12px 40px rgb(var(--shadow-rgb) / 0.10)',
           textAlign: 'center',
         }}
       >
@@ -218,7 +218,7 @@ export default function VerifyScreen({ email }: VerifyScreenProps) {
           <p
             style={{
               fontSize: 12.5,
-              color: 'var(--forest)',
+              color: 'var(--brand-text)',
               margin: '0 0 4px',
             }}
           >

@@ -8,9 +8,9 @@
   gap: 20px;
   height: 66px;
   padding: 0 clamp(20px, 5vw, 64px);
-  background: rgba(244, 239, 230, 0.82);
+  background: rgb(var(--bg-rgb) / 0.82);
   backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(28, 25, 23, 0.08);
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 0.08);
 }
 
 .brand {
@@ -62,7 +62,7 @@
 .newMemory {
   font-size: 13px;
   font-weight: 600;
-  color: #f4efe6;
+  color: var(--on-primary);
   background: var(--forest);
   padding: 9px 18px;
   border-radius: 22px;
@@ -71,7 +71,7 @@
 }
 
 .newMemory:hover {
-  background: #24403a;
+  background: var(--primary-hover);
 }
 
 .account {
@@ -85,7 +85,7 @@
   border-radius: 50%;
   border: none;
   background: var(--forest);
-  color: #f4efe6;
+  color: var(--on-primary);
   font-size: 16px;
   font-weight: 600;
   font-family: var(--font-serif), serif;
@@ -100,16 +100,16 @@
   right: 0;
   top: 48px;
   width: 216px;
-  background: #fff;
+  background: var(--surface);
   border-radius: 14px;
-  border: 1px solid rgba(28, 25, 23, 0.09);
-  box-shadow: 0 16px 40px rgba(28, 25, 23, 0.16);
+  border: 1px solid rgb(var(--ink-rgb) / 0.09);
+  box-shadow: 0 16px 40px rgb(var(--shadow-rgb) / 0.16);
   overflow: hidden;
 }
 
 .menuHead {
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(28, 25, 23, 0.07);
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 0.07);
 }
 
 .menuName {
@@ -132,12 +132,12 @@
   font-size: 13px;
   font-weight: 500;
   color: var(--foreground);
-  border-bottom: 1px solid rgba(28, 25, 23, 0.07);
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 0.07);
   transition: background 0.12s;
 }
 
 .menuLink:hover {
-  background: rgba(28, 25, 23, 0.04);
+  background: rgb(var(--ink-rgb) / 0.04);
 }
 
 .menuSignOut {
@@ -156,7 +156,7 @@
 }
 
 .menuSignOut:hover {
-  background: rgba(192, 57, 43, 0.07);
+  background: rgb(var(--danger-rgb) / 0.07);
 }
 
 .menuSignOut:disabled {
@@ -185,9 +185,9 @@
     align-items: flex-start;
     justify-content: space-around;
     padding: 11px 6px calc(9px + env(safe-area-inset-bottom));
-    background: rgba(244, 239, 230, 0.94);
+    background: rgb(var(--bg-rgb) / 0.94);
     backdrop-filter: blur(14px);
-    border-top: 1px solid rgba(28, 25, 23, 0.08);
+    border-top: 1px solid rgb(var(--ink-rgb) / 0.08);
   }
   .bottomItem {
     flex: 1;
@@ -223,8 +223,8 @@
     margin-top: -20px;
     border-radius: 50%;
     background: var(--forest);
-    color: #f4efe6;
-    box-shadow: 0 6px 16px rgba(28, 25, 23, 0.24);
+    color: var(--on-primary);
+    box-shadow: 0 6px 16px rgb(var(--shadow-rgb) / 0.24);
     border: 3px solid var(--background);
   }
   .addFab:active .addFabCircle {
@@ -232,5 +232,17 @@
   }
   .addFabLabel {
     display: block;
+  }
+}
+
+/* Header logo: 28px desktop, 26px mobile. */
+.brand svg {
+  height: 28px;
+  width: auto;
+}
+
+@media (max-width: 720px) {
+  .brand svg {
+    height: 26px;
   }
 }

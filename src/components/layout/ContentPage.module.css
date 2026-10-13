@@ -57,7 +57,7 @@
 
 .prose p {
   font-size: 16px;
-  color: #4a4540;
+  color: var(--foreground-2);
   line-height: 1.75;
   margin: 0 0 16px;
 }
@@ -69,7 +69,7 @@
 
 .prose li {
   font-size: 16px;
-  color: #4a4540;
+  color: var(--foreground-2);
   line-height: 1.75;
   margin-bottom: 8px;
 }
@@ -80,7 +80,7 @@
 }
 
 .prose a {
-  color: var(--forest);
+  color: var(--brand-text);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -112,15 +112,15 @@
   text-align: left;
   vertical-align: top;
   padding: 10px 14px;
-  border-bottom: 1px solid rgba(28, 25, 23, 0.1);
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 0.1);
   line-height: 1.6;
-  color: #4a4540;
+  color: var(--foreground-2);
 }
 
 .prose th {
   font-weight: 600;
   color: var(--foreground);
-  border-bottom-color: rgba(28, 25, 23, 0.2);
+  border-bottom-color: rgb(var(--ink-rgb) / 0.2);
 }
 
 /* The row label reads as a heading for its row, not as data. */
@@ -137,7 +137,7 @@
 }
 
 .footerHolder {
-  background: #1c1917;
+  background: var(--footer);
 }
 
 @media (max-width: 720px) {

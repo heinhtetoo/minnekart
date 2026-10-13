@@ -23,7 +23,7 @@ interface MiniGlobeProps {
 export default function MiniGlobe({
   lat,
   lng,
-  accent = '#a55931',
+  accent = 'var(--spot)',
   size = 112,
 }: MiniGlobeProps) {
   // useId's own format is not safe inside url(#…), so strip it down to
@@ -72,13 +72,11 @@ export default function MiniGlobe({
         cx={centre}
         cy={centre}
         r={radius}
-        fill={GLOBE_COLORS.water}
-        stroke={GLOBE_COLORS.border}
+        style={{ fill: GLOBE_COLORS.water, stroke: GLOBE_COLORS.border }}
         strokeWidth={0.9}
       />
       <g
-        fill={GLOBE_COLORS.land}
-        stroke={GLOBE_COLORS.border}
+        style={{ fill: GLOBE_COLORS.land, stroke: GLOBE_COLORS.border }}
         strokeWidth={0.4}
         strokeLinejoin="round"
       >
@@ -88,7 +86,7 @@ export default function MiniGlobe({
         <path
           d={borderPath}
           fill="none"
-          stroke={GLOBE_COLORS.border}
+          style={{ stroke: GLOBE_COLORS.border }}
           strokeWidth={0.3}
           opacity={0.55}
         />
@@ -102,15 +100,14 @@ export default function MiniGlobe({
             cx={centre}
             cy={centre}
             r={radius * 0.15}
-            fill={accent}
+            style={{ fill: accent }}
             opacity={0.2}
           />
           <circle
             cx={centre}
             cy={centre}
             r={radius * 0.065}
-            fill={accent}
-            stroke={GLOBE_COLORS.stroke}
+            style={{ fill: accent, stroke: GLOBE_COLORS.stroke }}
             strokeWidth={radius * 0.028}
           />
         </>

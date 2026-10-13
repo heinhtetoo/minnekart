@@ -9,8 +9,8 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--muted);
-  background: #fff;
-  border: 1px solid rgba(28, 25, 23, 0.12);
+  background: var(--surface);
+  border: 1px solid rgb(var(--ink-rgb) / 0.12);
   border-radius: 999px;
   padding: 8px 16px;
   cursor: pointer;
@@ -23,12 +23,12 @@
 
 .chip:hover {
   border-color: var(--accent);
-  color: var(--forest);
+  color: var(--brand-text);
 }
 
 .chip[data-active='true'] {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-primary);
   border-color: var(--accent);
 }
 
@@ -41,9 +41,9 @@
 .moreButton {
   font-size: 13px;
   font-weight: 600;
-  color: var(--forest);
-  background: #fff;
-  border: 1px solid rgba(28, 25, 23, 0.12);
+  color: var(--brand-text);
+  background: var(--surface);
+  border: 1px solid rgb(var(--ink-rgb) / 0.12);
   border-radius: 999px;
   padding: 11px 26px;
   cursor: pointer;

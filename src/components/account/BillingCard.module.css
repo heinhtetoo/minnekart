@@ -1,9 +1,9 @@
 .card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 18px;
   padding: 6px clamp(20px, 3vw, 30px) 20px;
-  border: 1px solid rgba(28, 25, 23, 0.07);
-  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.05);
+  border: 1px solid rgb(var(--ink-rgb) / 0.07);
+  box-shadow: 0 2px 12px rgb(var(--shadow-rgb) / 0.05);
   margin-top: 16px;
 }
 
@@ -36,9 +36,9 @@
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--forest);
-  background: #f4efe6;
-  border: 1px solid rgba(28, 25, 23, 0.1);
+  color: var(--brand-text);
+  background: var(--background);
+  border: 1px solid rgb(var(--ink-rgb) / 0.1);
   border-radius: 999px;
   padding: 5px 12px;
 }
@@ -54,7 +54,7 @@
 .primaryButton {
   font-size: 13px;
   font-weight: 600;
-  color: #fff;
+  color: var(--on-primary);
   background: var(--forest);
   border: none;
   border-radius: 10px;
@@ -65,15 +65,15 @@
 }
 
 .primaryButton:hover {
-  background: #24403a;
+  background: var(--primary-hover);
 }
 
 .secondaryButton {
   font-size: 13px;
   font-weight: 600;
-  color: var(--forest);
+  color: var(--brand-text);
   background: transparent;
-  border: 1px solid rgba(28, 25, 23, 0.15);
+  border: 1px solid rgb(var(--ink-rgb) / 0.15);
   border-radius: 10px;
   padding: 9px 14px;
   cursor: pointer;
@@ -82,11 +82,11 @@
 }
 
 .secondaryButton:hover {
-  background: #f4efe6;
+  background: var(--background);
 }
 
 .manage {
-  border-top: 1px solid rgba(28, 25, 23, 0.07);
+  border-top: 1px solid rgb(var(--ink-rgb) / 0.07);
   margin-top: 14px;
   padding-top: 14px;
 }
@@ -113,7 +113,7 @@
   font-weight: 600;
   color: var(--danger);
   background: transparent;
-  border: 1px solid rgba(180, 60, 40, 0.3);
+  border: 1px solid rgb(var(--danger-rgb) / 0.3);
   border-radius: 10px;
   padding: 9px 14px;
   cursor: pointer;
@@ -122,7 +122,7 @@
 }
 
 .dangerButton:hover {
-  background: rgba(180, 60, 40, 0.06);
+  background: rgb(var(--danger-rgb) / 0.06);
 }
 
 .card button:disabled {
@@ -139,7 +139,7 @@
 
 .success {
   font-size: 13px;
-  color: var(--forest);
+  color: var(--brand-text);
   font-weight: 600;
   margin: 8px 0 0;
 }

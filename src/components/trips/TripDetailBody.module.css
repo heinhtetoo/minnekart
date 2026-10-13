@@ -16,8 +16,8 @@
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(28, 25, 23, 0.05) 30%,
-    rgba(28, 25, 23, 0.55)
+    rgb(var(--shadow-rgb) / 0.05) 30%,
+    rgb(var(--shadow-rgb) / 0.55)
   );
 }
 
@@ -36,7 +36,7 @@
   letter-spacing: 1px;
   color: rgba(255, 255, 255, 0.92);
   margin-bottom: 16px;
-  background: rgba(28, 25, 23, 0.28);
+  background: rgb(var(--shadow-rgb) / 0.28);
   padding: 6px 14px;
   border-radius: 20px;
   backdrop-filter: blur(4px);
@@ -74,7 +74,7 @@
   font-size: clamp(26px, 3.5vw, 35px);
   font-weight: 500;
   font-style: italic;
-  color: var(--forest);
+  color: var(--brand-text);
   margin: 0 0 24px;
   line-height: 1.4;
   letter-spacing: -0.3px;
@@ -82,7 +82,7 @@
 
 .story {
   font-size: 15.5px;
-  color: #4a4540;
+  color: var(--foreground-2);
   line-height: 1.75;
   margin: 0 0 18px;
 }
@@ -93,11 +93,11 @@
 }
 
 .sidebar {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   padding: 22px;
-  border: 1px solid rgba(28, 25, 23, 0.07);
-  box-shadow: 0 2px 12px rgba(28, 25, 23, 0.05);
+  border: 1px solid rgb(var(--ink-rgb) / 0.07);
+  box-shadow: 0 2px 12px rgb(var(--shadow-rgb) / 0.05);
   position: sticky;
   top: 82px;
 }
@@ -117,7 +117,7 @@
   align-items: baseline;
   padding-bottom: 12px;
   margin-bottom: 12px;
-  border-bottom: 1px solid rgba(28, 25, 23, 0.06);
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 0.06);
   gap: 12px;
 }
 
@@ -139,7 +139,7 @@
   text-align: center;
   font-size: 13px;
   font-weight: 600;
-  color: #fff;
+  color: var(--on-primary);
   background: var(--forest);
   padding: 11px;
   border-radius: 10px;
@@ -147,7 +147,7 @@
 }
 
 .galleryButton:hover {
-  background: #24403a;
+  background: var(--primary-hover);
 }
 
 .editLink {
@@ -185,7 +185,7 @@
   gap: 16px;
   margin-top: 36px;
   padding-top: 24px;
-  border-top: 1px solid rgba(28, 25, 23, 0.1);
+  border-top: 1px solid rgb(var(--ink-rgb) / 0.1);
 }
 
 .pagerLink {

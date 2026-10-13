@@ -13,11 +13,11 @@ const RESET_ERRORS: Record<string, string> = {
 };
 
 const cardStyle = {
-  background: '#fff',
+  background: 'var(--surface)',
   borderRadius: 16,
   padding: '24px 26px 22px',
-  border: '1px solid rgba(28,25,23,.07)',
-  boxShadow: '0 10px 34px rgba(28,25,23,.09)',
+  border: '1px solid rgb(var(--ink-rgb) / 0.07)',
+  boxShadow: '0 10px 34px rgb(var(--shadow-rgb) / 0.09)',
   width: 'min(100%, 400px)',
   textAlign: 'left' as const,
 };
