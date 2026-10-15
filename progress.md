@@ -1286,8 +1286,10 @@ blocking Tier 2 work:
       against the current stylised look; the pin, halo and accent-colour
       styling we'd have to re-create; SSR and `opengraph-image` compatibility
       (Mapbox GL is client-only, so the OG share cards can't use it); access
-      token / secrets handling; and offline and mobile performance. Deliver a
-      recommendation plus a rough migration cost. Low urgency.
+      token / secrets handling; and offline and mobile performance. Real zoom
+      and coastlines would also make fine-tuning pin placement practical
+      _(BACKLOG)_. Deliver a recommendation plus a rough migration cost. Low
+      urgency.
 - [ ] **21. Seed photo is read and parsed twice.** `TripForm.readSeedPhoto`
       does `arrayBuffer()` → `sniffImageFormat()` → `readPhotoExif()` at pick
       time, and `processImage` (`src/lib/photos/process.ts`) repeats all three
@@ -1680,6 +1682,21 @@ blocking Tier 2 work:
       on the `dev` preview rather than assuming, since Neon's pooled connection
       may already make the session lookup cheap enough not to matter.
       Performance work, not GEO work — ranking does not depend on it.
+      **Folded in from the backlog (15 October 2026)**: two viewer-dependent
+      fixes, because whichever approach this takes has to settle both.
+      (a) **Unconfirmed accounts get two different headers.** The public
+      pages (`/u/…`, `/u/…/<trip>`, `/t/…`) pass
+      `viewerLoggedIn={viewer !== null}`, so a signed-in but unconfirmed
+      session sees "My globe →"; `ContentPage` checks `isVerified(viewer)` and
+      hardcodes `viewerLoggedIn={false}`, so the same session sees "Sign in /
+      Sign up". Pick one rule for unconfirmed sessions and use it everywhere.
+      (b) **Paid members are told to upgrade on Pricing.** The page body is
+      viewer-dependent too, not just the nav: `pricingCta(tier, loggedIn)`
+      shows "Upgrade in settings" to every signed-in visitor, paid or not.
+      Pass the plan through and show something like "Your plan". If the nav
+      moves client-side, the CTAs need the same treatment, and
+      `/api/auth/me` doesn't return `plan` today. (b) is small enough to ship
+      on its own first if wanted; this task then inherits it.
 - [x] **35. Apply the Phase 2 redesign (P0 + P1)** _(13 October 2026)_.
       The Dusk rebrand and the screen-by-screen redesign, built and locked in a
       private copy of this repo (baseline `dev` at `261eaa9`), move here. P0 is
@@ -1742,49 +1759,75 @@ blocking Tier 2 work:
       successful request; the next step is finding out why that doesn't
       re-render the server-fetched list in production. Owner-only, and
       reloading works around it.
-- Globe auto-spin as a `/settings` toggle _(BACKLOG, idea)_. Task 27 makes the
-  spin follow the OS `prefers-reduced-motion` preference, which is the right
-  default. An in-app toggle would go further: stop the spin without changing an
-  OS-wide setting, or keep it while reducing motion everywhere else. Undecided,
-  and not free — it needs a `users` column beside `globe_public`
-  (`src/db/schema.ts:38`) and a card on `/settings` following
-  `GlobeVisibility`, and a new `users` column downs every logged-in request
-  until Migrate Neon runs. Revisit once the media query has shipped and we know
-  whether anyone actually wants the override. The settings row is also the only
-  place a "following your system Reduce Motion setting" explanation belongs —
-  task 27 deliberately keeps it off the globe itself.
-- Metrics dashboard on `/admin` _(BACKLOG, idea — parked 12 August 2026)_.
-  Task 31 shipped `collectMetrics()` and `npm run metrics`, and deliberately
-  stopped short of a UI. Rendering today's numbers as a card is genuinely
-  small — the data layer is done and tested, `/admin` already has the owner
-  gate and `AppPage`, and `StatCell` is close to the display pattern. Call it
-  half a day.
-  **The cost is not in the card, it is in trends.** Every query returns a
-  point-in-time scalar, so a card would show "27% activation" with no sense of
-  direction — barely better than the CLI. Charting means bucketed
-  (`date_trunc`) queries, each needing its own tests, a date-range concept
-  threaded through, and rendering: there is **no chart library** in the
-  project and only `d3-geo`/`d3-drag`/`d3-selection` (no `d3-scale`,
-  no `d3-shape`), so it is either a new dependency in a repo that is
-  deliberately spare about them, or hand-rolled SVG. Several days, not hours.
-  **Two frictions worth knowing before starting.** The repo has no component
-  tests (`environment: 'node'`, no jsdom), so only extracted pure formatting
-  would be testable — the same trade every UI here already makes. And the
-  queries would move onto a request path: `collectMetrics()` currently awaits
-  six queries **sequentially**, so that is six Neon round trips per render,
-  and the percentile and group-by queries do full table scans. Trivial to fix
-  with `Promise.all` and irrelevant at current size, but it becomes a problem
-  quietly rather than loudly.
-  **The trigger for revisiting**: once `plan_events` has enough rows that
-  conversion and time-to-convert stop returning null. That is the point trends
-  exist, which is the point a UI beats a text report. Before then a dashboard
-  is a nicer-looking way to read the same zeros, and it invites daily checking
-  of numbers that cannot move yet.
-  **Cheap thing to consider first**: have the CLI append each run's numbers to
-  a snapshot table or JSON file. Costs almost nothing and means charts have
-  history to plot on day one — the same reasoning that made shipping
-  `plan_events` early worth it, since data only accumulates from the day you
-  start collecting it.
-- Long tail _(BACKLOG, post-PMF by design)_: journey grouping, originals
-  opt-in, map fine-tune pin placement, social/mobile/i18n — deferred until
-  real usage data exists.
+      **Folded in from the backlog (15 October 2026)**, since both sit in the
+      same two components and get tested on the same page: (a) a failed
+      revoke shows nothing — `InviteList.tsx` just re-enables the button and
+      the row still reads Unused, where creating already shows "Could not
+      create an invite."; (b) a refused clipboard copy shows nothing —
+      `InviteManager.tsx` calls `navigator.clipboard.writeText` without
+      handling a rejection, so "Copied" never appears (the link stays in its
+      field, so it can still be copied by hand). Catch it and say so, or
+      select the link text.
+- [ ] **37. Signed-out home: promises instead of sample counts**
+      _(logged 15 October 2026)_. The stats row under the signed-out globe
+      reads 7 · 7 · 7 · $0: `demo-trips.json` holds 7 trips in 7 countries
+      across 7 different years, so "Sample places", "Countries" and "Years"
+      all say 7, and they describe fictional data, which sells nothing. "$0 ·
+      Free forever" is true but hides the 15-memory cap Pricing states. On the
+      landing page, the most visited one we have. **Rough choice: replace the
+      counts with promises**, e.g. "15 · free memories", "6 · photos each",
+      "0 · ads or analytics", "$0 · to start". Read the numbers from
+      `src/lib/billing/limits.ts`, as Pricing does, so the two can't drift,
+      and keep every claim consistent with `/privacy` and `/pricing` (word the
+      privacy one carefully — Turnstile and Paddle are third-party scripts, so
+      "no ads or analytics", not "no third parties"). Rejected for now: new
+      sample trips (still fiction), real member-wide totals (tiny before
+      launch, a DB query on the public home against task 34, and aggregate
+      user data on a privacy product — revisit after launch), and dropping the
+      row. Wording settled at implementation. `LoggedOutHome.tsx` only.
+- [ ] **38. Theme toggle: System / Light / Dark** _(logged 15 October 2026)_.
+      Both themes exist since task 35, and `globals.css` (plus the six modules
+      with dark rules) already honours `<html data-theme="light|dark">` over
+      the OS setting — nothing sets it yet. `/settings` gets a three-way
+      control, System clearing the override; a sun/moon button in the account
+      menu (signed in) and `PublicChrome` (signed out) flips to the explicit
+      opposite. **Decided: browser storage** plus a tiny inline `<head>`
+      script that sets `data-theme` before first paint, so no flash and no
+      server read. Per device, not per account, and it works signed out.
+      Rejected: a cookie read in the root layout (would make every page
+      dynamic, against task 34) and a `users` column (migration outage risk,
+      and still flashes). Notes for implementation: `<html>` needs
+      `suppressHydrationWarning`; the **Turnstile widget must match the site
+      theme** (it follows the OS today — pass `theme`, and re-render on
+      change); Paddle's overlay defaults to light; OG cards and the postcard
+      stamp keep fixed colours by design. The globe reads theme tokens via
+      `style`, so it should switch live with no globe change — confirm before
+      touching it if not. Details settled at implementation.
+- [ ] **39. Signed-in home: the public globe's postcard in place of the
+      detail card** _(logged 15 October 2026)_. Align the two globe pages: the
+      home's docked `DetailCard` (right panel, above the pins list) gives way
+      to `PeekPanel`'s postcard, as on `/u/<username>`. **Rough direction**:
+      the home has each trip's thumbnail, so the stamp could carry the real
+      photo rather than the mark, making the home postcard richer, not just a
+      copy; the "Choose any pin…" prompt (the postcard only exists while a
+      place is selected) moves to the pins-list header; and the three copies
+      of `restingRadius` / `useGlobeCanvas` / `onZoom` (`LoggedInHome`,
+      `LoggedOutHome`, `PublicGlobe`) become one shared hook while those files
+      are open. Things the home would lose unless re-homed: photo count,
+      "Reset view", "Open journey →". Risks: the postcard moves into the globe
+      stage, so **show the layout and get sign-off before building** (globe
+      rule, even though `Globe.tsx` itself shouldn't change); stacked, the
+      slot is `display: contents`, which is exactly what #20 fixed with
+      `z-index: 30`; and July's floating home card was replaced by the docked
+      one because it covered the stats band. Options compared at
+      implementation.
+- [ ] **40. Bring the PRD and README up to the as-built product**
+      _(logged 15 October 2026)_. Do this **after 37–39**, so it's written
+      once. The PRD's "Design Reference" and F1 still describe the pre-Dusk
+      look (cream/forest-green palette, the "Minne forest green" two-tone
+      wordmark, the globe's "forest sea … no atmosphere rim") and none of
+      task 35: Haze/Nightfall themes, Rune M, the postcard, styled confirm
+      dialogs, back links, the lightbox changes. The README's
+      `docs/media/globe.gif` shows the old palette and needs re-recording
+      (owner action, or a screen recording from the preview). `docs/OPS.md`
+      looked current. `docs/BUSINESS.md` is separate — see `BACKLOG.md`.
